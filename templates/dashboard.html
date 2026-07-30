@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Mirage Smoke Lineups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Sora:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+  <main class="dash-page">
+    <div class="mirage-stage" aria-hidden="true">
+      <div class="mirage-sky"></div>
+      <div class="mirage-walls"></div>
+      <div class="arch arch-left"></div>
+      <div class="arch arch-right"></div>
+      <span class="smoke smoke-a"></span>
+      <span class="smoke smoke-b"></span>
+      <span class="smoke smoke-c"></span>
+      <span class="lineup-beam"></span>
+      <span class="crosshair"></span>
+    </div>
+
+    <header class="dash-top">
+      <div class="dash-brand">
+        <svg class="dash-logo" viewBox="0 0 80 80" aria-hidden="true" focusable="false">
+          <defs>
+            <linearGradient id="nadeGradDash" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#2dd4bf" />
+              <stop offset="100%" stop-color="#0f766e" />
+            </linearGradient>
+          </defs>
+          <circle cx="40" cy="40" r="28" fill="none" stroke="url(#nadeGradDash)" stroke-width="3" opacity="0.85" />
+          <path d="M40 18v10M40 52v10M18 40h10M52 40h10" stroke="#f0e6d2" stroke-width="2.5" stroke-linecap="round" />
+          <circle cx="40" cy="40" r="6" fill="#2dd4bf" />
+          <path d="M28 58c4-8 8-12 12-14 4 2 8 6 12 14" fill="none" stroke="#e8e4dc" stroke-width="3.5" stroke-linecap="round" opacity="0.9" />
+        </svg>
+        <div>
+          <p class="dash-name">MIRAGE</p>
+          <p class="dash-tag">Smoke Lineups</p>
+        </div>
+      </div>
+      <div class="dash-user">
+        <span class="callsign">{{ username }}</span>
+        <a class="btn-ghost" href="{{ url_for('logout') }}">Leave site</a>
+      </div>
+    </header>
+
+    <section class="dash-main" aria-labelledby="dash-title">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <ul class="flash-list dash-flash">
+            {% for category, message in messages %}
+              <li class="flash flash-{{ category }}">{{ message }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      {% endwith %}
+
+      <p class="module-kicker">Board · live · A-site</p>
+      <h1 id="dash-title">Lineup board</h1>
+      <p class="dash-lead">Pick a site callout and lock in the smoke. More lineups come online as the map expands.</p>
+
+      <div class="lineup-grid">
+        <article class="lineup-card">
+          <p class="lineup-site">A-site</p>
+          <h2>Window</h2>
+          <p>Stand mid window, aim the beam at the arch lip, left-click throw.</p>
+          <span class="lineup-status">Ready</span>
+        </article>
+        <article class="lineup-card">
+          <p class="lineup-site">A-site</p>
+          <h2>Jungle</h2>
+          <p>From stairs, align crosshair with the teal mark and jump-throw.</p>
+          <span class="lineup-status">Ready</span>
+        </article>
+        <article class="lineup-card">
+          <p class="lineup-site">Mid</p>
+          <h2>Connector</h2>
+          <p>Coming next — connector one-ways and deep site executes.</p>
+          <span class="lineup-status lineup-status-soon">Soon</span>
+        </article>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
