@@ -3,56 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login — KnightMind</title>
+  <title>Login — Mirage Smoke Lineups</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Sora:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
 </head>
 <body>
   <main class="login-page">
-    <div class="liquid-stage" aria-hidden="true">
-      <span class="blob blob-blue"></span>
-      <span class="blob blob-red"></span>
-      <span class="blob blob-blend"></span>
-      <span class="liquid-sheen"></span>
+    <div class="mirage-stage" aria-hidden="true">
+      <div class="mirage-sky"></div>
+      <div class="mirage-walls"></div>
+      <div class="arch arch-left"></div>
+      <div class="arch arch-right"></div>
+      <span class="smoke smoke-a"></span>
+      <span class="smoke smoke-b"></span>
+      <span class="smoke smoke-c"></span>
+      <span class="lineup-beam"></span>
+      <span class="crosshair"></span>
     </div>
 
-    <aside class="login-brand" aria-label="KnightMind branding">
+    <aside class="login-brand" aria-label="Mirage Smoke Lineups branding">
       <div class="brand-mark">
-        <svg class="brand-logo" viewBox="0 0 72 48" aria-hidden="true" focusable="false">
+        <svg class="brand-logo" viewBox="0 0 80 80" aria-hidden="true" focusable="false">
           <defs>
-            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#1a5cff" />
-              <stop offset="50%" stop-color="#3d7bff" />
-              <stop offset="100%" stop-color="#e11d48" />
+            <linearGradient id="nadeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#2dd4bf" />
+              <stop offset="100%" stop-color="#0f766e" />
             </linearGradient>
           </defs>
-          <path
-            d="M18 30c-7.2 0-13-4.9-13-11S10.8 8 18 8c4.2 0 7.9 1.7 10.2 4.3C30.5 8.9 35.4 6 41 6c8.3 0 15 5.8 15 13s-6.7 13-15 13c-3.5 0-6.7-1-9.3-2.7C29.2 32.5 24.1 35 18 35c-1.4 0-2.7-.1-4-.4"
-            fill="none"
-            stroke="url(#logoGrad)"
-            stroke-width="5.5"
-            stroke-linecap="round"
-          />
-          <path
-            d="M28 22c2.2-3.8 6.4-6.4 11.2-6.4 7 0 12.6 4.7 12.6 10.5S46.2 36.6 39.2 36.6c-4.2 0-7.9-1.7-10.2-4.3"
-            fill="none"
-            stroke="#e11d48"
-            stroke-width="5.5"
-            stroke-linecap="round"
-            opacity="0.9"
-          />
+          <circle cx="40" cy="40" r="28" fill="none" stroke="url(#nadeGrad)" stroke-width="3" opacity="0.85" />
+          <path d="M40 18v10M40 52v10M18 40h10M52 40h10" stroke="#f0e6d2" stroke-width="2.5" stroke-linecap="round" />
+          <circle cx="40" cy="40" r="6" fill="#2dd4bf" />
+          <path d="M28 58c4-8 8-12 12-14 4 2 8 6 12 14" fill="none" stroke="#e8e4dc" stroke-width="3.5" stroke-linecap="round" opacity="0.9" />
         </svg>
-        <p class="brand-name">KnightMind</p>
-        <p class="brand-tagline">Learning University</p>
+        <p class="brand-name">MIRAGE</p>
+        <p class="brand-tagline">Smoke Lineups</p>
       </div>
     </aside>
 
     <section class="login-panel" aria-labelledby="login-title">
       <div class="login-module">
         <div class="module-glow" aria-hidden="true"></div>
-        <h1 id="login-title">Tangina Mo Patrick</h1>
+        <p class="module-kicker">A-site · window · jungle</p>
+        <h1 id="login-title">Sign in to train lineups</h1>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
@@ -66,18 +60,18 @@
 
         <form class="login-form" method="POST" action="{{ url_for('login') }}">
           <div class="field">
-            <label for="username">Username <span class="required" aria-hidden="true"></span></label>
+            <label for="username">Username</label>
             <input
               type="text"
               id="username"
               name="username"
               autocomplete="username"
               required
-              placeholder="Username"
+              placeholder="Callsign"
             />
           </div>
           <div class="field">
-            <label for="password">Password <span class="required" aria-hidden="true"></span></label>
+            <label for="password">Password</label>
             <input
               type="password"
               id="password"
@@ -88,8 +82,8 @@
             />
           </div>
           <div class="form-actions">
-            <button type="submit" class="btn-primary">Log in</button>
-            <a class="access-link" href="#">I can't access my account</a>
+            <button type="submit" class="btn-primary">Deploy</button>
+            <a class="access-link" href="#">Can't access account</a>
           </div>
         </form>
       </div>
