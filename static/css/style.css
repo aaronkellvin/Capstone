@@ -540,6 +540,200 @@ body {
   }
 }
 
+/* —— Dashboard —— */
+.dash-page {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  background: #2a2218;
+  color: #f5efe4;
+}
+
+.dash-top,
+.dash-main {
+  position: relative;
+  z-index: 1;
+}
+
+.dash-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.35rem 1.75rem;
+  border-bottom: 1px solid rgba(45, 212, 191, 0.18);
+  background: rgba(28, 25, 23, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dash-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.dash-logo {
+  width: 2.6rem;
+  height: auto;
+  filter: drop-shadow(0 8px 16px rgba(15, 118, 110, 0.4));
+}
+
+.dash-name {
+  font-family: "Rajdhani", sans-serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1;
+}
+
+.dash-tag {
+  font-family: "Rajdhani", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-top: 0.2rem;
+}
+
+.dash-user {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.callsign {
+  font-family: "Rajdhani", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #d6d3d1;
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 0.95rem;
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  border-radius: 4px;
+  font-family: "Rajdhani", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #99f6e4;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-ghost:hover {
+  background: rgba(45, 212, 191, 0.12);
+  border-color: var(--teal);
+}
+
+.dash-main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 3.5rem;
+  animation: panel-in 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.dash-flash {
+  max-width: 420px;
+}
+
+.dash-main h1 {
+  font-family: "Rajdhani", sans-serif;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.55rem;
+}
+
+.dash-lead {
+  max-width: 34rem;
+  color: #d6d3d1;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  margin-bottom: 1.85rem;
+}
+
+.lineup-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.1rem;
+}
+
+.lineup-card {
+  padding: 1.35rem 1.25rem 1.2rem;
+  border-radius: 4px;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  box-shadow: 0 18px 40px rgba(15, 23, 20, 0.35);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.lineup-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(45, 212, 191, 0.5);
+}
+
+.lineup-site {
+  font-family: "Rajdhani", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 0.35rem;
+}
+
+.lineup-card h2 {
+  font-family: "Rajdhani", sans-serif;
+  font-size: 1.45rem;
+  font-weight: 700;
+  margin-bottom: 0.55rem;
+}
+
+.lineup-card p {
+  color: #d6d3d1;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.lineup-status {
+  display: inline-block;
+  font-family: "Rajdhani", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #042f2e;
+  background: linear-gradient(115deg, #5eead4 0%, #2dd4bf 55%, #0d9488 100%);
+  padding: 0.28rem 0.65rem;
+  border-radius: 3px;
+}
+
+.lineup-status-soon {
+  color: #f5efe4;
+  background: rgba(120, 113, 108, 0.55);
+}
+
+@media (max-width: 860px) {
+  .lineup-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-main {
+    padding-top: 1.75rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .smoke,
   .lineup-beam,
@@ -547,7 +741,13 @@ body {
   .arch,
   .module-glow,
   .brand-mark,
-  .login-module {
+  .login-module,
+  .dash-main,
+  .lineup-card {
     animation: none;
+  }
+
+  .lineup-card:hover {
+    transform: none;
   }
 }
