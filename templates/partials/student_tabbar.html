@@ -1,7 +1,19 @@
 {# Shared student bottom tabs. Expects: active_tab #}
 <nav class="app-tabbar tabbar-4" aria-label="Student navigation">
-  <a class="tab {% if active_tab == 'home' %}active{% endif %}" href="{{ url_for('home') }}"><span>Home</span></a>
-  <a class="tab {% if active_tab == 'practice' %}active{% endif %}" href="{{ url_for('practice') }}"><span>Practice</span></a>
-  <a class="tab {% if active_tab == 'results' %}active{% endif %}" href="{{ url_for('results') }}"><span>Results</span></a>
-  <a class="tab {% if active_tab == 'profile' %}active{% endif %}" href="{{ url_for('profile') }}"><span>Profile</span></a>
+  <a class="tab {% if active_tab == 'home' %}active{% endif %}" href="{{ url_for('home') }}">
+    <svg class="tab-svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3.2 3 10.2V21h6.2v-6.2h5.6V21H21V10.2L12 3.2Z"/></svg>
+    <span>Home</span>
+  </a>
+  <a class="tab {% if active_tab == 'practice' %}active{% endif %}" href="{{ url_for('practice') }}">
+    <svg class="tab-svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 3h10l4 4v14H5V3Zm9 1.5V8h3.4L14 4.5ZM7.5 11h9v1.6h-9V11Zm0 3.5h9V16h-9v-1.5Zm0 3.5h6V19.6h-6V18Z"/></svg>
+    <span>Practice</span>
+  </a>
+  <a class="tab {% if active_tab == 'results' %}active{% endif %}" href="{{ url_for('results') }}">
+    <svg class="tab-svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 19.5h16V21H4v-1.5Zm2.2-3.2 3.3-4.1 2.8 2.2 4.7-6.2 1.4 1.1-6 7.9-2.9-2.3-2.2 2.7-1.1-.9Z"/></svg>
+    <span>Results</span>
+  </a>
+  <a class="tab {% if active_tab == 'profile' %}active{% endif %}" href="{{ url_for('profile') }}">
+    <svg class="tab-svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 12a4.2 4.2 0 1 0-4.2-4.2A4.2 4.2 0 0 0 12 12Zm0 2.2c-3.5 0-7 1.7-7 4.1V20h14v-1.7c0-2.4-3.5-4.1-7-4.1Z"/></svg>
+    <span>Profile</span>
+  </a>
 </nav>

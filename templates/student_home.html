@@ -29,11 +29,12 @@
       {% endif %}
     {% endwith %}
 
-    <!-- Level 1: Companion guidance -->
     <section class="home-hero" aria-labelledby="guide-title">
-      <p class="hero-kicker">Your study companion</p>
-      <h1 id="guide-title" class="hero-title">{{ guide_title }}</h1>
-      <p class="hero-note">{{ guide_note }}</p>
+      <div class="home-hero-copy">
+        <p class="hero-kicker">Your study companion</p>
+        <h1 id="guide-title" class="hero-title">{{ guide_title }}</h1>
+        <p class="hero-note">{{ guide_note }}</p>
+      </div>
       {% if weekly_goal %}
         <div class="weekly-goal" aria-label="Weekly practice goal">
           <div class="weekly-goal-top">
@@ -48,16 +49,18 @@
       {% endif %}
     </section>
 
-    <!-- Level 2: Planner (Today) -->
     <section class="home-section" aria-labelledby="today-title">
       <div class="section-head">
-        <h2 id="today-title" class="section-title section-title-sm">Today</h2>
-        <p class="section-note">Up to 5 helpful next steps.</p>
+        <div>
+          <h2 id="today-title" class="section-title section-title-sm">Today</h2>
+          <p class="section-note">Up to 5 helpful next steps.</p>
+        </div>
       </div>
 
       <div class="today-list">
         {% for item in today_items %}
           <article class="today-card today-{{ item.priority }} today-{{ item.type }}">
+            <div class="today-icon" aria-hidden="true" data-type="{{ item.type }}"></div>
             <div class="today-copy">
               <p class="today-kicker">{{ item.kicker }}</p>
               <h3 class="today-title">{{ item.title }}</h3>
@@ -68,44 +71,58 @@
             </a>
           </article>
         {% else %}
-          <article class="today-card today-empty">
-            <div class="today-copy">
-              <h3 class="today-title">You’re all caught up</h3>
-              <p class="today-meta">Nice work. Pick a subject below for a calm Practice Check.</p>
-            </div>
+          <article class="empty-state-card">
+            <p class="empty-kicker">Today</p>
+            <h3 class="empty-title">You’re all caught up</h3>
+            <p class="empty-copy">Nice work. Pick a subject below for a calm Practice Check.</p>
           </article>
         {% endfor %}
       </div>
     </section>
 
-    <!-- Level 3: Light classroom dashboard -->
-    <section class="home-section" aria-labelledby="subjects-title">
-      <div class="section-head">
-        <h2 id="subjects-title" class="section-title section-title-sm">My Subjects</h2>
-        <p class="section-note">Progress first, then your next step.</p>
+    <section class="home-section subjects-showcase" aria-labelledby="subjects-title">
+      <div class="section-head section-head-row">
+        <div>
+          <h2 id="subjects-title" class="section-title section-title-sm">My Subjects</h2>
+          <p class="section-note">Progress first, then your next step.</p>
+        </div>
+        <p class="section-pill">Grade 7 · 3 subjects</p>
       </div>
 
       <div class="subject-grid">
         {% for subject in subjects %}
-          <a class="subject-card" href="{{ url_for('subject_hub', slug=subject.slug) }}">
+          <a class="subject-card subject-{{ subject.slug }}" href="{{ url_for('subject_hub', slug=subject.slug) }}">
+            <div class="subject-card-top">
+              <span class="subject-badge" aria-hidden="true">{{ subject.name[:1] }}</span>
+              <span class="subject-open">Open</span>
+            </div>
             <p class="subject-name">{{ subject.name }}</p>
             <p class="subject-progress">{{ subject.progress_label }}</p>
             <div class="subject-meter" aria-hidden="true">
               <span style="width: {{ subject.progress_percent }}%;"></span>
             </div>
-            <p class="subject-next">{{ subject.next_action }}</p>
+            <div class="subject-footer">
+              <p class="subject-next">{{ subject.next_action }}</p>
+              <span class="subject-arrow" aria-hidden="true">→</span>
+            </div>
           </a>
         {% endfor %}
       </div>
+
+      <aside class="home-boost" aria-label="Study tip">
+        <div class="home-boost-mark" aria-hidden="true"></div>
+        <div>
+          <p class="home-boost-title">Keep growing your HOTS skills</p>
+          <p class="home-boost-copy">
+            Balanced learning works best: one assessment when due, short practice for confidence, and a quick summary review.
+          </p>
+        </div>
+      </aside>
     </section>
   </main>
 
-  <nav class="app-tabbar tabbar-4" aria-label="Student navigation">
-    <a class="tab active" href="{{ url_for('home') }}"><span>Home</span></a>
-    <a class="tab" href="{{ url_for('practice') }}"><span>Practice</span></a>
-    <a class="tab" href="{{ url_for('results') }}"><span>Results</span></a>
-    <a class="tab" href="{{ url_for('profile') }}"><span>Profile</span></a>
-  </nav>
+  {% set active_tab = "home" %}
+  {% include "partials/student_tabbar.html" %}
   <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
 </body>
 </html>
