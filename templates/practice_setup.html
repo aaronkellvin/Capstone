@@ -26,7 +26,7 @@
       <h1 id="practice-setup-title" class="section-title">Practice this lesson</h1>
       <p class="section-note">{{ material_title }} · From approved material only. Not an official grade.</p>
 
-      <form class="practice-form" method="get" action="{{ url_for('practice') }}">
+      <form class="practice-form" method="GET" action="{{ url_for('practice_take', subject_slug=subject.slug, material_slug=material_slug) }}">
         <fieldset class="practice-fieldset">
           <legend>Choose focus</legend>
           <label class="choice"><input type="radio" name="focus" value="mixed" checked /> Mixed HOTS</label>
@@ -38,9 +38,8 @@
         <div class="field">
           <label for="count">How many questions?</label>
           <select id="count" name="count">
-            <option value="5" selected>5</option>
-            <option value="8">8</option>
-            <option value="10">10</option>
+            <option value="3" selected>3</option>
+            <option value="5">5</option>
           </select>
         </div>
 

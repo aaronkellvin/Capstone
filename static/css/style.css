@@ -1449,3 +1449,185 @@ body {
     top: 5.2rem;
   }
 }
+
+/* ========== Practice take + supportive results ========== */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.take-shell,
+.result-hero {
+  padding: 1.15rem 1.1rem 1.2rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 24px rgba(11, 61, 145, 0.08);
+}
+
+.take-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+}
+
+.take-title {
+  margin-top: 0.25rem;
+  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-size: clamp(1.35rem, 4vw, 1.7rem);
+  font-weight: 650;
+  color: var(--letran-blue);
+}
+
+.take-progress-label {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.take-progress {
+  margin: 0.9rem 0 1rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: rgba(11, 61, 145, 0.1);
+  overflow: hidden;
+}
+
+.take-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--letran-blue-soft), var(--letran-blue));
+  transition: width 0.2s ease;
+}
+
+.take-card {
+  padding: 0.2rem 0 0.4rem;
+}
+
+.take-question {
+  margin-top: 0.35rem;
+  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-size: 1.2rem;
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.take-options {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.take-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.7rem;
+  align-items: start;
+  padding: 0.85rem 0.9rem;
+  border-radius: 14px;
+  border: 2px solid var(--line);
+  background: #fff;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.take-option:has(input:checked) {
+  border-color: var(--letran-blue-soft);
+  background: rgba(11, 61, 145, 0.05);
+}
+
+.take-card textarea {
+  width: 100%;
+  margin-top: 0.9rem;
+  padding: 0.9rem 1rem;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  resize: vertical;
+  min-height: 8rem;
+}
+
+.take-card textarea:focus {
+  outline: none;
+  border-color: var(--letran-blue-soft);
+  box-shadow: 0 0 0 4px var(--focus);
+}
+
+.take-nav {
+  margin-top: 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.result-hero {
+  margin-bottom: 1.25rem;
+  background: linear-gradient(135deg, rgba(11, 61, 145, 0.95), rgba(26, 86, 176, 0.92) 58%, rgba(159, 24, 48, 0.88));
+  color: #fff;
+  border: none;
+}
+
+.result-hero .hero-kicker,
+.result-hero .hero-note {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.result-score-box {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.result-score {
+  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 650;
+}
+
+.result-message {
+  margin-top: 0.3rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.review-explain,
+.review-rubric {
+  margin-top: 0.55rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.review-rubric {
+  color: var(--muted);
+}
+
+.review-good {
+  border-left: 5px solid #0f766e;
+}
+
+.review-improve {
+  border-left: 5px solid var(--letran-red);
+}
+
+.review-review {
+  border-left: 5px solid var(--letran-blue-soft);
+}

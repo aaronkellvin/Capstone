@@ -513,6 +513,7 @@ def practice_setup(subject_slug, material_slug):
     context = {
         "user": user,
         "subject": subject,
+        "material_slug": material_slug,
         "material_title": summary["title"],
         "back_href": url_for(
             "summary_reader", slug=subject_slug, material_slug=material_slug
@@ -520,6 +521,264 @@ def practice_setup(subject_slug, material_slug):
     }
     context.update(announcements_context())
     return render_template("practice_setup.html", **context)
+
+
+def build_practice_questions(subject_slug, material_slug):
+    bank = {
+        "science:ecosystems": [
+            {
+                "id": 1,
+                "type": "mcq",
+                "type_label": "Multiple choice",
+                "bloom": "Analyze",
+                "prompt": "A forest loses many trees after a storm. Which change best shows how energy flow in the food chain may be affected?",
+                "citation": "p. 6",
+                "options": [
+                    {"id": "a", "text": "Producers increase, so every consumer gets more energy."},
+                    {"id": "b", "text": "Fewer producers may mean less energy available to consumers."},
+                    {"id": "c", "text": "Decomposers stop working because sunlight increases."},
+                    {"id": "d", "text": "Consumers become producers to balance the ecosystem."},
+                ],
+                "answer": "b",
+                "explanation": "With fewer producers, less energy enters the food chain, so consumers may receive less energy.",
+                "rubric": None,
+            },
+            {
+                "id": 2,
+                "type": "essay",
+                "type_label": "Essay",
+                "bloom": "Evaluate",
+                "prompt": "A classmate says every food chain should be very long so more animals can get energy. Do you agree? Explain using energy flow.",
+                "citation": "p. 6",
+                "options": [],
+                "answer": None,
+                "explanation": "Strong answers disagree and explain that only part of the energy moves to each next level, so long chains leave little energy near the end.",
+                "rubric": "Clear claim + evidence from energy flow + short explanation.",
+            },
+            {
+                "id": 3,
+                "type": "problem",
+                "type_label": "Problem-solving",
+                "bloom": "Create",
+                "prompt": "Create a 3-step food chain for a school garden ecosystem and label the producer and consumers.",
+                "citation": "pp. 4–5",
+                "options": [],
+                "answer": None,
+                "explanation": "A solid response includes one producer and two consumers in a sensible order, with clear labels.",
+                "rubric": "Original chain + correct roles + logical order.",
+            },
+        ],
+        "mathematics:fractions": [
+            {
+                "id": 1,
+                "type": "mcq",
+                "type_label": "Multiple choice",
+                "bloom": "Analyze",
+                "prompt": "Which pair shows equivalent fractions?",
+                "citation": "pp. 3–4",
+                "options": [
+                    {"id": "a", "text": "1/2 and 2/4"},
+                    {"id": "b", "text": "1/3 and 1/4"},
+                    {"id": "c", "text": "2/3 and 3/2"},
+                    {"id": "d", "text": "3/4 and 4/3"},
+                ],
+                "answer": "a",
+                "explanation": "1/2 and 2/4 name the same amount.",
+                "rubric": None,
+            },
+            {
+                "id": 2,
+                "type": "problem",
+                "type_label": "Problem-solving",
+                "bloom": "Evaluate",
+                "prompt": "Maya says 2/5 is greater than 3/5 because 2 is easier to work with. Is she correct? Explain.",
+                "citation": "pp. 1–2",
+                "options": [],
+                "answer": None,
+                "explanation": "She is not correct. With the same denominator, the larger numerator is greater, so 3/5 > 2/5.",
+                "rubric": "Decision + denominator reasoning.",
+            },
+            {
+                "id": 3,
+                "type": "essay",
+                "type_label": "Essay",
+                "bloom": "Create",
+                "prompt": "Create a real-life classroom example that uses the fraction 3/4 and explain what the numerator and denominator mean in your example.",
+                "citation": "pp. 1–2",
+                "options": [],
+                "answer": None,
+                "explanation": "Good answers invent a clear situation and correctly define numerator and denominator in context.",
+                "rubric": "Original example + correct fraction parts.",
+            },
+        ],
+        "english:poetry-analysis": [
+            {
+                "id": 1,
+                "type": "mcq",
+                "type_label": "Multiple choice",
+                "bloom": "Analyze",
+                "prompt": "Which strategy best helps you understand a poem’s mood?",
+                "citation": "pp. 1–2",
+                "options": [
+                    {"id": "a", "text": "Count only the number of stanzas."},
+                    {"id": "b", "text": "Notice imagery, word choice, and repeated sounds."},
+                    {"id": "c", "text": "Ignore figurative language."},
+                    {"id": "d", "text": "Read only the title."},
+                ],
+                "answer": "b",
+                "explanation": "Mood is often shown through imagery, diction, and sound devices.",
+                "rubric": None,
+            },
+            {
+                "id": 2,
+                "type": "essay",
+                "type_label": "Essay",
+                "bloom": "Evaluate",
+                "prompt": "Why is quoted evidence important when you make a claim about a poem?",
+                "citation": "p. 3",
+                "options": [],
+                "answer": None,
+                "explanation": "Evidence shows your claim is based on the text, not only personal opinion.",
+                "rubric": "Clear reason + connection to claim support.",
+            },
+            {
+                "id": 3,
+                "type": "problem",
+                "type_label": "Problem-solving",
+                "bloom": "Create",
+                "prompt": "Write one claim about a poem’s message and support it with one short quoted detail plus a one-sentence explanation.",
+                "citation": "p. 3",
+                "options": [],
+                "answer": None,
+                "explanation": "Strong responses include claim + quote + explanation that links them.",
+                "rubric": "Claim, evidence, explanation.",
+            },
+        ],
+    }
+    return bank.get(f"{subject_slug}:{material_slug}", bank["science:ecosystems"])
+
+
+@app.route("/subjects/<subject_slug>/practice/<material_slug>/take")
+def practice_take(subject_slug, material_slug):
+    user = require_user()
+    if not user:
+        return redirect(url_for("login"))
+
+    subject = SUBJECT_BY_SLUG.get(subject_slug)
+    summary = DEMO_SUMMARIES.get(subject_slug, {}).get(material_slug)
+    if not subject or not summary:
+        flash("That practice check is not available.", "danger")
+        return redirect(url_for("home"))
+
+    focus = request.args.get("focus", "mixed")
+    bloom_labels = {
+        "mixed": "Mixed HOTS",
+        "c4": "Analyze",
+        "c5": "Evaluate",
+        "c6": "Create",
+    }
+    questions = build_practice_questions(subject_slug, material_slug)
+    try:
+        count = max(1, min(int(request.args.get("count", 3)), len(questions)))
+    except ValueError:
+        count = min(3, len(questions))
+    questions = questions[:count]
+
+    context = {
+        "user": user,
+        "subject": subject,
+        "material_slug": material_slug,
+        "material_title": summary["title"],
+        "questions": questions,
+        "bloom_label": bloom_labels.get(focus, "Mixed HOTS"),
+    }
+    context.update(announcements_context())
+    return render_template("practice_take.html", **context)
+
+
+@app.route("/subjects/<subject_slug>/practice/<material_slug>/submit", methods=["POST"])
+def practice_submit(subject_slug, material_slug):
+    user = require_user()
+    if not user:
+        return redirect(url_for("login"))
+
+    subject = SUBJECT_BY_SLUG.get(subject_slug)
+    summary = DEMO_SUMMARIES.get(subject_slug, {}).get(material_slug)
+    if not subject or not summary:
+        flash("That practice check is not available.", "danger")
+        return redirect(url_for("home"))
+
+    questions = build_practice_questions(subject_slug, material_slug)
+    shown_ids = {
+        int(key[1:])
+        for key in request.form
+        if key.startswith("q") and key[1:].isdigit()
+    }
+
+    review_items = []
+    earned = 0
+    auto_total = 0
+
+    for q in questions:
+        if shown_ids and q["id"] not in shown_ids:
+            continue
+
+        raw = (request.form.get(f"q{q['id']}") or "").strip()
+        if q["type"] == "mcq":
+            auto_total += 1
+            option_map = {opt["id"]: opt["text"] for opt in q["options"]}
+            your_answer = option_map.get(raw, raw or "(No answer)")
+            correct_answer = option_map.get(q["answer"])
+            if raw == q["answer"]:
+                earned += 1
+                status, status_label = "good", "Good job"
+            else:
+                status, status_label = "improve", "Let’s improve"
+        else:
+            your_answer = raw or "(No answer)"
+            correct_answer = None
+            if raw:
+                status, status_label = "review", "Teacher-style review"
+            else:
+                status, status_label = "improve", "Try again next time"
+
+        review_items.append(
+            {
+                "bloom": q["bloom"],
+                "prompt": q["prompt"],
+                "your_answer": your_answer,
+                "correct_answer": correct_answer,
+                "explanation": q["explanation"],
+                "rubric": q.get("rubric"),
+                "citation": q["citation"],
+                "status": status,
+                "status_label": status_label,
+            }
+        )
+
+    if auto_total:
+        score_label = f"{earned}/{auto_total} automatic items"
+        encouragement = (
+            "Great focus on the multiple-choice items. Review the open answers to grow more."
+            if earned == auto_total
+            else "Good effort. Review 1–2 items below to strengthen your HOTS skills."
+        )
+    else:
+        score_label = "Open response practice"
+        encouragement = (
+            "Open answers are for learning. Use the explanations and rubric notes to improve."
+        )
+
+    context = {
+        "user": user,
+        "subject": subject,
+        "material_title": summary["title"],
+        "score_label": score_label,
+        "encouragement": encouragement,
+        "review_items": review_items,
+    }
+    context.update(announcements_context())
+    return render_template("practice_result.html", **context)
 
 
 @app.route("/subjects/<slug>")
