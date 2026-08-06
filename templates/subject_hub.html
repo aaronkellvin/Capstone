@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ subject.name }} — Bloom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="app-body">
+  <div class="app-bg" aria-hidden="true">
+    <span class="ribbon ribbon-blue"></span>
+    <span class="ribbon ribbon-red"></span>
+    <span class="dot-field"></span>
+  </div>
+
+  {% set topbar_sub = subject.name %}
+  {% include "partials/topbar.html" %}
+
+  <main class="app-main">
+    <section class="hub-hero" aria-labelledby="hub-title">
+      <a class="hub-back" href="{{ url_for('home') }}">Back to Home</a>
+      <h1 id="hub-title" class="section-title">{{ subject.name }}</h1>
+      <p class="section-note">{{ subject.teacher }} · {{ subject.progress_label }}</p>
+      <div class="subject-meter hub-meter" aria-hidden="true">
+        <span style="width: {{ subject.progress_percent }}%;"></span>
+      </div>
+      <p class="hub-next">{{ subject.next_action }}</p>
+    </section>
+
+    <nav class="hub-tabs" aria-label="{{ subject.name }} sections">
+      <a class="hub-tab {% if tab == 'assessments' %}active{% endif %}" href="{{ url_for('subject_hub', slug=subject.slug, tab='assessments') }}">Assessments</a>
+      <a class="hub-tab {% if tab == 'study' %}active{% endif %}" href="{{ url_for('subject_hub', slug=subject.slug, tab='study') }}">Study</a>
+      <a class="hub-tab {% if tab == 'practice' %}active{% endif %}" href="{{ url_for('subject_hub', slug=subject.slug, tab='practice') }}">Practice</a>
+      <a class="hub-tab {% if tab == 'results' %}active{% endif %}" href="{{ url_for('subject_hub', slug=subject.slug, tab='results') }}">Results</a>
+    </nav>
+
+    {% if tab == 'assessments' %}
+      <section class="hub-panel" aria-labelledby="assess-title">
+        <div class="hub-panel-head">
+          <h2 id="assess-title" class="hub-panel-title">HOTS Assessments</h2>
+          <p class="section-note">Start here. Assistive checks only — not official grades.</p>
+        </div>
+
+        {% set ns = namespace(total=0) %}
+        {% for group in assessment_groups %}
+          {% set ns.total = ns.total + (group.entries|length) %}
+        {% endfor %}
+
+        {% if ns.total == 0 %}
+          <article class="empty-state-card">
+            <p class="empty-kicker">All clear</p>
+            <h3 class="empty-title">No HOTS assessments right now</h3>
+            <p class="empty-copy">
+              When your teacher publishes one, it will show up here under Due or Open.
+              You can still study or practice in the meantime.
+            </p>
+            <div class="empty-actions">
+              <a class="today-action" href="{{ url_for('subject_hub', slug=subject.slug, tab='study') }}">Go to Study</a>
+              <a class="today-action today-action-soft" href="{{ url_for('subject_hub', slug=subject.slug, tab='practice') }}">Try Practice</a>
+            </div>
+          </article>
+        {% else %}
+          {% for group in assessment_groups %}
+            <div class="hub-group">
+              <div class="hub-group-head">
+                <h3 class="hub-group-title">{{ group.label }}</h3>
+                <span class="hub-count">{{ group.entries|length }}</span>
+              </div>
+              {% if group.entries %}
+                <div class="hub-list">
+                  {% for item in group.entries %}
+                    <article class="hub-card">
+                      <div>
+                        <p class="hub-card-kicker">{{ item.status_label }}</p>
+                        <h4 class="hub-card-title">{{ item.title }}</h4>
+                        <p class="hub-card-meta">{{ item.meta }}</p>
+                      </div>
+                      <a class="today-action {% if not item.primary %}today-action-soft{% endif %}" href="{{ item.href }}">
+                        {{ item.action }}
+                      </a>
+                    </article>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <article class="empty-inline-card">
+                  <p class="empty-inline-title">Nothing {{ group.label|lower }} yet</p>
+                  <p class="empty-inline-copy">You’re all set in this section.</p>
+                </article>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% endif %}
+      </section>
+
+    {% elif tab == 'study' %}
+      <section class="hub-panel" aria-labelledby="study-title">
+        <div class="hub-panel-head">
+          <h2 id="study-title" class="hub-panel-title">Materials & Summaries</h2>
+          <p class="section-note">Read first, then practice when you’re ready.</p>
+        </div>
+
+        {% if materials %}
+          <div class="hub-list">
+            {% for material in materials %}
+              <article class="hub-card hub-card-stack">
+                <div>
+                  <p class="hub-card-kicker">{{ material.kicker }}</p>
+                  <h4 class="hub-card-title">{{ material.title }}</h4>
+                  <p class="hub-card-meta">{{ material.meta }}</p>
+                </div>
+                <div class="hub-card-actions">
+                  <a class="today-action today-action-soft" href="{{ material.summary_href }}">Read Summary</a>
+                  <a class="text-link" href="{{ material.practice_href }}">Practice this lesson</a>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <article class="empty-state-card">
+            <p class="empty-kicker">Study</p>
+            <h3 class="empty-title">No materials posted yet</h3>
+            <p class="empty-copy">Approved teacher materials and summaries will appear here.</p>
+          </article>
+        {% endif %}
+
+        <div class="backup-card">
+          <p class="hub-card-title">Have a Canvas file not listed yet?</p>
+          <p class="hub-card-meta">Upload as backup. Needs teacher approval before practice unlocks.</p>
+          <a class="today-action today-action-soft" href="#">Upload backup file</a>
+          {% if pending_uploads %}
+            <ul class="pending-list">
+              {% for upload in pending_uploads %}
+                <li>{{ upload }} · Waiting for teacher approval</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      </section>
+
+    {% elif tab == 'practice' %}
+      <section class="hub-panel" aria-labelledby="practice-title">
+        <div class="hub-panel-head">
+          <h2 id="practice-title" class="hub-panel-title">Practice Checks</h2>
+          <p class="section-note">Personal practice from approved materials.</p>
+        </div>
+
+        {% if practice_items %}
+          <div class="hub-list">
+            {% for item in practice_items %}
+              <article class="hub-card">
+                <div>
+                  <p class="hub-card-kicker">{{ item.kicker }}</p>
+                  <h4 class="hub-card-title">{{ item.title }}</h4>
+                  <p class="hub-card-meta">{{ item.meta }}</p>
+                </div>
+                <a class="today-action {% if item.locked %}today-action-soft{% endif %}" href="{{ item.href }}">
+                  {{ item.action }}
+                </a>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <article class="empty-state-card">
+            <p class="empty-kicker">Practice</p>
+            <h3 class="empty-title">No practice checks yet</h3>
+            <p class="empty-copy">Once a lesson is approved, you can generate a calm Practice Check from Study.</p>
+            <div class="empty-actions">
+              <a class="today-action" href="{{ url_for('subject_hub', slug=subject.slug, tab='study') }}">Go to Study</a>
+            </div>
+          </article>
+        {% endif %}
+      </section>
+
+    {% else %}
+      <section class="hub-panel" aria-labelledby="results-title">
+        <div class="hub-panel-head">
+          <h2 id="results-title" class="hub-panel-title">Results</h2>
+          <p class="section-note">Review and improve — supportive feedback only.</p>
+        </div>
+
+        {% if result_items %}
+          <div class="hub-list">
+            {% for item in result_items %}
+              <article class="hub-card">
+                <div>
+                  <p class="hub-card-kicker">{{ item.kicker }}</p>
+                  <h4 class="hub-card-title">{{ item.title }}</h4>
+                  <p class="hub-card-meta">{{ item.meta }}</p>
+                </div>
+                <a class="today-action today-action-soft" href="{{ item.href }}">{{ item.action }}</a>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <article class="empty-state-card">
+            <p class="empty-kicker">Results</p>
+            <h3 class="empty-title">No results to review yet</h3>
+            <p class="empty-copy">When feedback is released, it will show up here so you can improve gently.</p>
+            <div class="empty-actions">
+              <a class="today-action today-action-soft" href="{{ url_for('subject_hub', slug=subject.slug, tab='assessments') }}">Back to Assessments</a>
+            </div>
+          </article>
+        {% endif %}
+      </section>
+    {% endif %}
+  </main>
+
+  <nav class="app-tabbar tabbar-4" aria-label="Student navigation">
+    <a class="tab active" href="{{ url_for('home') }}"><span>Home</span></a>
+    <a class="tab" href="{{ url_for('practice') }}"><span>Practice</span></a>
+    <a class="tab" href="{{ url_for('results') }}"><span>Results</span></a>
+    <a class="tab" href="{{ url_for('profile') }}"><span>Profile</span></a>
+  </nav>
+  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
+</body>
+</html>

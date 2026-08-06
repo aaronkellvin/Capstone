@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ summary.title }} — Bloom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="app-body">
+  <div class="app-bg" aria-hidden="true">
+    <span class="ribbon ribbon-blue"></span>
+    <span class="ribbon ribbon-red"></span>
+    <span class="dot-field"></span>
+  </div>
+
+  {% set topbar_sub = subject.name %}
+  {% include "partials/topbar.html" %}
+
+  <main class="app-main summary-layout">
+    <section class="summary-hero" aria-labelledby="summary-title">
+      <a class="hub-back" href="{{ url_for('subject_hub', slug=subject.slug, tab='study') }}">Back to Study</a>
+      <p class="hero-kicker summary-kicker">{{ subject.name }} · AI Summary</p>
+      <h1 id="summary-title" class="section-title">{{ summary.title }}</h1>
+      <p class="section-note">{{ summary.intro }}</p>
+    </section>
+
+    <nav class="summary-outline" aria-label="Jump to section">
+      <p class="outline-label">Jump to</p>
+      <div class="outline-links">
+        {% for section in summary.sections %}
+          <a href="#section-{{ section.id }}">{{ section.heading }}</a>
+        {% endfor %}
+      </div>
+    </nav>
+
+    <div class="summary-sections">
+      {% for section in summary.sections %}
+        <article class="summary-section" id="section-{{ section.id }}">
+          <h2 class="summary-heading">{{ section.heading }}</h2>
+          <p class="summary-body">{{ section.body }}</p>
+          <p class="summary-cite">Source: {{ section.citation }}</p>
+        </article>
+      {% endfor %}
+    </div>
+
+    <div class="summary-footer">
+      <a class="btn-primary btn-inline" href="{{ url_for('practice_setup', subject_slug=subject.slug, material_slug=summary.slug) }}">
+        Practice this lesson
+      </a>
+      <a class="text-link" href="{{ url_for('subject_hub', slug=subject.slug, tab='study') }}">Back to materials</a>
+    </div>
+  </main>
+
+  <nav class="app-tabbar tabbar-4" aria-label="Student navigation">
+    <a class="tab active" href="{{ url_for('home') }}"><span>Home</span></a>
+    <a class="tab" href="{{ url_for('practice') }}"><span>Practice</span></a>
+    <a class="tab" href="{{ url_for('results') }}"><span>Results</span></a>
+    <a class="tab" href="{{ url_for('profile') }}"><span>Profile</span></a>
+  </nav>
+  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
+</body>
+</html>

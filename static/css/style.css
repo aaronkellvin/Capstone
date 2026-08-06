@@ -1028,3 +1028,424 @@ body {
   color: var(--letran-blue);
   background: rgba(11, 61, 145, 0.04);
 }
+
+/* ========== Subject Hub ========== */
+.hub-hero {
+  margin-bottom: 1rem;
+  padding: 1.1rem 1.1rem 1rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 24px rgba(11, 61, 145, 0.08);
+}
+
+.hub-back {
+  display: inline-block;
+  margin-bottom: 0.55rem;
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-decoration: none;
+  color: var(--letran-blue-soft);
+}
+
+.hub-meter {
+  margin-top: 0.75rem;
+}
+
+.hub-next {
+  margin-top: 0.65rem;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--letran-blue);
+}
+
+.hub-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  padding: 0.35rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--line);
+}
+
+.hub-tab {
+  display: grid;
+  place-items: center;
+  min-height: 2.55rem;
+  padding: 0.4rem 0.35rem;
+  border-radius: 12px;
+  text-decoration: none;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--quiet);
+}
+
+.hub-tab.active {
+  color: #fff;
+  background: linear-gradient(120deg, var(--letran-blue-mid), var(--letran-blue));
+  box-shadow: 0 8px 16px rgba(11, 61, 145, 0.2);
+}
+
+.hub-panel-title {
+  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.hub-group + .hub-group {
+  margin-top: 1.2rem;
+}
+
+.hub-group-title {
+  margin-bottom: 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--quiet);
+}
+
+.hub-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.hub-card {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--line);
+  box-shadow: 0 8px 18px rgba(11, 61, 145, 0.07);
+}
+
+.hub-card-kicker {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--quiet);
+}
+
+.hub-card-title {
+  margin-top: 0.2rem;
+  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-size: 1.1rem;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.hub-card-meta {
+  margin-top: 0.25rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.hub-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.7rem 1rem;
+}
+
+.hub-empty {
+  padding: 0.85rem 0.2rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.backup-card {
+  margin-top: 1.15rem;
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px dashed rgba(11, 61, 145, 0.28);
+  background: rgba(11, 61, 145, 0.04);
+  display: grid;
+  gap: 0.55rem;
+  justify-items: start;
+}
+
+.pending-list {
+  margin-top: 0.35rem;
+  padding-left: 1.1rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+@media (min-width: 760px) {
+  .hub-card {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+
+  .hub-card-stack {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .hub-tab {
+    font-size: 0.86rem;
+  }
+}
+
+/* ========== Consistent empty states ========== */
+.hub-panel-head {
+  margin-bottom: 1rem;
+}
+
+.hub-panel-head .section-note {
+  margin-bottom: 0;
+}
+
+.hub-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.hub-count {
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--letran-blue);
+  background: rgba(11, 61, 145, 0.08);
+}
+
+.empty-state-card {
+  padding: 1.35rem 1.2rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 24px rgba(11, 61, 145, 0.08);
+  border-left: 5px solid var(--letran-blue-soft);
+}
+
+.empty-kicker {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--quiet);
+}
+
+.empty-title {
+  margin-top: 0.3rem;
+  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 650;
+  color: var(--letran-blue);
+}
+
+.empty-copy {
+  margin-top: 0.4rem;
+  max-width: 36rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.empty-actions {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.empty-inline-card {
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px dashed rgba(11, 61, 145, 0.22);
+}
+
+.empty-inline-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.empty-inline-copy {
+  margin-top: 0.15rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* ========== Summary reader + practice setup ========== */
+.summary-kicker {
+  color: var(--letran-red);
+}
+
+.summary-hero {
+  margin-bottom: 1rem;
+  padding: 1.15rem 1.1rem 1.05rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 24px rgba(11, 61, 145, 0.08);
+}
+
+.summary-outline {
+  margin-bottom: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--line);
+}
+
+.outline-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--quiet);
+}
+
+.outline-links {
+  margin-top: 0.55rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.outline-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: var(--letran-blue);
+  background: rgba(11, 61, 145, 0.08);
+  border: 1px solid rgba(11, 61, 145, 0.1);
+}
+
+.summary-sections {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.summary-section {
+  padding: 1.1rem 1.05rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--line);
+  box-shadow: 0 8px 18px rgba(11, 61, 145, 0.07);
+  border-left: 5px solid var(--letran-blue);
+}
+
+.summary-heading {
+  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-size: 1.2rem;
+  font-weight: 650;
+  color: var(--letran-blue);
+}
+
+.summary-body {
+  margin-top: 0.45rem;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.summary-cite {
+  margin-top: 0.7rem;
+  display: inline-flex;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--letran-red);
+  background: rgba(200, 16, 46, 0.08);
+}
+
+.summary-footer {
+  margin-top: 1.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.85rem 1.1rem;
+}
+
+.practice-form {
+  margin-top: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.practice-fieldset {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.85rem 0.95rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.practice-fieldset legend {
+  padding: 0 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.practice-form select {
+  width: 100%;
+  min-height: 3.1rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  font: inherit;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: #fff;
+}
+
+@media (min-width: 900px) {
+  .summary-layout {
+    display: grid;
+    grid-template-columns: 210px 1fr;
+    gap: 1rem 1.25rem;
+    align-items: start;
+  }
+
+  .summary-hero,
+  .summary-footer {
+    grid-column: 1 / -1;
+  }
+
+  .summary-outline {
+    position: sticky;
+    top: 5.2rem;
+  }
+}

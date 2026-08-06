@@ -72,6 +72,7 @@ DEMO_SUBJECTS = [
     {
         "slug": "english",
         "name": "English",
+        "teacher": "Mrs. Santos",
         "progress_label": "Progress 72% · Getting stronger in Evaluate",
         "progress_percent": 72,
         "next_action": "Next: Review poetry feedback",
@@ -79,6 +80,7 @@ DEMO_SUBJECTS = [
     {
         "slug": "mathematics",
         "name": "Mathematics",
+        "teacher": "Ms. Cruz",
         "progress_label": "Progress 58% · Practice building Analyze skills",
         "progress_percent": 58,
         "next_action": "Next: Fractions Practice Check",
@@ -86,11 +88,151 @@ DEMO_SUBJECTS = [
     {
         "slug": "science",
         "name": "Science",
+        "teacher": "Mr. Reyes",
         "progress_label": "Progress 41% · Assessment due tomorrow",
         "progress_percent": 41,
         "next_action": "Next: Ecosystems HOTS Assessment",
     },
 ]
+
+SUBJECT_BY_SLUG = {item["slug"]: item for item in DEMO_SUBJECTS}
+
+SUBJECT_HUB_CONTENT = {
+    "science": {
+        "assessments": {
+            "due": [
+                {
+                    "title": "Ecosystems HOTS Assessment",
+                    "status_label": "Due tomorrow — start now",
+                    "meta": "1 attempt · Due tomorrow · 5:00 PM",
+                    "action": "Start now",
+                    "href": "/assessments/ecosystems",
+                    "primary": True,
+                }
+            ],
+            "open": [
+                {
+                    "title": "Cells HOTS Check",
+                    "status_label": "Open",
+                    "meta": "Due Friday · Assistive assessment",
+                    "action": "Open",
+                    "href": "/assessments/ecosystems",
+                    "primary": False,
+                }
+            ],
+            "closed": [
+                {
+                    "title": "Matter HOTS Check",
+                    "status_label": "Closed",
+                    "meta": "Submitted · Result pending release",
+                    "action": "View",
+                    "href": "/results",
+                    "primary": False,
+                }
+            ],
+        },
+        "materials": [
+            {
+                "kicker": "Approved material",
+                "title": "Ecosystems",
+                "meta": "Summary ready · Citations included",
+                "summary_href": "/subjects/science/summaries/ecosystems",
+                "practice_href": "/subjects/science/practice/ecosystems",
+            },
+            {
+                "kicker": "Approved material",
+                "title": "Cells",
+                "meta": "Summary ready",
+                "summary_href": "/subjects/science/summaries/cells",
+                "practice_href": "/subjects/science/practice/cells",
+            },
+        ],
+        "pending_uploads": ["Lab handout.pdf"],
+        "practice_items": [
+            {
+                "kicker": "Ready",
+                "title": "Ecosystems Practice Check",
+                "meta": "From approved lesson · Personal practice",
+                "action": "Start",
+                "href": "/subjects/science/practice/ecosystems",
+                "locked": False,
+            },
+            {
+                "kicker": "Waiting for approval",
+                "title": "Lab handout practice",
+                "meta": "Backup upload pending teacher review",
+                "action": "Locked",
+                "href": "#",
+                "locked": True,
+            },
+        ],
+        "results": [
+            {
+                "kicker": "Pending release",
+                "title": "Matter HOTS Check",
+                "meta": "Submitted · Feedback not released yet",
+                "action": "Waiting",
+                "href": "/results",
+            }
+        ],
+    },
+    "mathematics": {
+        "assessments": {"due": [], "open": [], "closed": []},
+        "materials": [
+            {
+                "kicker": "New summary",
+                "title": "Fractions",
+                "meta": "AI summary ready with citations",
+                "summary_href": "/subjects/mathematics/summaries/fractions",
+                "practice_href": "/subjects/mathematics/practice/fractions",
+            }
+        ],
+        "pending_uploads": [],
+        "practice_items": [
+            {
+                "kicker": "Ready",
+                "title": "Fractions Practice Check",
+                "meta": "Great next step for Analyze skills",
+                "action": "Start",
+                "href": "/practice",
+                "locked": False,
+            }
+        ],
+        "results": [],
+    },
+    "english": {
+        "assessments": {"due": [], "open": [], "closed": []},
+        "materials": [
+            {
+                "kicker": "Approved material",
+                "title": "Poetry analysis",
+                "meta": "Reading guide available",
+                "summary_href": "/subjects/english/summaries/poetry-analysis",
+                "practice_href": "/subjects/english/practice/poetry-analysis",
+            }
+        ],
+        "pending_uploads": [],
+        "practice_items": [
+            {
+                "kicker": "Ready",
+                "title": "Poetry Practice Check",
+                "meta": "Review Evaluate skills",
+                "action": "Start",
+                "href": "/practice",
+                "locked": False,
+            }
+        ],
+        "results": [
+            {
+                "kicker": "Released",
+                "title": "Poetry analysis feedback",
+                "meta": "Score and explanations ready",
+                "action": "Review",
+                "href": "/results",
+            }
+        ],
+    },
+}
 
 DEMO_ASSESSMENTS = {
     "ecosystems": {
@@ -99,6 +241,97 @@ DEMO_ASSESSMENTS = {
         "title": "Ecosystems HOTS Assessment",
         "deadline_label": "Due tomorrow · 5:00 PM",
     }
+}
+
+DEMO_SUMMARIES = {
+    "science": {
+        "ecosystems": {
+            "slug": "ecosystems",
+            "title": "Ecosystems",
+            "intro": "A short student-friendly summary from your teacher’s uploaded material.",
+            "sections": [
+                {
+                    "id": "intro",
+                    "heading": "What is an ecosystem?",
+                    "body": "An ecosystem is a community of living things interacting with each other and with non-living parts of the environment, such as sunlight, water, and soil.",
+                    "citation": "pp. 2–3",
+                },
+                {
+                    "id": "food-chains",
+                    "heading": "Food chains",
+                    "body": "Food chains show how energy moves from one organism to another. Producers make food, consumers eat other organisms, and decomposers break down dead matter.",
+                    "citation": "pp. 4–5",
+                },
+                {
+                    "id": "energy-flow",
+                    "heading": "Energy flow",
+                    "body": "Energy flows in one direction through an ecosystem. Only part of the energy is passed to the next level, which is why food chains are usually short.",
+                    "citation": "p. 6",
+                },
+            ],
+        },
+        "cells": {
+            "slug": "cells",
+            "title": "Cells",
+            "intro": "Key ideas from your Cells lesson, grounded only in the uploaded material.",
+            "sections": [
+                {
+                    "id": "basics",
+                    "heading": "Cell basics",
+                    "body": "Cells are the basic units of life. Plant and animal cells share some parts, but plant cells have unique structures such as a cell wall and chloroplasts.",
+                    "citation": "pp. 1–2",
+                },
+                {
+                    "id": "organelles",
+                    "heading": "Important parts",
+                    "body": "The nucleus controls the cell, mitochondria release energy, and the membrane protects the cell while controlling what enters and leaves.",
+                    "citation": "pp. 3–4",
+                },
+            ],
+        },
+    },
+    "mathematics": {
+        "fractions": {
+            "slug": "fractions",
+            "title": "Fractions",
+            "intro": "A calm walkthrough of the main fraction ideas from your lesson.",
+            "sections": [
+                {
+                    "id": "meaning",
+                    "heading": "What fractions mean",
+                    "body": "A fraction shows equal parts of a whole. The denominator tells how many equal parts there are, and the numerator tells how many parts are being considered.",
+                    "citation": "pp. 1–2",
+                },
+                {
+                    "id": "compare",
+                    "heading": "Comparing fractions",
+                    "body": "Fractions are easier to compare when they share the same denominator. Equivalent fractions name the same amount in different forms.",
+                    "citation": "pp. 3–4",
+                },
+            ],
+        }
+    },
+    "english": {
+        "poetry-analysis": {
+            "slug": "poetry-analysis",
+            "title": "Poetry analysis",
+            "intro": "A short guide to reading poems carefully using your class material.",
+            "sections": [
+                {
+                    "id": "notice",
+                    "heading": "Notice the language",
+                    "body": "Look for word choice, imagery, and repeated sounds. These details help you understand the poem’s mood and message.",
+                    "citation": "pp. 1–2",
+                },
+                {
+                    "id": "evidence",
+                    "heading": "Support your ideas",
+                    "body": "When you make a claim about a poem, support it with short quoted evidence and explain how the evidence connects to your idea.",
+                    "citation": "p. 3",
+                },
+            ],
+        }
+    },
 }
 
 
@@ -244,24 +477,86 @@ def assessment_lobby(slug):
     )
 
 
+@app.route("/subjects/<slug>/summaries/<material_slug>")
+def summary_reader(slug, material_slug):
+    user = require_user()
+    if not user:
+        return redirect(url_for("login"))
+
+    subject = SUBJECT_BY_SLUG.get(slug)
+    summary = DEMO_SUMMARIES.get(slug, {}).get(material_slug)
+    if not subject or not summary:
+        flash("That summary is not available.", "danger")
+        return redirect(url_for("home"))
+
+    context = {
+        "user": user,
+        "subject": subject,
+        "summary": summary,
+    }
+    context.update(announcements_context())
+    return render_template("summary_reader.html", **context)
+
+
+@app.route("/subjects/<subject_slug>/practice/<material_slug>")
+def practice_setup(subject_slug, material_slug):
+    user = require_user()
+    if not user:
+        return redirect(url_for("login"))
+
+    subject = SUBJECT_BY_SLUG.get(subject_slug)
+    summary = DEMO_SUMMARIES.get(subject_slug, {}).get(material_slug)
+    if not subject or not summary:
+        flash("That practice setup is not available.", "danger")
+        return redirect(url_for("home"))
+
+    context = {
+        "user": user,
+        "subject": subject,
+        "material_title": summary["title"],
+        "back_href": url_for(
+            "summary_reader", slug=subject_slug, material_slug=material_slug
+        ),
+    }
+    context.update(announcements_context())
+    return render_template("practice_setup.html", **context)
+
+
 @app.route("/subjects/<slug>")
 def subject_hub(slug):
     user = require_user()
     if not user:
         return redirect(url_for("login"))
 
-    names = {
-        "english": "English",
-        "mathematics": "Mathematics",
-        "science": "Science",
+    subject = SUBJECT_BY_SLUG.get(slug)
+    if not subject:
+        flash("That subject is not available.", "danger")
+        return redirect(url_for("home"))
+
+    tab = request.args.get("tab", "assessments")
+    if tab not in {"assessments", "study", "practice", "results"}:
+        tab = "assessments"
+
+    content = SUBJECT_HUB_CONTENT.get(slug, {})
+    assessments = content.get("assessments", {"due": [], "open": [], "closed": []})
+    assessment_groups = [
+        {"label": "Due", "entries": assessments.get("due", [])},
+        {"label": "Open", "entries": assessments.get("open", [])},
+        {"label": "Closed", "entries": assessments.get("closed", [])},
+    ]
+
+    context = {
+        "user": user,
+        "subject": subject,
+        "tab": tab,
+        "assessment_groups": assessment_groups,
+        "materials": content.get("materials", []),
+        "pending_uploads": content.get("pending_uploads", []),
+        "practice_items": content.get("practice_items", []),
+        "result_items": content.get("results", []),
     }
-    name = names.get(slug, slug.title())
-    return render_student_placeholder(
-        user,
-        name,
-        "Subject hub (Assessments first) comes next.",
-        "home",
-    )
+    context.update(announcements_context())
+    return render_template("subject_hub.html", **context)
 
 
 @app.route("/practice")
