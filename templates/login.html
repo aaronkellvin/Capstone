@@ -11,33 +11,31 @@
 </head>
 <body>
   <main class="login-page">
-    <div class="login-atmosphere" aria-hidden="true">
-      <span class="orb orb-a"></span>
-      <span class="orb orb-b"></span>
-      <span class="orb orb-c"></span>
-      <span class="soft-grid"></span>
+    <div class="stage" aria-hidden="true">
+      <span class="ribbon ribbon-blue"></span>
+      <span class="ribbon ribbon-red"></span>
+      <span class="blob blob-one"></span>
+      <span class="dot-field"></span>
     </div>
 
-    <section class="login-shell" aria-labelledby="brand-name">
-      <div class="brand-block">
-        <div class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 64 64" focusable="false">
-            <circle cx="32" cy="32" r="30" fill="#dbeafe" />
-            <path
-              d="M32 46c-7-6-16-11-16-20a10 10 0 0 1 16-8 10 10 0 0 1 16 8c0 9-9 14-16 20z"
-              fill="#2563eb"
-            />
-            <circle cx="32" cy="24" r="4" fill="#93c5fd" />
-          </svg>
-        </div>
+    <section class="pass" aria-labelledby="brand-name">
+      <!-- Level 1: Brand -->
+      <header class="brand-block">
+        <img
+          class="school-logo"
+          src="{{ url_for('static', filename='images/letran-calamba-logo.png') }}"
+          alt="Colegio de San Juan de Letran Calamba logo"
+          width="88"
+          height="88"
+        />
         <h1 id="brand-name" class="brand-name">Bloom</h1>
         <p class="brand-school">Colegio de San Juan de Letran Calamba</p>
         <p class="brand-support">Study materials. Practice HOTS. Grow with feedback.</p>
-      </div>
+      </header>
 
-      <div class="login-card">
-        <h2 id="login-title" class="login-title">Sign in</h2>
-        <p class="login-subtitle">Use the school email and password from your teacher or admin.</p>
+      <!-- Level 2: Task + action -->
+      <div class="pass-body">
+        <h2 class="task-label">Sign in</h2>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
@@ -49,7 +47,7 @@
           {% endif %}
         {% endwith %}
 
-        <form class="login-form" method="POST" action="{{ url_for('login') }}" aria-labelledby="login-title">
+        <form class="login-form" method="POST" action="{{ url_for('login') }}">
           <div class="field">
             <label for="email">School Email</label>
             <input
@@ -77,6 +75,7 @@
           <button type="submit" class="btn-primary">Sign In</button>
         </form>
 
+        <!-- Level 3: Quiet helper -->
         <p class="login-help">Need help? Ask your teacher or admin.</p>
       </div>
     </section>
