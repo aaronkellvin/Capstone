@@ -167,17 +167,6 @@ body {
   color: var(--muted);
 }
 
-.brand-support {
-  margin-top: 0.4rem;
-  max-width: 22rem;
-  margin-left: auto;
-  margin-right: auto;
-  font-size: 0.95rem;
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--quiet);
-}
-
 /* Level 2 — Task cluster */
 .pass-body {
   padding: 0.35rem 1.55rem 1.55rem;
