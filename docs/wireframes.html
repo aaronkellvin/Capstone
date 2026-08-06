@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bloom — Low-Fidelity Wireframes</title>
+  <style>
+    :root {
+      --ink: #222;
+      --muted: #666;
+      --line: #333;
+      --fill: #e8e8e8;
+      --panel: #fff;
+      --soft: #f3f3f3;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: #d9d9d9;
+      line-height: 1.4;
+    }
+
+    .doc-header, .doc-footer, .toc, .figure {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .doc-header, .toc, .figure, .doc-footer {
+      background: #fff;
+      border: 2px solid #222;
+      padding: 1.25rem 1.4rem;
+      margin-top: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .doc-header h1 {
+      margin: 0 0 0.35rem;
+      font-size: 1.7rem;
+    }
+
+    .doc-header p, .toc p, .note {
+      margin: 0.35rem 0;
+      color: var(--muted);
+    }
+
+    .toc ol { margin: 0.5rem 0 0; padding-left: 1.25rem; }
+    .toc a { color: #111; }
+
+    .figure-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: baseline;
+      margin-bottom: 0.85rem;
+      padding-bottom: 0.55rem;
+      border-bottom: 2px solid #222;
+    }
+
+    .figure-title h2 {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+
+    .figure-title span {
+      font-size: 0.85rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .caption {
+      margin-top: 0.75rem;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    /* Browser chrome */
+    .browser {
+      border: 2px solid #222;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .chrome {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 0.5rem;
+      align-items: center;
+      padding: 0.45rem 0.55rem;
+      border-bottom: 2px solid #222;
+      background: #eee;
+    }
+
+    .dots { display: flex; gap: 0.3rem; }
+    .dots i {
+      width: 10px; height: 10px; border: 1.5px solid #333; border-radius: 50%;
+      display: block; background: #ccc;
+    }
+
+    .url {
+      border: 1.5px solid #333;
+      border-radius: 999px;
+      padding: 0.25rem 0.7rem;
+      font-size: 0.78rem;
+      background: #fff;
+      color: #444;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .screen {
+      min-height: 420px;
+      padding: 0.75rem;
+      background: #fafafa;
+    }
+
+    /* Wireframe primitives */
+    .box {
+      border: 1.8px solid #222;
+      background: #fff;
+      position: relative;
+    }
+
+    .xbox {
+      border: 1.8px solid #222;
+      background:
+        linear-gradient(to top left, transparent calc(50% - 1px), #333 calc(50% - 1px), #333 calc(50% + 1px), transparent calc(50% + 1px)),
+        linear-gradient(to top right, transparent calc(50% - 1px), #333 calc(50% - 1px), #333 calc(50% + 1px), transparent calc(50% + 1px)),
+        #f2f2f2;
+      min-height: 48px;
+    }
+
+    .bar {
+      height: 10px;
+      background: #cfcfcf;
+      border: 1px solid #999;
+      border-radius: 2px;
+    }
+
+    .bar.lg { height: 14px; }
+    .bar.sm { height: 7px; width: 55%; }
+    .bar.xs { height: 6px; width: 35%; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1.8px solid #222;
+      background: #ddd;
+      padding: 0.35rem 0.7rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      min-height: 28px;
+    }
+
+    .btn.primary { background: #bbb; }
+    .btn.pill { border-radius: 999px; }
+    .btn.ghost { background: #fff; }
+
+    .label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #555;
+    }
+
+    .title { font-size: 1.25rem; font-weight: 800; margin: 0.2rem 0; }
+    .subtitle { font-size: 0.9rem; font-weight: 700; margin: 0.15rem 0; }
+    .muted { color: #666; font-size: 0.82rem; }
+
+    .row { display: flex; gap: 0.55rem; align-items: center; }
+    .col { display: flex; flex-direction: column; gap: 0.45rem; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.55rem; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.45rem; }
+    .stack { display: grid; gap: 0.5rem; }
+    .grow { flex: 1; }
+    .between { justify-content: space-between; }
+    .wrap { flex-wrap: wrap; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.45rem 0.55rem;
+      border: 1.8px solid #222;
+      background: #fff;
+      margin-bottom: 0.55rem;
+    }
+
+    .brand { display: flex; gap: 0.45rem; align-items: center; }
+    .logo {
+      width: 28px; height: 28px; border: 1.8px solid #222; border-radius: 50%;
+      background:
+        linear-gradient(to top left, transparent calc(50% - 1px), #333 49%, #333 51%, transparent 52%),
+        linear-gradient(to top right, transparent calc(50% - 1px), #333 49%, #333 51%, transparent 52%),
+        #ddd;
+    }
+
+    .tabbar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.3rem;
+      margin-top: 0.65rem;
+      border: 1.8px solid #222;
+      padding: 0.35rem;
+      background: #fff;
+    }
+
+    .tabbar .btn { width: 100%; }
+
+    .staff-nav { display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: flex-end; }
+
+    .card {
+      border: 1.8px solid #222;
+      background: #fff;
+      padding: 0.55rem;
+    }
+
+    .hero {
+      border: 1.8px solid #222;
+      background: #d7d7d7;
+      padding: 0.7rem;
+      margin-bottom: 0.55rem;
+    }
+
+    .field {
+      border: 1.8px solid #222;
+      background: #fff;
+      min-height: 32px;
+      padding: 0.35rem 0.5rem;
+      font-size: 0.8rem;
+      color: #777;
+    }
+
+    .textarea { min-height: 70px; }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.3rem;
+      margin: 0.5rem 0;
+    }
+
+    .meter {
+      height: 8px;
+      border: 1.5px solid #333;
+      background: #eee;
+    }
+    .meter > i {
+      display: block;
+      height: 100%;
+      background: #999;
+      width: 55%;
+    }
+
+    .callout {
+      border: 1.8px dashed #333;
+      padding: 0.55rem;
+      background: #efefef;
+    }
+
+    .login-wrap {
+      max-width: 360px;
+      margin: 1.5rem auto;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap: 0.65rem;
+      min-height: 360px;
+    }
+
+    @media print {
+      body { background: #fff; }
+      .doc-header, .toc, .figure, .doc-footer {
+        break-inside: avoid;
+        box-shadow: none;
+        margin: 0 0 1rem;
+      }
+      .figure { page-break-inside: avoid; }
+      .no-print { display: none !important; }
+    }
+
+    @media (max-width: 800px) {
+      .split, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="doc-header">
+    <h1>Bloom — Low-Fidelity Wireframes</h1>
+    <p><strong>AI-Powered Smart Study Assistant</strong> for HOTS-Based Assessments and Learning Material Summaries</p>
+    <p>Colegio de San Juan de Letran Calamba · Grade 7 Pilot · Student / Teacher / Admin</p>
+    <p class="note no-print">Open this file in a browser and use <strong>Print → Save as PDF</strong> for your paper appendix.</p>
+  </header>
+
+  <nav class="toc">
+    <h2>Contents</h2>
+    <p>Grayscale low-fidelity screens (Balsamiq-style). Layout only — not final visual design.</p>
+    <ol>
+      <li><a href="#fig-01">Login</a></li>
+      <li><a href="#fig-02">Student Home</a></li>
+      <li><a href="#fig-03">Subject Hub — Assessments</a></li>
+      <li><a href="#fig-04">Subject Hub — Study</a></li>
+      <li><a href="#fig-05">Subject Hub — Practice</a></li>
+      <li><a href="#fig-06">Subject Hub — Results</a></li>
+      <li><a href="#fig-07">Lesson Summary Reader</a></li>
+      <li><a href="#fig-08">Practice Setup</a></li>
+      <li><a href="#fig-09">Practice Taking</a></li>
+      <li><a href="#fig-10">Practice / Assessment Results</a></li>
+      <li><a href="#fig-11">HOTS Assessment Lobby</a></li>
+      <li><a href="#fig-12">HOTS Assessment Taking</a></li>
+      <li><a href="#fig-13">Practice Hub</a></li>
+      <li><a href="#fig-14">Results Hub</a></li>
+      <li><a href="#fig-15">Announcements</a></li>
+      <li><a href="#fig-16">Profile</a></li>
+      <li><a href="#fig-17">Announcements Dropdown</a></li>
+      <li><a href="#fig-18">Teacher Home</a></li>
+      <li><a href="#fig-19">Teacher Materials</a></li>
+      <li><a href="#fig-20">Teacher HOTS Generator</a></li>
+      <li><a href="#fig-21">Teacher Monitoring</a></li>
+      <li><a href="#fig-22">Teacher Announcements</a></li>
+      <li><a href="#fig-23">Admin Home</a></li>
+      <li><a href="#fig-24">Admin Users (Bulk Import)</a></li>
+      <li><a href="#fig-25">Admin Section</a></li>
+      <li><a href="#fig-26">Admin Reports</a></li>
+      <li><a href="#fig-27">Admin Settings</a></li>
+    </ol>
+  </nav>
+
+  <!-- 01 Login -->
+  <section class="figure" id="fig-01">
+    <div class="figure-title"><h2>Figure 1. Login</h2><span>Public</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/login</div><div class="btn ghost">Bloom</div></div>
+      <div class="screen">
+        <div class="login-wrap col">
+          <div class="col" style="align-items:center; text-align:center;">
+            <div class="logo" style="width:56px;height:56px;"></div>
+            <div class="title">Bloom</div>
+            <div class="bar sm"></div>
+            <div class="muted">Colegio de San Juan de Letran Calamba</div>
+          </div>
+          <div class="card stack">
+            <div class="subtitle">Sign in</div>
+            <div class="label">School Email</div>
+            <div class="field">you@letran-calamba.edu.ph</div>
+            <div class="label">Password</div>
+            <div class="field">••••••••</div>
+            <div class="btn primary">Sign In</div>
+            <div class="muted" style="text-align:center;">Need help? Ask teacher/admin</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Admin-imported accounts sign in with school email and temporary password.</p>
+  </section>
+
+  <!-- 02 Student Home -->
+  <section class="figure" id="fig-02">
+    <div class="figure-title"><h2>Figure 2. Student Home</h2><span>Student</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/home</div><div class="btn ghost">Student</div></div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="brand"><div class="logo"></div><div><strong>Bloom</strong><div class="muted">Hi, Ana</div></div></div>
+          <div class="btn pill">Bell (3)</div>
+        </div>
+        <div class="hero">
+          <div class="label">Study companion</div>
+          <div class="title">Due tomorrow — start Science when ready</div>
+          <div class="bar" style="width:70%"></div>
+          <div class="card" style="margin-top:0.5rem; background:#efefef;">
+            <div class="row between"><span>Weekly practice goal</span><strong>2/3</strong></div>
+            <div class="meter" style="margin-top:0.35rem;"><i style="width:67%"></i></div>
+          </div>
+        </div>
+        <div class="subtitle">Today</div>
+        <div class="stack">
+          <div class="card row between"><div class="grow"><div class="label">Due tomorrow — start now</div><div class="bar lg"></div><div class="bar sm"></div></div><div class="btn primary">Start now</div></div>
+          <div class="card row between"><div class="grow"><div class="label">Result released</div><div class="bar"></div><div class="bar sm"></div></div><div class="btn">Review</div></div>
+        </div>
+        <div class="subtitle" style="margin-top:0.7rem;">My Subjects</div>
+        <div class="grid-3">
+          <div class="card"><div class="row between"><div class="xbox" style="width:28px;height:28px;"></div><span class="label">Open</span></div><div class="subtitle">English</div><div class="meter"><i style="width:72%"></i></div><div class="bar sm"></div></div>
+          <div class="card"><div class="row between"><div class="xbox" style="width:28px;height:28px;"></div><span class="label">Open</span></div><div class="subtitle">Mathematics</div><div class="meter"><i style="width:58%"></i></div><div class="bar sm"></div></div>
+          <div class="card"><div class="row between"><div class="xbox" style="width:28px;height:28px;"></div><span class="label">Open</span></div><div class="subtitle">Science</div><div class="meter"><i style="width:41%"></i></div><div class="bar sm"></div></div>
+        </div>
+        <div class="tabbar"><div class="btn primary">Home</div><div class="btn">Practice</div><div class="btn">Results</div><div class="btn">Profile</div></div>
+      </div>
+    </div>
+    <p class="caption">Companion guidance + Today planner + subject progress cards + bottom navigation.</p>
+  </section>
+
+  <!-- 03 Subject Assessments -->
+  <section class="figure" id="fig-03">
+    <div class="figure-title"><h2>Figure 3. Subject Hub — Assessments</h2><span>Student</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/subjects/science?tab=assessments</div><div class="btn ghost">Science</div></div>
+      <div class="screen">
+        <div class="topbar"><div class="brand"><div class="logo"></div><strong>Bloom</strong></div><div class="btn pill">Bell</div></div>
+        <div class="card">
+          <div class="muted">Back to Home</div>
+          <div class="title">Science</div>
+          <div class="bar sm"></div>
+          <div class="meter"><i style="width:41%"></i></div>
+        </div>
+        <div class="tabs"><div class="btn primary">Assessments</div><div class="btn">Study</div><div class="btn">Practice</div><div class="btn">Results</div></div>
+        <div class="subtitle">HOTS Assessments</div>
+        <div class="label">Due</div>
+        <div class="card row between"><div class="grow"><div class="bar lg"></div><div class="bar sm"></div></div><div class="btn primary">Start now</div></div>
+        <div class="label" style="margin-top:0.45rem;">Open</div>
+        <div class="card row between"><div class="grow"><div class="bar"></div><div class="bar sm"></div></div><div class="btn">Open</div></div>
+        <div class="label" style="margin-top:0.45rem;">Closed</div>
+        <div class="card row between"><div class="grow"><div class="bar"></div><div class="bar sm"></div></div><div class="btn">View</div></div>
+      </div>
+    </div>
+    <p class="caption">Assessments-first subject hub with Due / Open / Closed groups.</p>
+  </section>
+
+  <!-- 04 Study -->
+  <section class="figure" id="fig-04">
+    <div class="figure-title"><h2>Figure 4. Subject Hub — Study</h2><span>Student</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/subjects/science?tab=study</div><div class="btn ghost">Study</div></div>
+      <div class="screen">
+        <div class="tabs"><div class="btn">Assessments</div><div class="btn primary">Study</div><div class="btn">Practice</div><div class="btn">Results</div></div>
+        <div class="subtitle">Materials &amp; Summaries</div>
+        <div class="stack">
+          <div class="card"><div class="label">Approved material</div><div class="bar lg"></div><div class="row wrap" style="margin-top:0.4rem;"><div class="btn">Read Summary</div><div class="btn ghost">Practice this lesson</div></div></div>
+          <div class="card"><div class="label">Approved material</div><div class="bar lg"></div><div class="row wrap" style="margin-top:0.4rem;"><div class="btn">Read Summary</div><div class="btn ghost">Practice this lesson</div></div></div>
+          <div class="callout"><div class="subtitle">Backup upload</div><div class="bar sm"></div><div class="btn" style="margin-top:0.4rem;">Upload backup file</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Teacher materials plus visible backup upload option requiring approval.</p>
+  </section>
+
+  <!-- 05 Practice tab in hub -->
+  <section class="figure" id="fig-05">
+    <div class="figure-title"><h2>Figure 5. Subject Hub — Practice</h2><span>Student</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/subjects/science?tab=practice</div><div class="btn ghost">Practice</div></div>
+      <div class="screen">
+        <div class="tabs"><div class="btn">Assessments</div><div class="btn">Study</div><div class="btn primary">Practice</div><div class="btn">Results</div></div>
+        <div class="card row between"><div class="grow"><div class="label">Ready</div><div class="bar lg"></div><div class="bar sm"></div></div><div class="btn primary">Start</div></div>
+        <div class="card row between" style="margin-top:0.45rem;"><div class="grow"><div class="label">Waiting for approval</div><div class="bar"></div><div class="bar sm"></div></div><div class="btn">Locked</div></div>
+      </div>
+    </div>
+    <p class="caption">Practice Checks unlocked only for approved materials.</p>
+  </section>
+
+  <!-- 06 Subject results -->
+  <section class="figure" id="fig-06">
+    <div class="figure-title"><h2>Figure 6. Subject Hub — Results</h2><span>Student</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/subjects/science?tab=results</div><div class="btn ghost">Results</div></div>
+      <div class="screen">
+        <div class="tabs"><div class="btn">Assessments</div><div class="btn">Study</div><div class="btn">Practice</div><div class="btn primary">Results</div></div>
+        <div class="card row between"><div class="grow"><div class="label">Pending release</div><div class="bar lg"></div><div class="bar sm"></div></div><div class="btn">Waiting</div></div>
+        <div class="callout" style="margin-top:0.55rem;"><div class="subtitle">Empty-state variant</div><div class="bar"></div><div class="bar sm"></div></div>
+      </div>
+    </div>
+    <p class="caption">Supportive results with release-aware status.</p>
+  </section>
+
+  <!-- 07 Summary -->
+  <section class="figure" id="fig-07">
+    <div class="figure-title"><h2>Figure 7. Lesson Summary Reader</h2><span>Student</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/subjects/science/summaries/ecosystems</div><div class="btn ghost">Summary</div></div>
+      <div class="screen">
+        <div class="card"><div class="muted">Back to Study</div><div class="label">Science · AI Summary</div><div class="title">Ecosystems</div><div class="bar sm"></div></div>
+        <div class="row wrap" style="margin:0.5rem 0;"><div class="btn pill">Intro</div><div class="btn pill">Food chains</div><div class="btn pill">Energy flow</div></div>
+        <div class="stack">
+          <div class="card"><div class="subtitle">What is an ecosystem?</div><div class="bar"></div><div class="bar"></div><div class="bar sm"></div><div class="btn pill" style="margin-top:0.35rem;">Source: pp. 2–3</div></div>
+          <div class="card"><div class="subtitle">Food chains</div><div class="bar"></div><div class="bar sm"></div><div class="btn pill" style="margin-top:0.35rem;">Source: pp. 4–5</div></div>
+        </div>
+        <div class="row wrap" style="margin-top:0.55rem;"><div class="btn primary">Practice this lesson</div><div class="btn ghost">Back to materials</div></div>
+      </div>
+    </div>
+    <p class="caption">Chunked summary sections with citations; practice CTA after reading.</p>
+  </section>
+
+  <!-- 08 Practice setup -->
+  <section class="figure" id="fig-08">
+    <div class="figure-title"><h2>Figure 8. Practice Setup</h2><span>Student</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/subjects/science/practice/ecosystems</div><div class="btn ghost">Setup</div></div>
+      <div class="screen">
+        <div class="card stack" style="max-width:480px;margin:0 auto;">
+          <div class="label">Science · Practice Check</div>
+          <div class="title">Practice this lesson</div>
+          <div class="label">Choose focus</div>
+          <div class="row wrap"><div class="btn primary">Mixed HOTS</div><div class="btn">Analyze</div><div class="btn">Evaluate</div><div class="btn">Create</div></div>
+          <div class="label">How many questions?</div>
+          <div class="field">3</div>
+          <div class="label">Include</div>
+          <div class="row wrap"><div class="btn">MCQ</div><div class="btn">Essay</div><div class="btn">Problem-solving</div></div>
+          <div class="btn primary">Generate Practice Check</div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Personal practice configuration from approved material only.</p>
+  </section>
+
+  <!-- 09 Practice take -->
+  <section class="figure" id="fig-09">
+    <div class="figure-title"><h2>Figure 9. Practice Taking</h2><span>Student</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">.../practice/ecosystems/take</div><div class="btn ghost">Take</div></div>
+      <div class="screen">
+        <div class="card">
+          <div class="row between"><div><div class="label">Analyze · Multiple choice</div><div class="subtitle">Ecosystems Practice</div></div><div>1 / 3</div></div>
+          <div class="meter" style="margin:0.5rem 0;"><i style="width:33%"></i></div>
+          <div class="bar lg"></div><div class="bar"></div>
+          <div class="btn pill" style="margin:0.45rem 0;">Source: p. 6</div>
+          <div class="stack">
+            <div class="field">Option A</div>
+            <div class="field">Option B</div>
+            <div class="field">Option C</div>
+            <div class="field">Option D</div>
+          </div>
+          <div class="row" style="margin-top:0.55rem;"><div class="btn">Back</div><div class="btn primary">Next</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">One-question-at-a-time practice with progress indicator.</p>
+  </section>
+
+  <!-- 10 Results review -->
+  <section class="figure" id="fig-10">
+    <div class="figure-title"><h2>Figure 10. Practice / Assessment Results</h2><span>Student</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">.../submit</div><div class="btn ghost">Review</div></div>
+      <div class="screen">
+        <div class="hero">
+          <div class="label">Supportive feedback</div>
+          <div class="title">Nice work. Let’s review and improve.</div>
+          <div class="card" style="margin-top:0.45rem;"><strong>2/3 automatic items</strong><div class="bar sm" style="margin-top:0.3rem;"></div></div>
+        </div>
+        <div class="stack">
+          <div class="card"><div class="label">Good job</div><div class="bar lg"></div><div class="bar sm"></div><div class="btn pill">Source</div></div>
+          <div class="card"><div class="label">Let’s improve</div><div class="bar"></div><div class="bar sm"></div><div class="bar xs"></div></div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Score summary plus explanations, rubric notes, and citations.</p>
+  </section>
+
+  <!-- 11 Assessment lobby -->
+  <section class="figure" id="fig-11">
+    <div class="figure-title"><h2>Figure 11. HOTS Assessment Lobby</h2><span>Student</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/assessments/ecosystems</div><div class="btn ghost">Lobby</div></div>
+      <div class="screen">
+        <div class="card stack" style="max-width:520px;margin:0 auto;">
+          <div class="label">Science</div>
+          <div class="title">Ecosystems HOTS Assessment</div>
+          <div class="bar sm"></div>
+          <div class="label">Before you start</div>
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar sm"></div>
+          <div class="row wrap"><div class="btn primary">Start Assessment</div><div class="btn ghost">Not now</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Calm checklist lobby: 1 attempt, assistive assessment disclaimer.</p>
+  </section>
+
+  <!-- 12 Assessment take -->
+  <section class="figure" id="fig-12">
+    <div class="figure-title"><h2>Figure 12. HOTS Assessment Taking</h2><span>Student</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/assessments/ecosystems/take</div><div class="btn ghost">Assessment</div></div>
+      <div class="screen">
+        <div class="card">
+          <div class="row between"><div class="subtitle">1 attempt · HOTS Assessment</div><div>2 / 8</div></div>
+          <div class="meter"><i style="width:25%"></i></div>
+          <div class="bar lg"></div>
+          <div class="textarea field" style="margin-top:0.5rem;">Essay / problem response area</div>
+          <div class="row" style="margin-top:0.55rem;"><div class="btn">Back</div><div class="btn primary">Next / Submit</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Same taking pattern as practice, labeled as section assessment.</p>
+  </section>
+
+  <!-- 13 Practice hub -->
+  <section class="figure" id="fig-13">
+    <div class="figure-title"><h2>Figure 13. Practice Hub</h2><span>Student</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/practice</div><div class="btn ghost">Practice Hub</div></div>
+      <div class="screen">
+        <div class="topbar"><div class="brand"><div class="logo"></div><strong>Bloom</strong></div><div class="btn pill">Bell</div></div>
+        <div class="title">Practice</div>
+        <div class="stack">
+          <div class="card row between"><div class="grow"><div class="label">Science · Ready</div><div class="bar lg"></div></div><div class="btn primary">Start</div></div>
+          <div class="card row between"><div class="grow"><div class="label">Math · Ready</div><div class="bar"></div></div><div class="btn primary">Start</div></div>
+          <div class="card row between"><div class="grow"><div class="label">Science · Locked</div><div class="bar sm"></div></div><div class="btn">Locked</div></div>
+        </div>
+        <div class="tabbar"><div class="btn">Home</div><div class="btn primary">Practice</div><div class="btn">Results</div><div class="btn">Profile</div></div>
+      </div>
+    </div>
+    <p class="caption">Cross-subject practice list with ready and locked states.</p>
+  </section>
+
+  <!-- 14 Results hub -->
+  <section class="figure" id="fig-14">
+    <div class="figure-title"><h2>Figure 14. Results Hub</h2><span>Student</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/results</div><div class="btn ghost">Results</div></div>
+      <div class="screen">
+        <div class="title">Results</div>
+        <div class="row wrap"><div class="btn primary pill">All</div><div class="btn pill">Assessments</div><div class="btn pill">Practice</div></div>
+        <div class="stack" style="margin-top:0.55rem;">
+          <div class="card row between"><div class="grow"><div class="label">Assessment · English</div><div class="bar lg"></div></div><div class="btn">Review</div></div>
+          <div class="card row between"><div class="grow"><div class="label">Practice · Math</div><div class="bar"></div></div><div class="btn">Open</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Filtered history of assessments and practice checks.</p>
+  </section>
+
+  <!-- 15 Announcements -->
+  <section class="figure" id="fig-15">
+    <div class="figure-title"><h2>Figure 15. Announcements Feed</h2><span>Student</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/announcements</div><div class="btn ghost">Announcements</div></div>
+      <div class="screen">
+        <div class="title">Announcements</div>
+        <div class="row wrap"><div class="btn primary pill">All</div><div class="btn pill">English</div><div class="btn pill">Math</div><div class="btn pill">Science</div></div>
+        <div class="stack" style="margin-top:0.55rem;">
+          <div class="card"><div class="label">English · Unread</div><div class="bar lg"></div><div class="bar sm"></div></div>
+          <div class="card"><div class="label">Science</div><div class="bar"></div><div class="bar xs"></div></div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Shared feed with subject filters.</p>
+  </section>
+
+  <!-- 16 Profile -->
+  <section class="figure" id="fig-16">
+    <div class="figure-title"><h2>Figure 16. Profile</h2><span>Student</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/profile</div><div class="btn ghost">Profile</div></div>
+      <div class="screen">
+        <div class="card stack">
+          <div class="title">Profile</div>
+          <div class="label">Name</div><div class="bar sm"></div>
+          <div class="label">School email</div><div class="bar"></div>
+          <div class="label">Role / Section</div><div class="bar sm"></div>
+        </div>
+        <div class="card stack" style="margin-top:0.55rem;">
+          <div class="subtitle">Change password</div>
+          <div class="field">Current password</div>
+          <div class="field">New password</div>
+          <div class="field">Confirm password</div>
+          <div class="btn primary">Update Password</div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Account details and temporary-password change.</p>
+  </section>
+
+  <!-- 17 Dropdown -->
+  <section class="figure" id="fig-17">
+    <div class="figure-title"><h2>Figure 17. Announcements Dropdown</h2><span>Global component</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">any authenticated page</div><div class="btn ghost">Top bar</div></div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="brand"><div class="logo"></div><strong>Bloom</strong></div>
+          <div style="position:relative;">
+            <div class="btn pill">Bell (3)</div>
+            <div class="card" style="position:absolute; right:0; top:36px; width:260px; z-index:2;">
+              <div class="row between"><strong>Announcements</strong><span class="muted">3 unread</span></div>
+              <div class="stack" style="margin-top:0.4rem;">
+                <div><div class="label">English</div><div class="bar"></div></div>
+                <div><div class="label">Science</div><div class="bar sm"></div></div>
+              </div>
+              <div class="btn" style="width:100%; margin-top:0.45rem;">View all</div>
+            </div>
+          </div>
+        </div>
+        <div class="xbox" style="min-height:180px; margin-top:0.5rem;"></div>
+      </div>
+    </div>
+    <p class="caption">Bell opens preview dropdown; full feed remains available.</p>
+  </section>
+
+  <!-- 18 Teacher home -->
+  <section class="figure" id="fig-18">
+    <div class="figure-title"><h2>Figure 18. Teacher Home</h2><span>Teacher</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/teacher</div><div class="btn ghost">Teacher</div></div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="brand"><div class="logo"></div><div><strong>Bloom</strong><div class="muted">Teacher · Science</div></div></div>
+          <div class="staff-nav"><div class="btn primary pill">Home</div><div class="btn pill">Materials</div><div class="btn pill">HOTS</div><div class="btn pill">Monitor</div><div class="btn pill">Announce</div></div>
+        </div>
+        <div class="hero"><div class="title">Welcome, Teacher</div><div class="bar sm"></div></div>
+        <div class="grid-4">
+          <div class="card"><div class="label">Materials</div><div class="title">4</div></div>
+          <div class="card"><div class="label">Draft HOTS</div><div class="title">6</div></div>
+          <div class="card"><div class="label">Pending</div><div class="title">1</div></div>
+          <div class="card"><div class="label">Due</div><div class="title">1</div></div>
+        </div>
+        <div class="subtitle" style="margin-top:0.55rem;">Needs attention</div>
+        <div class="card row between"><div class="grow"><div class="bar lg"></div></div><div class="btn primary">Review</div></div>
+      </div>
+    </div>
+    <p class="caption">Subject-scoped teacher dashboard and attention queue.</p>
+  </section>
+
+  <!-- 19 Materials -->
+  <section class="figure" id="fig-19">
+    <div class="figure-title"><h2>Figure 19. Teacher Materials</h2><span>Teacher</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/teacher/materials</div><div class="btn ghost">Materials</div></div>
+      <div class="screen">
+        <div class="title">Materials</div>
+        <div class="card row between"><div class="grow"><div class="label">Approved</div><div class="bar lg"></div></div><div class="btn">View</div></div>
+        <div class="card row between" style="margin-top:0.45rem;"><div class="grow"><div class="label">Pending approval</div><div class="bar"></div></div><div class="btn primary">Approve</div></div>
+        <div class="card stack" style="margin-top:0.55rem;">
+          <div class="subtitle">Upload material</div>
+          <div class="field">Title</div>
+          <div class="field">File name / upload</div>
+          <div class="textarea field">Paste text</div>
+          <div class="btn primary">Upload &amp; summarize</div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Upload-once workflow and student backup review queue.</p>
+  </section>
+
+  <!-- 20 HOTS -->
+  <section class="figure" id="fig-20">
+    <div class="figure-title"><h2>Figure 20. Teacher HOTS Generator</h2><span>Teacher</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/teacher/hots</div><div class="btn ghost">HOTS</div></div>
+      <div class="screen">
+        <div class="title">AI HOTS Question Generator</div>
+        <div class="card row between"><div class="grow"><div class="label">Draft · Analyze</div><div class="bar lg"></div></div><div class="btn">Regenerate</div></div>
+        <div class="card row between" style="margin-top:0.45rem;"><div class="grow"><div class="label">Draft · Evaluate</div><div class="bar"></div></div><div class="btn">Edit</div></div>
+        <div class="card stack" style="margin-top:0.55rem;">
+          <div class="subtitle">Generate from material</div>
+          <div class="field">Material</div>
+          <div class="field">Bloom focus</div>
+          <div class="field">Question count</div>
+          <div class="btn primary">Generate HOTS set</div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Generate → review/edit/regenerate → publish (teacher gatekeeping).</p>
+  </section>
+
+  <!-- 21 Monitor -->
+  <section class="figure" id="fig-21">
+    <div class="figure-title"><h2>Figure 21. Teacher Monitoring</h2><span>Teacher</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/teacher/monitor</div><div class="btn ghost">Monitor</div></div>
+      <div class="screen">
+        <div class="title">Monitoring &amp; Analytics</div>
+        <div class="stack">
+          <div class="card"><div class="label">Assessment completion</div><div class="bar lg"></div><div class="bar sm"></div></div>
+          <div class="card"><div class="label">Practice activity</div><div class="bar"></div><div class="bar sm"></div></div>
+          <div class="card"><div class="label">Release controls</div><div class="bar sm"></div><div class="btn" style="margin-top:0.35rem;">Configure</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Scores, completion, Bloom performance, release settings.</p>
+  </section>
+
+  <!-- 22 Announce -->
+  <section class="figure" id="fig-22">
+    <div class="figure-title"><h2>Figure 22. Teacher Announcements</h2><span>Teacher</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/teacher/announce</div><div class="btn ghost">Announce</div></div>
+      <div class="screen">
+        <div class="title">Subject announcements</div>
+        <div class="card"><div class="label">Posted</div><div class="bar lg"></div></div>
+        <div class="card stack" style="margin-top:0.55rem;">
+          <div class="field">Title</div>
+          <div class="textarea field">Message</div>
+          <div class="btn primary">Post announcement</div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Subject-specific announcements to student feed.</p>
+  </section>
+
+  <!-- 23 Admin home -->
+  <section class="figure" id="fig-23">
+    <div class="figure-title"><h2>Figure 23. Admin Home</h2><span>Admin</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/admin</div><div class="btn ghost">Admin</div></div>
+      <div class="screen">
+        <div class="topbar">
+          <div class="brand"><div class="logo"></div><strong>Bloom Admin</strong></div>
+          <div class="staff-nav"><div class="btn primary pill">Home</div><div class="btn pill">Users</div><div class="btn pill">Section</div><div class="btn pill">Reports</div><div class="btn pill">Settings</div></div>
+        </div>
+        <div class="title">Admin dashboard</div>
+        <div class="grid-2">
+          <div class="card"><div class="label">Users</div><div class="bar lg"></div><div class="btn" style="margin-top:0.35rem;">Manage</div></div>
+          <div class="card"><div class="label">System</div><div class="bar"></div><div class="btn" style="margin-top:0.35rem;">Reports</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Pilot oversight for the Grade 7 pilot section.</p>
+  </section>
+
+  <!-- 24 Users -->
+  <section class="figure" id="fig-24">
+    <div class="figure-title"><h2>Figure 24. Admin Users (Bulk Import)</h2><span>Admin</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/admin/users</div><div class="btn ghost">Users</div></div>
+      <div class="screen">
+        <div class="title">Users</div>
+        <div class="card"><div class="label">Student</div><div class="bar"></div></div>
+        <div class="card" style="margin-top:0.4rem;"><div class="label">Teacher</div><div class="bar sm"></div></div>
+        <div class="card stack" style="margin-top:0.55rem;">
+          <div class="subtitle">Bulk import CSV</div>
+          <div class="textarea field">email, name, role, temp password, subject/section</div>
+          <div class="btn primary">Import users</div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Bulk account creation with temporary passwords.</p>
+  </section>
+
+  <!-- 25 Section -->
+  <section class="figure" id="fig-25">
+    <div class="figure-title"><h2>Figure 25. Admin Section</h2><span>Admin</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/admin/section</div><div class="btn ghost">Section</div></div>
+      <div class="screen">
+        <div class="title">Section management</div>
+        <div class="card"><div class="label">Pilot section</div><div class="subtitle">Grade 7 · Section A</div><div class="bar sm"></div></div>
+      </div>
+    </div>
+    <p class="caption">One pilot section; students see all three subjects.</p>
+  </section>
+
+  <!-- 26 Reports -->
+  <section class="figure" id="fig-26">
+    <div class="figure-title"><h2>Figure 26. Admin Reports</h2><span>Admin</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/admin/reports</div><div class="btn ghost">Reports</div></div>
+      <div class="screen">
+        <div class="title">Reports &amp; analytics</div>
+        <div class="grid-2">
+          <div class="card"><div class="label">Participation</div><div class="xbox" style="min-height:90px; margin-top:0.35rem;"></div></div>
+          <div class="card"><div class="label">Bloom focus</div><div class="xbox" style="min-height:90px; margin-top:0.35rem;"></div></div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Section-level participation and Bloom-level performance snapshots.</p>
+  </section>
+
+  <!-- 27 Settings -->
+  <section class="figure" id="fig-27">
+    <div class="figure-title"><h2>Figure 27. Admin Settings</h2><span>Admin</span></div>
+    <div class="browser">
+      <div class="chrome"><div class="dots"><i></i><i></i><i></i></div><div class="url">/admin/settings</div><div class="btn ghost">Settings</div></div>
+      <div class="screen">
+        <div class="title">System settings</div>
+        <div class="card"><div class="label">Uploads</div><div class="bar"></div><div class="bar sm"></div></div>
+        <div class="card" style="margin-top:0.45rem;"><div class="label">Privacy</div><div class="bar"></div><div class="bar xs"></div></div>
+      </div>
+    </div>
+    <p class="caption">Pilot defaults for uploads, English-only content, and privacy constraints.</p>
+  </section>
+
+  <footer class="doc-footer">
+    <strong>Appendix note.</strong>
+    These low-fidelity wireframes document information architecture and interaction layout for Bloom.
+    They intentionally exclude final color, illustration, and production styling.
+  </footer>
+</body>
+</html>
