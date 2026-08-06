@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ assessment.title }} — Bloom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="app-body">
+  <div class="app-bg" aria-hidden="true">
+    <span class="ribbon ribbon-blue"></span>
+    <span class="ribbon ribbon-red"></span>
+    <span class="dot-field"></span>
+  </div>
+
+  {% set topbar_sub = "HOTS Assessment" %}
+  {% include "partials/topbar.html" %}
+
+  <main class="app-main">
+    <section class="take-shell">
+      <div class="take-top">
+        <div>
+          <p class="hero-kicker summary-kicker">{{ assessment.subject }} · 1 attempt</p>
+          <h1 class="take-title">{{ assessment.title }}</h1>
+        </div>
+        <p class="take-progress-label"><span id="progress-text">1</span> / {{ questions|length }}</p>
+      </div>
+      <div class="take-progress" aria-hidden="true">
+        <span id="progress-bar" style="width: {{ (1 / questions|length * 100)|round }}%;"></span>
+      </div>
+
+      <form id="practice-take-form" method="POST" action="{{ url_for('assessment_submit', slug=assessment.slug) }}">
+        {% for q in questions %}
+          <article class="take-card {% if loop.first %}is-active{% endif %}" data-question="{{ loop.index0 }}" {% if not loop.first %}hidden{% endif %}>
+            <p class="hub-card-kicker">{{ q.bloom }} · {{ q.type_label }}</p>
+            <h2 class="take-question">{{ q.prompt }}</h2>
+            <p class="summary-cite">Source: {{ q.citation }}</p>
+            {% if q.type == 'mcq' %}
+              <div class="take-options">
+                {% for opt in q.options %}
+                  <label class="take-option">
+                    <input type="radio" name="q{{ q.id }}" value="{{ opt.id }}" />
+                    <span>{{ opt.text }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+            {% else %}
+              <label class="field">
+                <span class="sr-only">Your answer</span>
+                <textarea name="q{{ q.id }}" rows="5" placeholder="Type your answer here..."></textarea>
+              </label>
+            {% endif %}
+          </article>
+        {% endfor %}
+
+        <div class="take-nav">
+          <button type="button" class="today-action today-action-soft" id="prev-btn" disabled>Back</button>
+          <button type="button" class="today-action" id="next-btn">Next</button>
+          <button type="submit" class="btn-primary btn-inline" id="submit-btn" hidden>Submit Assessment</button>
+        </div>
+      </form>
+      <p class="login-help">Assistive HOTS assessment — not an official school grade.</p>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/practice_take.js') }}"></script>
+</body>
+</html>

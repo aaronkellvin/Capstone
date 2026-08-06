@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile — Bloom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="app-body">
+  <div class="app-bg" aria-hidden="true">
+    <span class="ribbon ribbon-blue"></span>
+    <span class="ribbon ribbon-red"></span>
+    <span class="dot-field"></span>
+  </div>
+
+  {% set topbar_sub = "Profile" %}
+  {% include "partials/topbar.html" %}
+
+  <main class="app-main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-list home-flash">
+          {% for category, message in messages %}
+            <li class="flash flash-{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <section class="lobby-card">
+      <h1 class="section-title">Profile</h1>
+      <p class="section-note">Your Bloom account details</p>
+
+      <dl class="profile-facts">
+        <div><dt>Name</dt><dd>{{ user.name }}</dd></div>
+        <div><dt>School email</dt><dd>{{ user.email }}</dd></div>
+        <div><dt>Role</dt><dd>{{ user.role|capitalize }}</dd></div>
+        <div><dt>Section</dt><dd>Grade 7 · Pilot Section</dd></div>
+      </dl>
+    </section>
+
+    <section class="lobby-card" style="margin-top: 1rem;">
+      <h2 class="hub-panel-title">Change password</h2>
+      <p class="section-note">Use this after signing in with a temporary password.</p>
+      <form class="login-form" method="POST" action="{{ url_for('profile') }}">
+        <div class="field">
+          <label for="current_password">Current password</label>
+          <input type="password" id="current_password" name="current_password" required />
+        </div>
+        <div class="field">
+          <label for="new_password">New password</label>
+          <input type="password" id="new_password" name="new_password" minlength="8" required />
+        </div>
+        <div class="field">
+          <label for="confirm_password">Confirm new password</label>
+          <input type="password" id="confirm_password" name="confirm_password" minlength="8" required />
+        </div>
+        <button type="submit" class="btn-primary">Update Password</button>
+      </form>
+    </section>
+
+    <div class="summary-footer">
+      <a class="today-action today-action-soft" href="{{ url_for('logout') }}">Sign out</a>
+    </div>
+  </main>
+
+  {% set active_tab = "profile" %}
+  {% include "partials/student_tabbar.html" %}
+  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
+</body>
+</html>

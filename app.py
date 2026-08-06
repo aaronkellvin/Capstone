@@ -11,11 +11,19 @@ DEMO_USERS = {
         "password_hash": generate_password_hash("student123"),
         "name": "Demo Student",
         "role": "student",
+        "subject": None,
     },
     "teacher@letran-calamba.edu.ph": {
         "password_hash": generate_password_hash("teacher123"),
         "name": "Demo Teacher",
         "role": "teacher",
+        "subject": "Science",
+    },
+    "admin@letran-calamba.edu.ph": {
+        "password_hash": generate_password_hash("admin123"),
+        "name": "Demo Admin",
+        "role": "admin",
+        "subject": None,
     },
 }
 
@@ -411,6 +419,7 @@ def login():
                 "email": email,
                 "name": user["name"],
                 "role": user["role"],
+                "subject": user.get("subject"),
             }
             flash(
                 "Welcome to Bloom. For security, change your temporary password in Profile later.",
@@ -431,12 +440,9 @@ def home():
         return redirect(url_for("login"))
 
     if user["role"] == "teacher":
-        return render_student_placeholder(
-            user,
-            "Teacher Home",
-            "Teacher dashboard comes next. Student Home is ready for design review.",
-            "home",
-        )
+        return redirect(url_for("teacher_home"))
+    if user["role"] == "admin":
+        return redirect(url_for("admin_home"))
 
     first_name = user["name"].split(" ")[0]
     context = {
@@ -823,12 +829,41 @@ def practice():
     user = require_user()
     if not user:
         return redirect(url_for("login"))
-    return render_student_placeholder(
-        user,
-        "Practice",
-        "Practice hub comes next.",
-        "practice",
-    )
+    if user["role"] != "student":
+        return redirect(url_for("home"))
+
+    context = {
+        "user": user,
+        "practice_ready": [
+            {
+                "subject": "Science",
+                "title": "Ecosystems Practice Check",
+                "meta": "Approved material · Mixed HOTS",
+                "href": "/subjects/science/practice/ecosystems",
+            },
+            {
+                "subject": "Mathematics",
+                "title": "Fractions Practice Check",
+                "meta": "New summary available",
+                "href": "/subjects/mathematics/practice/fractions",
+            },
+            {
+                "subject": "English",
+                "title": "Poetry Practice Check",
+                "meta": "Approved material",
+                "href": "/subjects/english/practice/poetry-analysis",
+            },
+        ],
+        "practice_locked": [
+            {
+                "subject": "Science",
+                "title": "Lab handout practice",
+                "meta": "Backup upload pending teacher approval",
+            }
+        ],
+    }
+    context.update(announcements_context())
+    return render_template("practice_hub.html", **context)
 
 
 @app.route("/results")
@@ -836,25 +871,133 @@ def results():
     user = require_user()
     if not user:
         return redirect(url_for("login"))
-    return render_student_placeholder(
-        user,
-        "Results",
-        "Supportive results page comes next.",
-        "results",
-    )
+    if user["role"] != "student":
+        return redirect(url_for("home"))
+
+    filter_name = request.args.get("filter", "all")
+    all_items = [
+        {
+            "kind": "Assessment",
+            "subject": "English",
+            "title": "Poetry analysis feedback",
+            "meta": "Released · Review explanations and rubric notes",
+            "action": "Review",
+            "href": "/subjects/english?tab=results",
+            "bucket": "assessments",
+        },
+        {
+            "kind": "Assessment",
+            "subject": "Science",
+            "title": "Matter HOTS Check",
+            "meta": "Submitted · Waiting for release",
+            "action": "Waiting",
+            "href": "/subjects/science?tab=results",
+            "bucket": "assessments",
+        },
+        {
+            "kind": "Practice",
+            "subject": "Mathematics",
+            "title": "Fractions Practice Check",
+            "meta": "Personal practice · Supportive feedback ready",
+            "action": "Open",
+            "href": "/subjects/mathematics/practice/fractions",
+            "bucket": "practice",
+        },
+    ]
+    if filter_name in {"assessments", "practice"}:
+        items = [item for item in all_items if item["bucket"] == filter_name]
+    else:
+        items = all_items
+        filter_name = "all"
+
+    context = {"user": user, "filter": filter_name, "result_items": items}
+    context.update(announcements_context())
+    return render_template("results.html", **context)
 
 
-@app.route("/profile")
+@app.route("/profile", methods=["GET", "POST"])
 def profile():
     user = require_user()
     if not user:
         return redirect(url_for("login"))
-    return render_student_placeholder(
-        user,
-        "Profile",
-        "Profile and password change come next.",
-        "profile",
-    )
+
+    if request.method == "POST":
+        current = request.form.get("current_password", "")
+        new = request.form.get("new_password", "")
+        confirm = request.form.get("confirm_password", "")
+        record = DEMO_USERS.get(user["email"])
+        if not record or not check_password_hash(record["password_hash"], current):
+            flash("Current password is incorrect.", "danger")
+        elif len(new) < 8:
+            flash("New password must be at least 8 characters.", "danger")
+        elif new != confirm:
+            flash("New passwords do not match.", "danger")
+        else:
+            record["password_hash"] = generate_password_hash(new)
+            flash("Password updated. Use your new password next time.", "success")
+        return redirect(url_for("profile"))
+
+    if user["role"] != "student":
+        # Staff can still change password from a simple profile view
+        topbar_sub = "Profile"
+        role_nav = teacher_nav() if user["role"] == "teacher" else admin_nav()
+        return render_template(
+            "staff_page.html",
+            user=user,
+            topbar_sub=topbar_sub,
+            role_nav=role_nav,
+            active_nav="profile",
+            title="Profile",
+            subtitle="Account details and password",
+            panels=[
+                {
+                    "kicker": "Account",
+                    "title": user["name"],
+                    "meta": f"{user['email']} · {user['role']}",
+                    "action": None,
+                    "action_href": None,
+                    "soft": True,
+                }
+            ],
+            form_blocks=[
+                {
+                    "title": "Change password",
+                    "note": "Update your temporary password.",
+                    "action": url_for("profile"),
+                    "submit": "Update Password",
+                    "fields": [
+                        {
+                            "id": "current_password",
+                            "name": "current_password",
+                            "label": "Current password",
+                            "type": "password",
+                            "placeholder": "",
+                            "required": True,
+                        },
+                        {
+                            "id": "new_password",
+                            "name": "new_password",
+                            "label": "New password",
+                            "type": "password",
+                            "placeholder": "",
+                            "required": True,
+                        },
+                        {
+                            "id": "confirm_password",
+                            "name": "confirm_password",
+                            "label": "Confirm new password",
+                            "type": "password",
+                            "placeholder": "",
+                            "required": True,
+                        },
+                    ],
+                }
+            ],
+        )
+
+    context = {"user": user}
+    context.update(announcements_context())
+    return render_template("profile.html", **context)
 
 
 @app.route("/announcements")
@@ -862,12 +1005,584 @@ def announcements():
     user = require_user()
     if not user:
         return redirect(url_for("login"))
-    return render_student_placeholder(
-        user,
-        "Announcements",
-        "Shared announcements feed with subject filters comes next.",
-        "home",
+    if user["role"] != "student":
+        return redirect(url_for("home"))
+
+    filter_name = request.args.get("filter", "all")
+    notes = DEMO_ANNOUNCEMENTS
+    if filter_name != "all":
+        notes = [n for n in DEMO_ANNOUNCEMENTS if n["subject"] == filter_name]
+    context = {"user": user, "filter": filter_name, "announcements": notes}
+    context.update(announcements_context())
+    return render_template("announcements.html", **context)
+
+
+def teacher_nav():
+    return [
+        {"label": "Home", "endpoint": "teacher_home", "key": "home"},
+        {"label": "Materials", "endpoint": "teacher_materials", "key": "materials"},
+        {"label": "HOTS", "endpoint": "teacher_hots", "key": "hots"},
+        {"label": "Monitor", "endpoint": "teacher_monitor", "key": "monitor"},
+        {"label": "Announce", "endpoint": "teacher_announce", "key": "announce"},
+    ]
+
+
+def admin_nav():
+    return [
+        {"label": "Home", "endpoint": "admin_home", "key": "home"},
+        {"label": "Users", "endpoint": "admin_users", "key": "users"},
+        {"label": "Section", "endpoint": "admin_section", "key": "section"},
+        {"label": "Reports", "endpoint": "admin_reports", "key": "reports"},
+        {"label": "Settings", "endpoint": "admin_settings", "key": "settings"},
+    ]
+
+
+@app.route("/teacher")
+def teacher_home():
+    user = require_user()
+    if not user:
+        return redirect(url_for("login"))
+    if user["role"] != "teacher":
+        return redirect(url_for("home"))
+
+    subject_name = user.get("subject") or "Science"
+    return render_template(
+        "teacher_home.html",
+        user=user,
+        topbar_sub=f"Teacher · {subject_name}",
+        role_nav=teacher_nav(),
+        active_nav="home",
+        subject_name=subject_name,
+        stats=[
+            {"label": "Approved materials", "value": "4", "meta": "Ready for class"},
+            {"label": "Draft HOTS items", "value": "6", "meta": "Needs review"},
+            {"label": "Pending uploads", "value": "1", "meta": "Student backup"},
+            {"label": "Due assessments", "value": "1", "meta": "Ecosystems tomorrow"},
+        ],
+        attention=[
+            {
+                "kicker": "Review queue",
+                "title": "Lab handout.pdf awaiting approval",
+                "meta": "Student backup upload",
+                "action": "Review",
+                "href": url_for("teacher_materials"),
+            },
+            {
+                "kicker": "HOTS draft",
+                "title": "Ecosystems question set",
+                "meta": "Edit, regenerate, then publish",
+                "action": "Open",
+                "href": url_for("teacher_hots"),
+            },
+        ],
     )
+
+
+@app.route("/teacher/materials", methods=["GET", "POST"])
+def teacher_materials():
+    user = require_user()
+    if not user or user["role"] != "teacher":
+        return redirect(url_for("login"))
+    if request.method == "POST":
+        flash("Demo upload received. In production this extracts text and queues an AI summary.", "success")
+        return redirect(url_for("teacher_materials"))
+
+    return render_template(
+        "staff_page.html",
+        user=user,
+        topbar_sub="Materials",
+        role_nav=teacher_nav(),
+        active_nav="materials",
+        title="Materials",
+        subtitle="Upload Canvas files once. Approve before students practice.",
+        panels=[
+            {
+                "kicker": "Approved",
+                "title": "Ecosystems",
+                "meta": "Summary ready · Visible to section",
+                "action": "View",
+                "action_href": url_for("teacher_hots"),
+                "soft": True,
+            },
+            {
+                "kicker": "Pending approval",
+                "title": "Lab handout.pdf",
+                "meta": "Student backup upload",
+                "action": "Approve",
+                "action_href": url_for("teacher_materials"),
+                "soft": False,
+            },
+        ],
+        form_blocks=[
+            {
+                "title": "Upload material",
+                "note": "PDF, DOCX, PPTX, or paste text. Scanned PDFs without extractable text are rejected.",
+                "action": url_for("teacher_materials"),
+                "submit": "Upload & summarize",
+                "fields": [
+                    {
+                        "id": "title",
+                        "name": "title",
+                        "label": "Material title",
+                        "type": "text",
+                        "placeholder": "Ecosystems",
+                        "required": True,
+                    },
+                    {
+                        "id": "file",
+                        "name": "file",
+                        "label": "File upload (demo)",
+                        "type": "text",
+                        "placeholder": "ecosystems.pdf",
+                        "required": False,
+                    },
+                    {
+                        "id": "notes",
+                        "name": "notes",
+                        "label": "Or paste text",
+                        "type": "textarea",
+                        "placeholder": "Paste lesson text here...",
+                        "required": False,
+                    },
+                ],
+            }
+        ],
+    )
+
+
+@app.route("/teacher/hots", methods=["GET", "POST"])
+def teacher_hots():
+    user = require_user()
+    if not user or user["role"] != "teacher":
+        return redirect(url_for("login"))
+    if request.method == "POST":
+        flash("Demo HOTS set generated. Review items before publishing to the section.", "success")
+        return redirect(url_for("teacher_hots"))
+
+    return render_template(
+        "staff_page.html",
+        user=user,
+        topbar_sub="HOTS Generator",
+        role_nav=teacher_nav(),
+        active_nav="hots",
+        title="AI HOTS Question Generator",
+        subtitle="Generate C4–C6 questions from an approved material, then edit before publish.",
+        panels=[
+            {
+                "kicker": "Draft item · Analyze",
+                "title": "How does fewer producers affect energy flow?",
+                "meta": "Citation: p. 6 · Multiple choice",
+                "action": "Regenerate",
+                "action_href": url_for("teacher_hots"),
+                "soft": True,
+            },
+            {
+                "kicker": "Draft item · Evaluate",
+                "title": "Should food chains be very long? Explain.",
+                "meta": "Citation: p. 6 · Essay · Rubric attached",
+                "action": "Edit",
+                "action_href": url_for("teacher_hots"),
+                "soft": True,
+            },
+        ],
+        form_blocks=[
+            {
+                "title": "Generate from material",
+                "note": "Grounded only in uploaded content. Teacher approval required before students see items.",
+                "action": url_for("teacher_hots"),
+                "submit": "Generate HOTS set",
+                "fields": [
+                    {
+                        "id": "material",
+                        "name": "material",
+                        "label": "Material",
+                        "type": "select",
+                        "options": ["Ecosystems", "Cells"],
+                        "required": True,
+                    },
+                    {
+                        "id": "bloom",
+                        "name": "bloom",
+                        "label": "Bloom focus",
+                        "type": "select",
+                        "options": ["Mixed C4–C6", "Analyze", "Evaluate", "Create"],
+                        "required": True,
+                    },
+                    {
+                        "id": "count",
+                        "name": "count",
+                        "label": "Question count",
+                        "type": "select",
+                        "options": ["5", "8", "10"],
+                        "required": True,
+                    },
+                ],
+            }
+        ],
+    )
+
+
+@app.route("/teacher/monitor")
+def teacher_monitor():
+    user = require_user()
+    if not user or user["role"] != "teacher":
+        return redirect(url_for("login"))
+    return render_template(
+        "staff_page.html",
+        user=user,
+        topbar_sub="Monitoring",
+        role_nav=teacher_nav(),
+        active_nav="monitor",
+        title="Monitoring & Analytics",
+        subtitle="Completion, scores, Bloom performance, and practice activity for your subject.",
+        panels=[
+            {
+                "kicker": "Assessment",
+                "title": "Ecosystems HOTS Assessment",
+                "meta": "12/30 started · Avg 71% on auto items · C5 weakest",
+                "action": "Details",
+                "action_href": url_for("teacher_monitor"),
+                "soft": True,
+            },
+            {
+                "kicker": "Practice activity",
+                "title": "Fractions / Ecosystems practice",
+                "meta": "18 practice checks this week · Common miss: energy flow",
+                "action": "View",
+                "action_href": url_for("teacher_monitor"),
+                "soft": True,
+            },
+            {
+                "kicker": "Release controls",
+                "title": "Scores / answers / feedback",
+                "meta": "Can be released independently after close",
+                "action": "Configure",
+                "action_href": url_for("teacher_hots"),
+                "soft": False,
+            },
+        ],
+        form_blocks=[],
+    )
+
+
+@app.route("/teacher/announce", methods=["GET", "POST"])
+def teacher_announce():
+    user = require_user()
+    if not user or user["role"] != "teacher":
+        return redirect(url_for("login"))
+    if request.method == "POST":
+        flash("Announcement posted to your subject feed.", "success")
+        return redirect(url_for("teacher_announce"))
+    return render_template(
+        "staff_page.html",
+        user=user,
+        topbar_sub="Announcements",
+        role_nav=teacher_nav(),
+        active_nav="announce",
+        title="Subject announcements",
+        subtitle="Posts appear in the shared student feed, filterable by subject.",
+        panels=[
+            {
+                "kicker": "Science",
+                "title": "Ecosystems assessment opens tomorrow",
+                "meta": "Posted yesterday",
+                "action": None,
+                "action_href": None,
+                "soft": True,
+            }
+        ],
+        form_blocks=[
+            {
+                "title": "New announcement",
+                "note": "Keep it short and student-friendly.",
+                "action": url_for("teacher_announce"),
+                "submit": "Post announcement",
+                "fields": [
+                    {
+                        "id": "title",
+                        "name": "title",
+                        "label": "Title",
+                        "type": "text",
+                        "placeholder": "Assessment reminder",
+                        "required": True,
+                    },
+                    {
+                        "id": "body",
+                        "name": "body",
+                        "label": "Message",
+                        "type": "textarea",
+                        "placeholder": "Write your announcement...",
+                        "required": True,
+                    },
+                ],
+            }
+        ],
+    )
+
+
+@app.route("/admin")
+def admin_home():
+    user = require_user()
+    if not user or user["role"] != "admin":
+        return redirect(url_for("login"))
+    return render_template(
+        "staff_page.html",
+        user=user,
+        topbar_sub="Admin",
+        role_nav=admin_nav(),
+        active_nav="home",
+        title="Admin dashboard",
+        subtitle="Pilot section oversight for Grade 7 Bloom.",
+        panels=[
+            {
+                "kicker": "Users",
+                "title": "128 imported accounts",
+                "meta": "1 section · 3 subject teachers",
+                "action": "Manage",
+                "action_href": url_for("admin_users"),
+                "soft": True,
+            },
+            {
+                "kicker": "System",
+                "title": "Usability pilot ready",
+                "meta": "Research focus: usability, acceptability, perceived effectiveness",
+                "action": "Reports",
+                "action_href": url_for("admin_reports"),
+                "soft": True,
+            },
+        ],
+        form_blocks=[],
+    )
+
+
+@app.route("/admin/users", methods=["GET", "POST"])
+def admin_users():
+    user = require_user()
+    if not user or user["role"] != "admin":
+        return redirect(url_for("login"))
+    if request.method == "POST":
+        flash("Demo bulk import accepted. Users can sign in with temporary passwords.", "success")
+        return redirect(url_for("admin_users"))
+    return render_template(
+        "staff_page.html",
+        user=user,
+        topbar_sub="Users",
+        role_nav=admin_nav(),
+        active_nav="users",
+        title="Users",
+        subtitle="Bulk import school emails, names, roles, and temporary passwords.",
+        panels=[
+            {
+                "kicker": "Student",
+                "title": "Demo Student",
+                "meta": "student@letran-calamba.edu.ph",
+                "action": None,
+                "action_href": None,
+                "soft": True,
+            },
+            {
+                "kicker": "Teacher · Science",
+                "title": "Demo Teacher",
+                "meta": "teacher@letran-calamba.edu.ph",
+                "action": None,
+                "action_href": None,
+                "soft": True,
+            },
+        ],
+        form_blocks=[
+            {
+                "title": "Bulk import",
+                "note": "Paste CSV rows: email, full name, role, temporary password, subject/section",
+                "action": url_for("admin_users"),
+                "submit": "Import users",
+                "fields": [
+                    {
+                        "id": "csv",
+                        "name": "csv",
+                        "label": "CSV data",
+                        "type": "textarea",
+                        "placeholder": "student1@letran-calamba.edu.ph, Ana Cruz, student, Temp1234, Grade7",
+                        "required": True,
+                    }
+                ],
+            }
+        ],
+    )
+
+
+@app.route("/admin/section")
+def admin_section():
+    user = require_user()
+    if not user or user["role"] != "admin":
+        return redirect(url_for("login"))
+    return render_template(
+        "staff_page.html",
+        user=user,
+        topbar_sub="Section",
+        role_nav=admin_nav(),
+        active_nav="section",
+        title="Section management",
+        subtitle="One Grade 7 pilot section with English, Math, and Science teachers.",
+        panels=[
+            {
+                "kicker": "Pilot section",
+                "title": "Grade 7 · Section A",
+                "meta": "Students can view all three subjects",
+                "action": None,
+                "action_href": None,
+                "soft": True,
+            }
+        ],
+        form_blocks=[],
+    )
+
+
+@app.route("/admin/reports")
+def admin_reports():
+    user = require_user()
+    if not user or user["role"] != "admin":
+        return redirect(url_for("login"))
+    return render_template(
+        "staff_page.html",
+        user=user,
+        topbar_sub="Reports",
+        role_nav=admin_nav(),
+        active_nav="reports",
+        title="Reports & analytics",
+        subtitle="Section-level completion, Bloom performance, and participation snapshots.",
+        panels=[
+            {
+                "kicker": "Participation",
+                "title": "89% students active this week",
+                "meta": "Practice + assessment combined",
+                "action": None,
+                "action_href": None,
+                "soft": True,
+            },
+            {
+                "kicker": "Bloom focus",
+                "title": "Evaluate (C5) needs support",
+                "meta": "Across English and Science",
+                "action": None,
+                "action_href": None,
+                "soft": True,
+            },
+        ],
+        form_blocks=[],
+    )
+
+
+@app.route("/admin/settings")
+def admin_settings():
+    user = require_user()
+    if not user or user["role"] != "admin":
+        return redirect(url_for("login"))
+    return render_template(
+        "staff_page.html",
+        user=user,
+        topbar_sub="Settings",
+        role_nav=admin_nav(),
+        active_nav="settings",
+        title="System settings",
+        subtitle="Pilot defaults for uploads, English-only content, and privacy reminders.",
+        panels=[
+            {
+                "kicker": "Uploads",
+                "title": "20 MB · 100 pages · reject weak scans",
+                "meta": "No OCR in research scope",
+                "action": None,
+                "action_href": None,
+                "soft": True,
+            },
+            {
+                "kicker": "Privacy",
+                "title": "Minimize student data in AI prompts",
+                "meta": "Role-based access · school email accounts",
+                "action": None,
+                "action_href": None,
+                "soft": True,
+            },
+        ],
+        form_blocks=[],
+    )
+
+
+@app.route("/assessments/<slug>/take")
+def assessment_take(slug):
+    user = require_user()
+    if not user:
+        return redirect(url_for("login"))
+    assessment = DEMO_ASSESSMENTS.get(slug)
+    if not assessment:
+        flash("That assessment is not available.", "danger")
+        return redirect(url_for("home"))
+    questions = build_practice_questions("science", "ecosystems")
+    context = {
+        "user": user,
+        "assessment": assessment,
+        "questions": questions,
+    }
+    context.update(announcements_context())
+    return render_template("assessment_take.html", **context)
+
+
+@app.route("/assessments/<slug>/submit", methods=["POST"])
+def assessment_submit(slug):
+    user = require_user()
+    if not user:
+        return redirect(url_for("login"))
+    assessment = DEMO_ASSESSMENTS.get(slug)
+    if not assessment:
+        flash("That assessment is not available.", "danger")
+        return redirect(url_for("home"))
+
+    # Reuse practice scoring presentation with assessment wording
+    questions = build_practice_questions("science", "ecosystems")
+    review_items = []
+    earned = 0
+    auto_total = 0
+    for q in questions:
+        raw = (request.form.get(f"q{q['id']}") or "").strip()
+        if q["type"] == "mcq":
+            auto_total += 1
+            option_map = {opt["id"]: opt["text"] for opt in q["options"]}
+            your_answer = option_map.get(raw, raw or "(No answer)")
+            correct_answer = option_map.get(q["answer"])
+            if raw == q["answer"]:
+                earned += 1
+                status, status_label = "good", "Good job"
+            else:
+                status, status_label = "improve", "Let’s improve"
+        else:
+            your_answer = raw or "(No answer)"
+            correct_answer = None
+            status, status_label = ("review", "Pending release") if raw else ("improve", "No answer")
+        review_items.append(
+            {
+                "bloom": q["bloom"],
+                "prompt": q["prompt"],
+                "your_answer": your_answer,
+                "correct_answer": None if status_label == "Pending release" else correct_answer,
+                "explanation": "Feedback will follow your teacher’s release settings."
+                if q["type"] != "mcq"
+                else q["explanation"],
+                "rubric": q.get("rubric"),
+                "citation": q["citation"],
+                "status": status,
+                "status_label": status_label,
+            }
+        )
+
+    context = {
+        "user": user,
+        "subject": {"name": assessment["subject"], "slug": "science"},
+        "material_title": assessment["title"],
+        "score_label": f"{earned}/{auto_total} automatic items · open items pending release",
+        "encouragement": "Submitted. Your teacher controls when full answers and feedback appear.",
+        "review_items": review_items,
+    }
+    context.update(announcements_context())
+    return render_template("practice_result.html", **context)
 
 
 @app.route("/logout")

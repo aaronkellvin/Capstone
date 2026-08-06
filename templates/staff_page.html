@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ title }} — Bloom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="app-body staff-body">
+  <div class="app-bg" aria-hidden="true">
+    <span class="ribbon ribbon-blue"></span>
+    <span class="ribbon ribbon-red"></span>
+    <span class="dot-field"></span>
+  </div>
+
+  {% include "partials/staff_topbar.html" %}
+
+  <main class="app-main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-list home-flash">
+          {% for category, message in messages %}
+            <li class="flash flash-{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <section class="home-section">
+      <h1 class="section-title">{{ title }}</h1>
+      <p class="section-note">{{ subtitle }}</p>
+
+      {% if panels %}
+        <div class="hub-list" style="margin-top: 1rem;">
+          {% for panel in panels %}
+            <article class="hub-card hub-card-stack">
+              <div>
+                <p class="hub-card-kicker">{{ panel.kicker }}</p>
+                <h2 class="hub-card-title">{{ panel.title }}</h2>
+                <p class="hub-card-meta">{{ panel.meta }}</p>
+              </div>
+              {% if panel.action_href and panel.action %}
+                <a class="today-action {% if panel.soft %}today-action-soft{% endif %}" href="{{ panel.action_href }}">{{ panel.action }}</a>
+              {% endif %}
+            </article>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% if form_blocks %}
+        {% for block in form_blocks %}
+          <section class="lobby-card" style="margin-top: 1rem;">
+            <h2 class="hub-panel-title">{{ block.title }}</h2>
+            <p class="section-note">{{ block.note }}</p>
+            <form class="login-form" method="POST" action="{{ block.action }}">
+              {% for field in block.fields %}
+                <div class="field">
+                  <label for="{{ field.id }}">{{ field.label }}</label>
+                  {% if field.type == 'textarea' %}
+                    <textarea id="{{ field.id }}" name="{{ field.name }}" rows="4" placeholder="{{ field.placeholder }}">{{ field.value or '' }}</textarea>
+                  {% elif field.type == 'select' %}
+                    <select id="{{ field.id }}" name="{{ field.name }}">
+                      {% for opt in field.options %}
+                        <option value="{{ opt }}">{{ opt }}</option>
+                      {% endfor %}
+                    </select>
+                  {% else %}
+                    <input id="{{ field.id }}" name="{{ field.name }}" type="{{ field.type }}" placeholder="{{ field.placeholder }}" {% if field.required %}required{% endif %} />
+                  {% endif %}
+                </div>
+              {% endfor %}
+              <button type="submit" class="btn-primary">{{ block.submit }}</button>
+            </form>
+          </section>
+        {% endfor %}
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>

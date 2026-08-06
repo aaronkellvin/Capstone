@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Results — Bloom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="app-body">
+  <div class="app-bg" aria-hidden="true">
+    <span class="ribbon ribbon-blue"></span>
+    <span class="ribbon ribbon-red"></span>
+    <span class="dot-field"></span>
+  </div>
+
+  {% set topbar_sub = "Results" %}
+  {% include "partials/topbar.html" %}
+
+  <main class="app-main">
+    <section class="home-section">
+      <h1 class="section-title">Results</h1>
+      <p class="section-note">Review and improve. Assistive feedback only.</p>
+
+      <div class="filter-chips" role="tablist" aria-label="Result filters">
+        <a class="chip-link {% if filter == 'all' %}active{% endif %}" href="{{ url_for('results', filter='all') }}">All</a>
+        <a class="chip-link {% if filter == 'assessments' %}active{% endif %}" href="{{ url_for('results', filter='assessments') }}">Assessments</a>
+        <a class="chip-link {% if filter == 'practice' %}active{% endif %}" href="{{ url_for('results', filter='practice') }}">Practice</a>
+      </div>
+
+      <div class="hub-list" style="margin-top: 1rem;">
+        {% for item in result_items %}
+          <article class="hub-card">
+            <div>
+              <p class="hub-card-kicker">{{ item.kind }} · {{ item.subject }}</p>
+              <h2 class="hub-card-title">{{ item.title }}</h2>
+              <p class="hub-card-meta">{{ item.meta }}</p>
+            </div>
+            <a class="today-action today-action-soft" href="{{ item.href }}">{{ item.action }}</a>
+          </article>
+        {% else %}
+          <article class="empty-state-card">
+            <p class="empty-kicker">Results</p>
+            <h3 class="empty-title">No results in this filter yet</h3>
+            <p class="empty-copy">Finished practice and released assessments will show up here.</p>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
+
+  {% set active_tab = "results" %}
+  {% include "partials/student_tabbar.html" %}
+  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
+</body>
+</html>

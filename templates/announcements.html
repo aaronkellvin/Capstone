@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Announcements — Bloom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="app-body">
+  <div class="app-bg" aria-hidden="true">
+    <span class="ribbon ribbon-blue"></span>
+    <span class="ribbon ribbon-red"></span>
+    <span class="dot-field"></span>
+  </div>
+
+  {% set topbar_sub = "Announcements" %}
+  {% include "partials/topbar.html" %}
+
+  <main class="app-main">
+    <section class="home-section">
+      <h1 class="section-title">Announcements</h1>
+      <p class="section-note">Subject updates from your teachers.</p>
+
+      <div class="filter-chips">
+        <a class="chip-link {% if filter == 'all' %}active{% endif %}" href="{{ url_for('announcements', filter='all') }}">All</a>
+        <a class="chip-link {% if filter == 'English' %}active{% endif %}" href="{{ url_for('announcements', filter='English') }}">English</a>
+        <a class="chip-link {% if filter == 'Math' %}active{% endif %}" href="{{ url_for('announcements', filter='Math') }}">Math</a>
+        <a class="chip-link {% if filter == 'Science' %}active{% endif %}" href="{{ url_for('announcements', filter='Science') }}">Science</a>
+      </div>
+
+      <div class="hub-list" style="margin-top: 1rem;">
+        {% for note in announcements %}
+          <article class="hub-card hub-card-stack {% if note.unread %}is-unread-card{% endif %}">
+            <div>
+              <p class="hub-card-kicker">{{ note.subject }}{% if note.unread %} · Unread{% endif %}</p>
+              <h2 class="hub-card-title">{{ note.title }}</h2>
+              <p class="hub-card-meta">{{ note.meta }}</p>
+            </div>
+          </article>
+        {% else %}
+          <article class="empty-state-card">
+            <p class="empty-kicker">Announcements</p>
+            <h3 class="empty-title">No announcements in this filter</h3>
+            <p class="empty-copy">When teachers post subject updates, they will appear here.</p>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
+
+  {% set active_tab = "home" %}
+  {% include "partials/student_tabbar.html" %}
+  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
+</body>
+</html>

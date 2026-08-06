@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teacher Home — Bloom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="app-body staff-body">
+  <div class="app-bg" aria-hidden="true">
+    <span class="ribbon ribbon-blue"></span>
+    <span class="ribbon ribbon-red"></span>
+    <span class="dot-field"></span>
+  </div>
+
+  {% include "partials/staff_topbar.html" %}
+
+  <main class="app-main">
+    <section class="home-hero">
+      <p class="hero-kicker">Teacher workspace · {{ subject_name }}</p>
+      <h1 class="hero-title">Welcome, {{ user.name.split(' ')[0] }}</h1>
+      <p class="hero-note">Upload once, review HOTS items, publish to your section, and monitor progress.</p>
+    </section>
+
+    <section class="stat-grid">
+      {% for card in stats %}
+        <article class="stat-card">
+          <p class="stat-label">{{ card.label }}</p>
+          <p class="stat-value">{{ card.value }}</p>
+          <p class="stat-meta">{{ card.meta }}</p>
+        </article>
+      {% endfor %}
+    </section>
+
+    <section class="home-section">
+      <h2 class="section-title section-title-sm">Needs attention</h2>
+      <div class="hub-list">
+        {% for item in attention %}
+          <article class="hub-card">
+            <div>
+              <p class="hub-card-kicker">{{ item.kicker }}</p>
+              <h3 class="hub-card-title">{{ item.title }}</h3>
+              <p class="hub-card-meta">{{ item.meta }}</p>
+            </div>
+            <a class="today-action" href="{{ item.href }}">{{ item.action }}</a>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
+</body>
+</html>

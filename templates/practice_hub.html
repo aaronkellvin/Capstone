@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Practice — Bloom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="app-body">
+  <div class="app-bg" aria-hidden="true">
+    <span class="ribbon ribbon-blue"></span>
+    <span class="ribbon ribbon-red"></span>
+    <span class="dot-field"></span>
+  </div>
+
+  {% set topbar_sub = "Practice" %}
+  {% include "partials/topbar.html" %}
+
+  <main class="app-main">
+    <section class="home-section">
+      <h1 class="section-title">Practice</h1>
+      <p class="section-note">Personal Practice Checks from approved materials. Not official grades.</p>
+
+      <div class="hub-list">
+        {% for item in practice_ready %}
+          <article class="hub-card">
+            <div>
+              <p class="hub-card-kicker">{{ item.subject }} · Ready</p>
+              <h2 class="hub-card-title">{{ item.title }}</h2>
+              <p class="hub-card-meta">{{ item.meta }}</p>
+            </div>
+            <a class="today-action" href="{{ item.href }}">Start</a>
+          </article>
+        {% endfor %}
+      </div>
+
+      {% if practice_locked %}
+        <div class="hub-group" style="margin-top: 1.25rem;">
+          <h2 class="hub-group-title">Waiting for approval</h2>
+          <div class="hub-list">
+            {% for item in practice_locked %}
+              <article class="hub-card">
+                <div>
+                  <p class="hub-card-kicker">{{ item.subject }} · Locked</p>
+                  <h3 class="hub-card-title">{{ item.title }}</h3>
+                  <p class="hub-card-meta">{{ item.meta }}</p>
+                </div>
+                <span class="today-action today-action-soft">Locked</span>
+              </article>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </section>
+  </main>
+
+  {% set active_tab = "practice" %}
+  {% include "partials/student_tabbar.html" %}
+  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
+</body>
+</html>
