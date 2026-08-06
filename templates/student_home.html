@@ -16,26 +16,7 @@
     <span class="dot-field"></span>
   </div>
 
-  <header class="app-topbar">
-    <div class="topbar-brand">
-      <img
-        src="{{ url_for('static', filename='images/letran-calamba-logo.png') }}"
-        alt=""
-        width="36"
-        height="36"
-      />
-      <div>
-        <p class="topbar-title">Bloom</p>
-        <p class="topbar-sub">{{ greeting }}</p>
-      </div>
-    </div>
-    <a class="bell-btn" href="{{ url_for('announcements') }}" aria-label="Announcements">
-      <span class="bell-mark" aria-hidden="true"></span>
-      {% if unread_announcements %}
-        <span class="bell-dot">{{ unread_announcements }}</span>
-      {% endif %}
-    </a>
-  </header>
+  {% include "partials/topbar.html" %}
 
   <main class="app-main">
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -125,5 +106,6 @@
     <a class="tab" href="{{ url_for('results') }}"><span>Results</span></a>
     <a class="tab" href="{{ url_for('profile') }}"><span>Profile</span></a>
   </nav>
+  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
 </body>
 </html>

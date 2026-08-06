@@ -1,0 +1,60 @@
+<header class="app-topbar">
+  <div class="topbar-brand">
+    <img
+      class="topbar-logo"
+      src="{{ url_for('static', filename='images/letran-calamba-logo.png') }}"
+      alt=""
+      width="40"
+      height="40"
+    />
+    <div class="topbar-text">
+      <p class="topbar-title">Bloom</p>
+      <p class="topbar-sub">{{ topbar_sub }}</p>
+    </div>
+  </div>
+
+  <div class="topbar-actions">
+    <div class="notify-wrap">
+      <button
+        type="button"
+        class="bell-btn"
+        id="notify-toggle"
+        aria-label="Announcements"
+        aria-haspopup="true"
+        aria-expanded="false"
+        aria-controls="notify-panel"
+      >
+        <svg class="bell-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path
+            d="M12 22a2.2 2.2 0 0 0 2.2-2.2h-4.4A2.2 2.2 0 0 0 12 22Zm7-5.2V11a7 7 0 1 0-14 0v5.8L3 18.6V20h18v-1.4l-2-1.8Z"
+            fill="currentColor"
+          />
+        </svg>
+        {% if unread_announcements %}
+          <span class="bell-dot">{{ unread_announcements }}</span>
+        {% endif %}
+      </button>
+
+      <div class="notify-panel" id="notify-panel" hidden role="region" aria-label="Announcements preview">
+        <div class="notify-head">
+          <p class="notify-title">Announcements</p>
+          <p class="notify-count">{{ unread_announcements }} unread</p>
+        </div>
+
+        <ul class="notify-list">
+          {% for note in announcements_preview %}
+            <li class="notify-item {% if note.unread %}is-unread{% endif %}">
+              <p class="notify-subject">{{ note.subject }}</p>
+              <p class="notify-item-title">{{ note.title }}</p>
+              <p class="notify-meta">{{ note.meta }}</p>
+            </li>
+          {% else %}
+            <li class="notify-empty">No announcements yet.</li>
+          {% endfor %}
+        </ul>
+
+        <a class="notify-all" href="{{ url_for('announcements') }}">View all announcements</a>
+      </div>
+    </div>
+  </div>
+</header>

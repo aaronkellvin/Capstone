@@ -114,14 +114,46 @@ def require_user():
     return user
 
 
+DEMO_ANNOUNCEMENTS = [
+    {
+        "subject": "English",
+        "title": "Reading guide posted",
+        "meta": "Today · Mrs. Santos",
+        "unread": True,
+    },
+    {
+        "subject": "Science",
+        "title": "Ecosystems assessment opens tomorrow",
+        "meta": "Yesterday · Mr. Reyes",
+        "unread": True,
+    },
+    {
+        "subject": "Math",
+        "title": "Fractions practice tips",
+        "meta": "Mon · Ms. Cruz",
+        "unread": True,
+    },
+]
+
+
+def announcements_context():
+    unread = sum(1 for note in DEMO_ANNOUNCEMENTS if note.get("unread"))
+    return {
+        "announcements_preview": DEMO_ANNOUNCEMENTS[:4],
+        "unread_announcements": unread,
+    }
+
+
 def render_student_placeholder(user, title, message, active_tab):
-    return render_template(
-        "placeholder.html",
-        user=user,
-        title=title,
-        message=message,
-        active_tab=active_tab,
-    )
+    context = {
+        "user": user,
+        "title": title,
+        "message": message,
+        "active_tab": active_tab,
+        "topbar_sub": title,
+    }
+    context.update(announcements_context())
+    return render_template("placeholder.html", **context)
 
 
 @app.route("/")
@@ -174,22 +206,23 @@ def home():
         )
 
     first_name = user["name"].split(" ")[0]
-    return render_template(
-        "student_home.html",
-        user=user,
-        greeting=f"Hi, {first_name}",
-        guide_title="Due tomorrow — start Science when you're ready",
-        guide_note="Balanced plan for today: one assessment, one review, and light practice.",
-        weekly_goal={
+    context = {
+        "user": user,
+        "greeting": f"Hi, {first_name}",
+        "topbar_sub": f"Hi, {first_name}",
+        "guide_title": "Due tomorrow — start Science when you're ready",
+        "guide_note": "Balanced plan for today: one assessment, one review, and light practice.",
+        "weekly_goal": {
             "done": 2,
             "target": 3,
             "percent": 67,
             "hint": "Gentle goal only — no streak pressure. One more Practice Check this week is enough.",
         },
-        today_items=DEMO_TODAY[:5],
-        subjects=DEMO_SUBJECTS,
-        unread_announcements=3,
-    )
+        "today_items": DEMO_TODAY[:5],
+        "subjects": DEMO_SUBJECTS,
+    }
+    context.update(announcements_context())
+    return render_template("student_home.html", **context)
 
 
 @app.route("/assessments/<slug>")
@@ -203,7 +236,12 @@ def assessment_lobby(slug):
         flash("That assessment is not available.", "danger")
         return redirect(url_for("home"))
 
-    return render_template("assessment_lobby.html", user=user, assessment=assessment)
+    return render_template(
+        "assessment_lobby.html",
+        user=user,
+        assessment=assessment,
+        **announcements_context(),
+    )
 
 
 @app.route("/subjects/<slug>")

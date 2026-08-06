@@ -891,3 +891,140 @@ body {
   align-items: center;
   gap: 0.9rem 1.1rem;
 }
+
+/* ========== Top bar + announcements dropdown ========== */
+.app-topbar {
+  min-height: 4.1rem;
+  padding: 0.85rem 1.15rem;
+}
+
+.topbar-logo {
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.topbar-text {
+  min-width: 0;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.notify-wrap {
+  position: relative;
+}
+
+.bell-btn {
+  appearance: none;
+  border: 1px solid rgba(11, 61, 145, 0.12);
+  background: rgba(11, 61, 145, 0.08);
+  color: var(--letran-blue);
+  cursor: pointer;
+}
+
+.bell-btn:hover,
+.bell-btn[aria-expanded=\"true\"] {
+  background: rgba(11, 61, 145, 0.14);
+}
+
+.bell-svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  display: block;
+}
+
+.notify-panel {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  right: 0;
+  width: min(92vw, 340px);
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 40px rgba(11, 61, 145, 0.18);
+  overflow: hidden;
+  z-index: 20;
+  animation: rise-in 0.2s ease both;
+}
+
+.notify-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem 0.65rem;
+  border-bottom: 1px solid rgba(201, 215, 239, 0.85);
+}
+
+.notify-title {
+  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--letran-blue);
+}
+
+.notify-count {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--letran-red);
+}
+
+.notify-list {
+  list-style: none;
+  max-height: 16rem;
+  overflow: auto;
+}
+
+.notify-item {
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid rgba(201, 215, 239, 0.55);
+}
+
+.notify-item.is-unread {
+  background: rgba(11, 61, 145, 0.04);
+}
+
+.notify-subject {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--quiet);
+}
+
+.notify-item-title {
+  margin-top: 0.2rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.notify-meta {
+  margin-top: 0.18rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.notify-empty {
+  padding: 1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.notify-all {
+  display: block;
+  padding: 0.85rem 1rem;
+  text-align: center;
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--letran-blue);
+  background: rgba(11, 61, 145, 0.04);
+}
