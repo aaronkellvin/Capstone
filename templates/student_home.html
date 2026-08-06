@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home — Bloom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="app-body">
+  <div class="app-bg" aria-hidden="true">
+    <span class="ribbon ribbon-blue"></span>
+    <span class="ribbon ribbon-red"></span>
+    <span class="dot-field"></span>
+  </div>
+
+  <header class="app-topbar">
+    <div class="topbar-brand">
+      <img
+        src="{{ url_for('static', filename='images/letran-calamba-logo.png') }}"
+        alt=""
+        width="36"
+        height="36"
+      />
+      <div>
+        <p class="topbar-title">Bloom</p>
+        <p class="topbar-sub">{{ greeting }}</p>
+      </div>
+    </div>
+    <a class="bell-btn" href="{{ url_for('announcements') }}" aria-label="Announcements">
+      <span class="bell-mark" aria-hidden="true"></span>
+      {% if unread_announcements %}
+        <span class="bell-dot">{{ unread_announcements }}</span>
+      {% endif %}
+    </a>
+  </header>
+
+  <main class="app-main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-list home-flash">
+          {% for category, message in messages %}
+            <li class="flash flash-{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Level 1: Companion guidance -->
+    <section class="home-hero" aria-labelledby="guide-title">
+      <p class="hero-kicker">Your study companion</p>
+      <h1 id="guide-title" class="hero-title">{{ guide_title }}</h1>
+      <p class="hero-note">{{ guide_note }}</p>
+      {% if weekly_goal %}
+        <div class="weekly-goal" aria-label="Weekly practice goal">
+          <div class="weekly-goal-top">
+            <span>This week’s practice goal</span>
+            <strong>{{ weekly_goal.done }}/{{ weekly_goal.target }}</strong>
+          </div>
+          <div class="goal-bar" aria-hidden="true">
+            <span style="width: {{ weekly_goal.percent }}%;"></span>
+          </div>
+          <p class="goal-hint">{{ weekly_goal.hint }}</p>
+        </div>
+      {% endif %}
+    </section>
+
+    <!-- Level 2: Planner (Today) -->
+    <section class="home-section" aria-labelledby="today-title">
+      <div class="section-head">
+        <h2 id="today-title" class="section-title section-title-sm">Today</h2>
+        <p class="section-note">Up to 5 helpful next steps.</p>
+      </div>
+
+      <div class="today-list">
+        {% for item in today_items %}
+          <article class="today-card today-{{ item.priority }} today-{{ item.type }}">
+            <div class="today-copy">
+              <p class="today-kicker">{{ item.kicker }}</p>
+              <h3 class="today-title">{{ item.title }}</h3>
+              <p class="today-meta">{{ item.meta }}</p>
+            </div>
+            <a class="today-action {% if item.priority != 'primary' %}today-action-soft{% endif %}" href="{{ item.href }}">
+              {{ item.action }}
+            </a>
+          </article>
+        {% else %}
+          <article class="today-card today-empty">
+            <div class="today-copy">
+              <h3 class="today-title">You’re all caught up</h3>
+              <p class="today-meta">Nice work. Pick a subject below for a calm Practice Check.</p>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Level 3: Light classroom dashboard -->
+    <section class="home-section" aria-labelledby="subjects-title">
+      <div class="section-head">
+        <h2 id="subjects-title" class="section-title section-title-sm">My Subjects</h2>
+        <p class="section-note">Progress first, then your next step.</p>
+      </div>
+
+      <div class="subject-grid">
+        {% for subject in subjects %}
+          <a class="subject-card" href="{{ url_for('subject_hub', slug=subject.slug) }}">
+            <p class="subject-name">{{ subject.name }}</p>
+            <p class="subject-progress">{{ subject.progress_label }}</p>
+            <div class="subject-meter" aria-hidden="true">
+              <span style="width: {{ subject.progress_percent }}%;"></span>
+            </div>
+            <p class="subject-next">{{ subject.next_action }}</p>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
+
+  <nav class="app-tabbar tabbar-4" aria-label="Student navigation">
+    <a class="tab active" href="{{ url_for('home') }}"><span>Home</span></a>
+    <a class="tab" href="{{ url_for('practice') }}"><span>Practice</span></a>
+    <a class="tab" href="{{ url_for('results') }}"><span>Results</span></a>
+    <a class="tab" href="{{ url_for('profile') }}"><span>Profile</span></a>
+  </nav>
+</body>
+</html>

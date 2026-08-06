@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ assessment.title }} — Bloom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="app-body">
+  <div class="app-bg" aria-hidden="true">
+    <span class="ribbon ribbon-blue"></span>
+    <span class="ribbon ribbon-red"></span>
+    <span class="dot-field"></span>
+  </div>
+
+  <header class="app-topbar">
+    <div class="topbar-brand">
+      <img
+        src="{{ url_for('static', filename='images/letran-calamba-logo.png') }}"
+        alt=""
+        width="36"
+        height="36"
+      />
+      <div>
+        <p class="topbar-title">Bloom</p>
+        <p class="topbar-sub">HOTS Assessment</p>
+      </div>
+    </div>
+    <a class="text-link" href="{{ url_for('home') }}">Home</a>
+  </header>
+
+  <main class="app-main">
+    <section class="lobby-card" aria-labelledby="lobby-title">
+      <p class="hero-kicker">{{ assessment.subject }}</p>
+      <h1 id="lobby-title" class="section-title">{{ assessment.title }}</h1>
+      <p class="section-note">{{ assessment.deadline_label }}</p>
+
+      <ul class="lobby-checklist">
+        <li>One attempt only</li>
+        <li>You can finish if time ends while answering</li>
+        <li>This helps you practice HOTS</li>
+        <li>Not an official school grade</li>
+      </ul>
+
+      <p class="lobby-focus">Includes: Analyze · Evaluate · Create</p>
+
+      <div class="lobby-actions">
+        <a class="btn-primary btn-inline" href="#">Start Assessment</a>
+        <a class="text-link" href="{{ url_for('home') }}">Not now</a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
