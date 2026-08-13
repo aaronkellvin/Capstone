@@ -20,6 +20,8 @@
   {% include "partials/topbar.html" %}
 
   <main class="app-main">
+  {% include "partials/flash.html" %}
+
     <section class="home-section">
       <h1 class="section-title">Announcements</h1>
       <p class="section-note">Subject updates from your teachers.</p>
@@ -37,6 +39,7 @@
             <div>
               <p class="hub-card-kicker">{{ note.subject }}{% if note.unread %} · Unread{% endif %}</p>
               <h2 class="hub-card-title">{{ note.title }}</h2>
+              {% if note.body %}<p class="hub-card-meta">{{ note.body }}</p>{% endif %}
               <p class="hub-card-meta">{{ note.meta }}</p>
             </div>
           </article>

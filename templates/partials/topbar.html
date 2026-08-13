@@ -1,5 +1,5 @@
 <header class="app-topbar">
-  <div class="topbar-brand">
+  <a class="topbar-brand" href="{{ url_for('home') }}">
     <img
       class="topbar-logo"
       src="{{ url_for('static', filename='images/letran-calamba-logo.png') }}"
@@ -11,7 +11,7 @@
       <p class="topbar-title">Bloom</p>
       <p class="topbar-sub">{{ topbar_sub }}</p>
     </div>
-  </div>
+  </a>
 
   <div class="topbar-actions">
     <div class="notify-wrap">
@@ -38,15 +38,21 @@
       <div class="notify-panel" id="notify-panel" hidden role="region" aria-label="Announcements preview">
         <div class="notify-head">
           <p class="notify-title">Announcements</p>
-          <p class="notify-count">{{ unread_announcements }} unread</p>
+          {% if unread_announcements %}
+            <p class="notify-count">{{ unread_announcements }} unread</p>
+          {% else %}
+            <p class="notify-count">All caught up</p>
+          {% endif %}
         </div>
 
         <ul class="notify-list">
           {% for note in announcements_preview %}
-            <li class="notify-item {% if note.unread %}is-unread{% endif %}">
-              <p class="notify-subject">{{ note.subject }}</p>
-              <p class="notify-item-title">{{ note.title }}</p>
-              <p class="notify-meta">{{ note.meta }}</p>
+            <li>
+              <a class="notify-item {% if note.unread %}is-unread{% endif %}" href="{{ note.href }}">
+                <p class="notify-subject">{{ note.subject }}{% if note.unread %} · New{% endif %}</p>
+                <p class="notify-item-title">{{ note.title }}</p>
+                <p class="notify-meta">{{ note.meta }}</p>
+              </a>
             </li>
           {% else %}
             <li class="notify-empty">No announcements yet.</li>

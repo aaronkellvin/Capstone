@@ -20,6 +20,16 @@
   {% include "partials/topbar.html" %}
 
   <main class="app-main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-list home-flash">
+          {% for category, message in messages %}
+            <li class="flash flash-{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
     <section class="hub-hero" aria-labelledby="hub-title">
       <a class="hub-back" href="{{ url_for('home') }}">Back to Home</a>
       <h1 id="hub-title" class="section-title">{{ subject.name }}</h1>
@@ -129,7 +139,17 @@
         <div class="backup-card">
           <p class="hub-card-title">Have a Canvas file not listed yet?</p>
           <p class="hub-card-meta">Upload as backup. Needs teacher approval before practice unlocks.</p>
-          <a class="today-action today-action-soft" href="#">Upload backup file</a>
+          <form class="login-form" method="POST" action="{{ url_for('subject_hub', slug=subject.slug) }}" enctype="multipart/form-data" data-loading="Uploading your backup file…">
+            <div class="field">
+              <label for="backup-title">Title</label>
+              <input id="backup-title" name="title" type="text" placeholder="Lesson title" />
+            </div>
+            <div class="field">
+              <label for="backup-file">File</label>
+              <input id="backup-file" name="file" type="file" accept=".pdf,.docx,.pptx,.txt" required />
+            </div>
+            <button type="submit" class="today-action today-action-soft">Upload backup file</button>
+          </form>
           {% if pending_uploads %}
             <ul class="pending-list">
               {% for upload in pending_uploads %}
@@ -156,9 +176,11 @@
                   <h4 class="hub-card-title">{{ item.title }}</h4>
                   <p class="hub-card-meta">{{ item.meta }}</p>
                 </div>
-                <a class="today-action {% if item.locked %}today-action-soft{% endif %}" href="{{ item.href }}">
-                  {{ item.action }}
-                </a>
+                {% if item.locked %}
+                  <span class="today-action today-action-soft">{{ item.action }}</span>
+                {% else %}
+                  <a class="today-action" href="{{ item.href }}">{{ item.action }}</a>
+                {% endif %}
               </article>
             {% endfor %}
           </div>
@@ -208,12 +230,8 @@
     {% endif %}
   </main>
 
-  <nav class="app-tabbar tabbar-4" aria-label="Student navigation">
-    <a class="tab active" href="{{ url_for('home') }}"><span>Home</span></a>
-    <a class="tab" href="{{ url_for('practice') }}"><span>Practice</span></a>
-    <a class="tab" href="{{ url_for('results') }}"><span>Results</span></a>
-    <a class="tab" href="{{ url_for('profile') }}"><span>Profile</span></a>
-  </nav>
+  {% set active_tab = "home" %}
+  {% include "partials/student_tabbar.html" %}
   <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
 </body>
 </html>

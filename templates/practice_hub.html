@@ -20,6 +20,7 @@
   {% include "partials/topbar.html" %}
 
   <main class="app-main">
+  {% include "partials/flash.html" %}
     <section class="home-section">
       <h1 class="section-title">Practice</h1>
       <p class="section-note">Personal Practice Checks from approved materials. Not official grades.</p>
@@ -33,6 +34,12 @@
               <p class="hub-card-meta">{{ item.meta }}</p>
             </div>
             <a class="today-action" href="{{ item.href }}">Start</a>
+          </article>
+        {% else %}
+          <article class="empty-state-card">
+            <p class="empty-kicker">Practice</p>
+            <h3 class="empty-title">No practice checks yet</h3>
+            <p class="empty-copy">Approved lessons will appear here so you can generate a Practice Check.</p>
           </article>
         {% endfor %}
       </div>

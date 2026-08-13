@@ -46,7 +46,7 @@
           {% endif %}
         {% endwith %}
 
-        <form class="login-form" method="POST" action="{{ url_for('login') }}">
+        <form class="login-form" method="POST" action="{{ url_for('login') }}" data-loading="Signing in…">
           <div class="field">
             <label for="email">School Email</label>
             <input
@@ -55,6 +55,7 @@
               name="email"
               autocomplete="username"
               required
+              autofocus
               placeholder="you@letran-calamba.edu.ph"
             />
           </div>
@@ -74,10 +75,20 @@
           <button type="submit" class="btn-primary">Sign In</button>
         </form>
 
-        <!-- Level 3: Quiet helper -->
+        <details class="pilot-box">
+          <summary>Pilot accounts</summary>
+          <div class="pilot-actions">
+            <button type="button" class="today-action today-action-soft" data-fill-login="student@letran-calamba.edu.ph|student123">Student</button>
+            <button type="button" class="today-action today-action-soft" data-fill-login="teacher@letran-calamba.edu.ph|teacher123">Teacher</button>
+            <button type="button" class="today-action today-action-soft" data-fill-login="admin@letran-calamba.edu.ph|admin123">Admin</button>
+          </div>
+          <p class="login-help">English and Math teachers use english.teacher@ and math.teacher@ with teacher123.</p>
+        </details>
+
         <p class="login-help">Need help? Ask your teacher or admin.</p>
       </div>
     </section>
   </main>
+  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
 </body>
 </html>

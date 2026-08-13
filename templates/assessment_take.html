@@ -20,6 +20,7 @@
   {% include "partials/topbar.html" %}
 
   <main class="app-main">
+  {% include "partials/flash.html" %}
     <section class="take-shell">
       <div class="take-top">
         <div>
@@ -32,7 +33,7 @@
         <span id="progress-bar" style="width: {{ (1 / questions|length * 100)|round }}%;"></span>
       </div>
 
-      <form id="practice-take-form" method="POST" action="{{ url_for('assessment_submit', slug=assessment.slug) }}">
+      <form id="practice-take-form" method="POST" action="{{ url_for('assessment_submit', slug=assessment.slug) }}" data-confirm-submit="This uses one attempt. Submit now?">
         {% for q in questions %}
           <article class="take-card {% if loop.first %}is-active{% endif %}" data-question="{{ loop.index0 }}" {% if not loop.first %}hidden{% endif %}>
             <p class="hub-card-kicker">{{ q.bloom }} · {{ q.type_label }}</p>

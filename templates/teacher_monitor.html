@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monitoring — Bloom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="app-body staff-body">
+  <div class="app-bg" aria-hidden="true">
+    <span class="ribbon ribbon-blue"></span>
+    <span class="ribbon ribbon-red"></span>
+    <span class="dot-field"></span>
+  </div>
+
+  {% include "partials/staff_topbar.html" %}
+
+  <main class="app-main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-list home-flash">
+          {% for category, message in messages %}
+            <li class="flash flash-{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <section class="home-section">
+      <h1 class="section-title">Monitoring</h1>
+      <p class="section-note">{{ subject_name }} · Section completion, extra attempts, and independent release controls.</p>
+    </section>
+
+    <section class="stat-grid">
+      <article class="stat-card">
+        <p class="stat-label">Practice Checks</p>
+        <p class="stat-value">{{ practice_n }}</p>
+        <p class="stat-meta">Personal practice attempts in this subject</p>
+      </article>
+    </section>
+
+    {% if panels %}
+      <div class="hub-list" style="margin-top: 1rem;">
+        {% for panel in panels %}
+          <article class="hub-card hub-card-stack">
+            <div>
+              <p class="hub-card-kicker">{{ panel.kicker }}</p>
+              <h2 class="hub-card-title">{{ panel.title }}</h2>
+              <p class="hub-card-meta">{{ panel.meta }}</p>
+              <p class="hub-card-meta">
+                Scores {{ "released" if panel.release_scores else "held" }}
+                · Answers {{ "released" if panel.release_answers else "held" }}
+                · Feedback {{ "released" if panel.release_feedback else "held" }}
+              </p>
+            </div>
+            <div class="hub-card-actions">
+              {% if panel.status == "published" %}
+                <form method="POST" action="{{ url_for('teacher_monitor') }}" data-confirm="Close this assessment? Students already answering may still submit.">
+                  <input type="hidden" name="assessment_id" value="{{ panel.assessment_id }}" />
+                  <input type="hidden" name="action" value="close" />
+                  <button class="today-action today-action-soft" type="submit">Close</button>
+                </form>
+              {% elif panel.status == "closed" %}
+                <form method="POST" action="{{ url_for('teacher_monitor') }}" data-confirm="Reopen with one extra attempt? Original attempts stay in history.">
+                  <input type="hidden" name="assessment_id" value="{{ panel.assessment_id }}" />
+                  <input type="hidden" name="action" value="reopen" />
+                  <button class="today-action" type="submit">Reopen + extra attempt</button>
+                </form>
+              {% endif %}
+              {% if not panel.release_scores %}
+                <form method="POST" action="{{ url_for('teacher_monitor') }}">
+                  <input type="hidden" name="assessment_id" value="{{ panel.assessment_id }}" />
+                  <input type="hidden" name="action" value="release_scores" />
+                  <button class="today-action today-action-soft" type="submit">Release scores</button>
+                </form>
+              {% endif %}
+              {% if not panel.release_answers %}
+                <form method="POST" action="{{ url_for('teacher_monitor') }}">
+                  <input type="hidden" name="assessment_id" value="{{ panel.assessment_id }}" />
+                  <input type="hidden" name="action" value="release_answers" />
+                  <button class="today-action today-action-soft" type="submit">Release answers</button>
+                </form>
+              {% endif %}
+              {% if not panel.release_feedback %}
+                <form method="POST" action="{{ url_for('teacher_monitor') }}">
+                  <input type="hidden" name="assessment_id" value="{{ panel.assessment_id }}" />
+                  <input type="hidden" name="action" value="release_feedback" />
+                  <button class="today-action today-action-soft" type="submit">Release feedback</button>
+                </form>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <article class="empty-state-card" style="margin-top: 1rem;">
+        <p class="empty-kicker">Monitor</p>
+        <h3 class="empty-title">No assessments to monitor yet</h3>
+        <p class="empty-copy">Publish a HOTS set first, then track submissions here.</p>
+      </article>
+    {% endif %}
+  </main>
+  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
+</body>
+</html>

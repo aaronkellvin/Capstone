@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HOTS Generator — Bloom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="app-body staff-body">
+  <div class="app-bg" aria-hidden="true">
+    <span class="ribbon ribbon-blue"></span>
+    <span class="ribbon ribbon-red"></span>
+    <span class="dot-field"></span>
+  </div>
+
+  {% include "partials/staff_topbar.html" %}
+
+  <main class="app-main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-list home-flash">
+          {% for category, message in messages %}
+            <li class="flash flash-{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <section class="home-section">
+      <h1 class="section-title">HOTS Generator</h1>
+      <p class="section-note">{{ subject_name }} · Generate from approved materials, review items, then publish to the section.</p>
+    </section>
+
+    <section class="lobby-card">
+      <h2 class="hub-panel-title">Generate a HOTS set</h2>
+      <p class="section-note">Questions stay grounded in the uploaded lesson text. Review before publishing.</p>
+      {% if materials %}
+        <form class="login-form" method="POST" action="{{ url_for('teacher_hots') }}" data-loading="Generating HOTS questions…">
+          <input type="hidden" name="action" value="generate" />
+          <div class="field">
+            <label for="material_id">Approved material</label>
+            <select id="material_id" name="material_id" required>
+              {% for material in materials %}
+                <option value="{{ material.id }}">{{ material.title }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label for="bloom">Bloom focus</label>
+            <select id="bloom" name="bloom">
+              <option value="mixed" selected>Mixed C4–C6</option>
+              <option value="c4">Analyze</option>
+              <option value="c5">Evaluate</option>
+              <option value="c6">Create</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="count">Number of questions</label>
+            <select id="count" name="count">
+              <option value="3">3</option>
+              <option value="5" selected>5</option>
+            </select>
+          </div>
+          <button type="submit" class="btn-primary">Generate HOTS set</button>
+        </form>
+      {% else %}
+        <p class="section-note">Upload and approve a material first.</p>
+        <a class="today-action" href="{{ url_for('teacher_materials') }}">Go to Materials</a>
+      {% endif %}
+    </section>
+
+    {% for assessment in assessments %}
+      <section class="lobby-card" style="margin-top: 1rem;">
+        <p class="hub-card-kicker">{{ assessment.status.title() }}</p>
+        <h2 class="hub-panel-title">{{ assessment.title }}</h2>
+        <p class="section-note">
+          {{ assessment.questions|length }} questions
+          {% if assessment.deadline %} · Due {{ assessment.deadline.strftime("%b %d · %I:%M %p") }}{% endif %}
+        </p>
+
+        <div class="hub-list" style="margin-top: 0.85rem;">
+          {% for question in assessment.questions %}
+            <article class="hub-card hub-card-stack">
+              <div>
+                <p class="hub-card-kicker">{{ question.bloom }} · {{ question.qtype }} · {{ question.citation }}</p>
+                <h3 class="hub-card-title">{{ question.prompt }}</h3>
+                {% if question.options() %}
+                  <p class="hub-card-meta">
+                    {% for opt in question.options() %}{{ opt.id }}) {{ opt.text }}{% if not loop.last %} · {% endif %}{% endfor %}
+                  </p>
+                {% endif %}
+                {% if question.answer %}<p class="hub-card-meta">Answer: {{ question.answer }}</p>{% endif %}
+              </div>
+              {% if assessment.status == "draft" %}
+                <form method="POST" action="{{ url_for('teacher_hots') }}" data-loading="Regenerating this question…">
+                  <input type="hidden" name="action" value="regenerate" />
+                  <input type="hidden" name="question_id" value="{{ question.id }}" />
+                  <button class="today-action today-action-soft" type="submit">Regenerate</button>
+                </form>
+              {% endif %}
+            </article>
+          {% endfor %}
+        </div>
+
+        {% if assessment.status == "draft" %}
+          <form class="login-form" method="POST" action="{{ url_for('teacher_hots') }}" style="margin-top: 1rem;" data-confirm="Publish this HOTS assessment to the section?">
+            <input type="hidden" name="action" value="publish" />
+            <input type="hidden" name="assessment_id" value="{{ assessment.id }}" />
+            <div class="field">
+              <label for="deadline-{{ assessment.id }}">Deadline</label>
+              <input id="deadline-{{ assessment.id }}" name="deadline" type="datetime-local" />
+            </div>
+            <button type="submit" class="btn-primary">Publish to section</button>
+          </form>
+        {% endif %}
+      </section>
+    {% else %}
+      <article class="empty-state-card" style="margin-top: 1rem;">
+        <p class="empty-kicker">HOTS</p>
+        <h3 class="empty-title">No HOTS sets yet</h3>
+        <p class="empty-copy">Generate from an approved lesson, review each item, then publish.</p>
+      </article>
+    {% endfor %}
+  </main>
+  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
+</body>
+</html>

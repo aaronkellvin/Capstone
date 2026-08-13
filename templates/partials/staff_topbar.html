@@ -1,6 +1,6 @@
 {# Shared staff top nav. Expects: role_nav (list of {label, endpoint, key}), active_nav, topbar_sub #}
 <header class="app-topbar staff-topbar">
-  <div class="topbar-brand">
+  <a class="topbar-brand" href="{{ url_for('home') }}">
     <img
       class="topbar-logo"
       src="{{ url_for('static', filename='images/letran-calamba-logo.png') }}"
@@ -12,7 +12,7 @@
       <p class="topbar-title">Bloom</p>
       <p class="topbar-sub">{{ topbar_sub }}</p>
     </div>
-  </div>
+  </a>
   <nav class="staff-nav" aria-label="Main">
     {% for item in role_nav %}
       <a class="staff-nav-link {% if active_nav == item.key %}active{% endif %}" href="{{ url_for(item.endpoint) }}">{{ item.label }}</a>

@@ -153,7 +153,7 @@ body {
   background: linear-gradient(90deg, var(--letran-blue) 0%, var(--letran-blue-mid) 55%, var(--letran-red) 100%);
 }
 
-/* Level 1 â€” Brand cluster */
+/* Level 1 ? Brand cluster */
 .brand-block {
   padding: 2rem 1.6rem 1.15rem;
   text-align: center;
@@ -186,7 +186,7 @@ body {
   color: var(--muted);
 }
 
-/* Level 2 â€” Task cluster */
+/* Level 2 ? Task cluster */
 .pass-body {
   padding: 0.35rem 1.55rem 1.55rem;
   border-top: 1px solid rgba(201, 215, 239, 0.85);
@@ -296,7 +296,7 @@ body {
   transform: translateY(1px) scale(0.99);
 }
 
-/* Level 3 â€” Quiet helper */
+/* Level 3 ? Quiet helper */
 .login-help {
   margin-top: 1rem;
   text-align: center;
@@ -600,6 +600,7 @@ body {
   justify-content: center;
   min-height: 2.5rem;
   padding: 0.45rem 1rem;
+  border: 0;
   border-radius: 12px;
   text-decoration: none;
   font-family: "Fredoka", "Nunito", sans-serif;
@@ -608,6 +609,7 @@ body {
   color: #fff;
   background: linear-gradient(120deg, var(--letran-blue-mid), var(--letran-blue));
   box-shadow: 0 8px 16px rgba(11, 61, 145, 0.2);
+  cursor: pointer;
 }
 
 .subject-grid {
@@ -1806,7 +1808,7 @@ body {
 }
 
 /* =========================================================
-   UI/UX polish layer — design system refinements
+   UI/UX polish layer ? design system refinements
    ========================================================= */
 
 html {
@@ -2029,7 +2031,7 @@ button:disabled,
   }
 }
 
-/* Subjects showcase — stronger bottom presence */
+/* Subjects showcase ? stronger bottom presence */
 .subjects-showcase {
   padding: 1.2rem 1.1rem 1.25rem;
   border-radius: var(--radius-lg);
@@ -2308,4 +2310,99 @@ button:disabled,
     animation: none !important;
     transition: none !important;
   }
+}
+
+a.topbar-brand {
+  text-decoration: none;
+  color: inherit;
+}
+
+a.notify-item {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.password-wrap {
+  position: relative;
+}
+
+.password-wrap input {
+  padding-right: 4.4rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--letran-blue);
+  cursor: pointer;
+}
+
+.file-chosen {
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.pilot-box {
+  margin-top: 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 14px;
+  background: rgba(11, 61, 145, 0.04);
+  border: 1px solid var(--line);
+}
+
+.pilot-box summary {
+  cursor: pointer;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.pilot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+
+.qol-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 28, 63, 0.42);
+}
+
+.qol-overlay-card {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  padding: 1.2rem 1.4rem;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--shadow-lg);
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.qol-spinner {
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 3px solid var(--line);
+  border-top-color: var(--letran-blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

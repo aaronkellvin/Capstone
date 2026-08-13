@@ -20,13 +20,14 @@
   {% include "partials/topbar.html" %}
 
   <main class="app-main">
+  {% include "partials/flash.html" %}
     <section class="lobby-card" aria-labelledby="practice-setup-title">
       <a class="hub-back" href="{{ back_href }}">Back</a>
       <p class="hero-kicker summary-kicker">{{ subject.name }} · Practice Check</p>
       <h1 id="practice-setup-title" class="section-title">Practice this lesson</h1>
       <p class="section-note">{{ material_title }} · From approved material only. Not an official grade.</p>
 
-      <form class="practice-form" method="GET" action="{{ url_for('practice_take', subject_slug=subject.slug, material_slug=material_slug) }}">
+      <form class="practice-form" method="GET" action="{{ url_for('practice_take', subject_slug=subject.slug, material_slug=material_slug) }}" data-loading="Generating your Practice Check…">
         <fieldset class="practice-fieldset">
           <legend>Choose focus</legend>
           <label class="choice"><input type="radio" name="focus" value="mixed" checked /> Mixed HOTS</label>
@@ -55,12 +56,8 @@
     </section>
   </main>
 
-  <nav class="app-tabbar tabbar-4" aria-label="Student navigation">
-    <a class="tab" href="{{ url_for('home') }}"><span>Home</span></a>
-    <a class="tab active" href="{{ url_for('practice') }}"><span>Practice</span></a>
-    <a class="tab" href="{{ url_for('results') }}"><span>Results</span></a>
-    <a class="tab" href="{{ url_for('profile') }}"><span>Profile</span></a>
-  </nav>
+  {% set active_tab = "practice" %}
+  {% include "partials/student_tabbar.html" %}
   <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
 </body>
 </html>

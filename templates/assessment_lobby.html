@@ -20,13 +20,19 @@
   {% include "partials/topbar.html" %}
 
   <main class="app-main">
+  {% include "partials/flash.html" %}
     <section class="lobby-card" aria-labelledby="lobby-title">
+      <a class="hub-back" href="{{ url_for('subject_hub', slug=assessment.subject_slug) }}">Back to {{ assessment.subject }}</a>
       <p class="hero-kicker">{{ assessment.subject }}</p>
       <h1 id="lobby-title" class="section-title">{{ assessment.title }}</h1>
       <p class="section-note">{{ assessment.deadline_label }}</p>
 
       <ul class="lobby-checklist">
-        <li>One attempt only</li>
+        {% if allowed > 1 %}
+          <li>One extra attempt is available. Your original attempt stays in history.</li>
+        {% else %}
+          <li>One attempt only</li>
+        {% endif %}
         <li>You can finish if time ends while answering</li>
         <li>This helps you practice HOTS</li>
         <li>Not an official school grade</li>
@@ -35,7 +41,13 @@
       <p class="lobby-focus">Includes: Analyze · Evaluate · Create</p>
 
       <div class="lobby-actions">
-        <a class="btn-primary btn-inline" href="{{ url_for('assessment_take', slug=assessment.slug) }}">Start Assessment</a>
+        {% if can_start %}
+          <a class="btn-primary btn-inline" href="{{ url_for('assessment_take', slug=assessment.slug) }}">
+            {% if taken %}Start extra attempt{% else %}Start Assessment{% endif %}
+          </a>
+        {% else %}
+          <a class="btn-primary btn-inline" href="{{ url_for('results', filter='assessments') }}">View results</a>
+        {% endif %}
         <a class="text-link" href="{{ url_for('home') }}">Not now</a>
       </div>
     </section>

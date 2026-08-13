@@ -19,6 +19,16 @@
   {% include "partials/staff_topbar.html" %}
 
   <main class="app-main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-list home-flash">
+          {% for category, message in messages %}
+            <li class="flash flash-{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
     <section class="home-hero">
       <p class="hero-kicker">Teacher workspace · {{ subject_name }}</p>
       <h1 class="hero-title">Welcome, {{ user.name.split(' ')[0] }}</h1>
@@ -51,5 +61,6 @@
       </div>
     </section>
   </main>
+  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
 </body>
 </html>

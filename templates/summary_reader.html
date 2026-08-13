@@ -54,12 +54,8 @@
     </div>
   </main>
 
-  <nav class="app-tabbar tabbar-4" aria-label="Student navigation">
-    <a class="tab active" href="{{ url_for('home') }}"><span>Home</span></a>
-    <a class="tab" href="{{ url_for('practice') }}"><span>Practice</span></a>
-    <a class="tab" href="{{ url_for('results') }}"><span>Results</span></a>
-    <a class="tab" href="{{ url_for('profile') }}"><span>Profile</span></a>
-  </nav>
+  {% set active_tab = "home" %}
+  {% include "partials/student_tabbar.html" %}
   <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
 </body>
 </html>

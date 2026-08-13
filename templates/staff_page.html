@@ -42,7 +42,23 @@
                 <h2 class="hub-card-title">{{ panel.title }}</h2>
                 <p class="hub-card-meta">{{ panel.meta }}</p>
               </div>
-              {% if panel.action_href and panel.action %}
+              {% if panel.form_action and panel.action %}
+                <div class="hub-card-actions">
+                  <form method="POST" action="{{ panel.form_action }}">
+                    {% for key, value in (panel.hidden or {}).items() %}
+                      <input type="hidden" name="{{ key }}" value="{{ value }}" />
+                    {% endfor %}
+                    <button class="today-action" type="submit">{{ panel.action }}</button>
+                  </form>
+                  {% if panel.reject %}
+                    <form method="POST" action="{{ panel.form_action }}" data-confirm="Reject this upload? The student will not be able to practice from it.">
+                      <input type="hidden" name="action" value="reject" />
+                      <input type="hidden" name="material_id" value="{{ panel.material_id }}" />
+                      <button class="today-action today-action-soft" type="submit">Reject</button>
+                    </form>
+                  {% endif %}
+                </div>
+              {% elif panel.action_href and panel.action %}
                 <a class="today-action {% if panel.soft %}today-action-soft{% endif %}" href="{{ panel.action_href }}">{{ panel.action }}</a>
               {% endif %}
             </article>
@@ -55,7 +71,7 @@
           <section class="lobby-card" style="margin-top: 1rem;">
             <h2 class="hub-panel-title">{{ block.title }}</h2>
             <p class="section-note">{{ block.note }}</p>
-            <form class="login-form" method="POST" action="{{ block.action }}">
+            <form class="login-form" method="POST" action="{{ block.action }}" {% if block.enctype %}enctype="{{ block.enctype }}"{% endif %} {% if block.loading %}data-loading="{{ block.loading }}"{% endif %}>
               {% for field in block.fields %}
                 <div class="field">
                   <label for="{{ field.id }}">{{ field.label }}</label>
@@ -68,10 +84,13 @@
                       {% endfor %}
                     </select>
                   {% else %}
-                    <input id="{{ field.id }}" name="{{ field.name }}" type="{{ field.type }}" placeholder="{{ field.placeholder }}" {% if field.required %}required{% endif %} />
+                    <input id="{{ field.id }}" name="{{ field.name }}" type="{{ field.type }}" placeholder="{{ field.placeholder }}" {% if field.accept %}accept="{{ field.accept }}"{% endif %} {% if field.required %}required{% endif %} />
                   {% endif %}
                 </div>
               {% endfor %}
+              {% if block.sample_target %}
+                <button type="button" class="text-link" data-fill-target="{{ block.sample_target }}" data-fill-value="{{ block.sample_value }}">Insert sample rows</button>
+              {% endif %}
               <button type="submit" class="btn-primary">{{ block.submit }}</button>
             </form>
           </section>
@@ -79,5 +98,6 @@
       {% endif %}
     </section>
   </main>
+  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
 </body>
 </html>
