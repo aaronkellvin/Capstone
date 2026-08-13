@@ -10,7 +10,7 @@ from flask import Flask, flash, redirect, render_template, request, session, url
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
-from ai import generate_hots_questions, summarize_material
+from ai import generate_hots_questions, last_ai_error, summarize_material
 from extract import ExtractError, extract_text
 from models import Announcement, Assessment, Attempt, Material, Question, QuizDraft, Setting, Summary, User, db
 
@@ -739,6 +739,12 @@ def practice_take(subject_slug, material_slug):
     if not questions:
         flash("Could not generate practice questions from this lesson yet.", "danger")
         return redirect(url_for("practice_setup", subject_slug=subject_slug, material_slug=material_slug))
+    if last_ai_error():
+        flash(
+            "AI generation failed, so Bloom used basic fallback questions. "
+            f"Check the terminal for details. ({last_ai_error()[:180]})",
+            "danger",
+        )
     bloom_label = {"mixed": "Mixed HOTS", "c4": "Analyze", "c5": "Evaluate", "c6": "Create"}.get(focus, "Mixed HOTS")
     QuizDraft.query.filter_by(user_id=user["id"], kind="practice").delete()
     draft = QuizDraft(

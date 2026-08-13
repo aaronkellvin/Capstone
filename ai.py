@@ -105,33 +105,81 @@ def _normalize_question(item: dict, index: int) -> dict:
     }
 
 
+_LAST_AI_ERROR = ""
+
+
+def last_ai_error() -> str:
+    return _LAST_AI_ERROR
+
+
+def _set_ai_error(message: str) -> None:
+    global _LAST_AI_ERROR
+    _LAST_AI_ERROR = message
+    print(f"[ai] {message}")
+
+
 def _complete_json(prompt: str) -> dict:
     raw = _complete(prompt)
     if not raw:
         return {}
     match = re.search(r"\{[\s\S]*\}", raw)
     if not match:
+        _set_ai_error("Model returned text that was not valid JSON.")
         return {}
     try:
         return json.loads(match.group(0))
     except json.JSONDecodeError:
+        _set_ai_error("Could not parse model JSON.")
         return {}
 
 
 def _complete(prompt: str) -> str:
+    global _LAST_AI_ERROR
+    _LAST_AI_ERROR = ""
     openai_key = os.environ.get("OPENAI_API_KEY", "").strip()
     gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
-    if openai_key:
-        try:
-            return _openai(prompt, openai_key)
-        except Exception:
-            pass
-    if gemini_key:
-        try:
-            return _gemini(prompt, gemini_key)
-        except Exception:
-            pass
+    provider = os.environ.get("AI_PROVIDER", "").strip().lower()
+
+    # Prefer Gemini when both keys exist unless AI_PROVIDER forces openai.
+    order = []
+    if provider == "openai":
+        order = ["openai", "gemini"]
+    elif provider == "gemini":
+        order = ["gemini", "openai"]
+    elif gemini_key:
+        order = ["gemini", "openai"]
+    else:
+        order = ["openai", "gemini"]
+
+    errors = []
+    for name in order:
+        if name == "openai" and openai_key:
+            try:
+                return _openai(prompt, openai_key)
+            except Exception as exc:
+                detail = _http_error_text(exc)
+                errors.append(f"OpenAI: {detail}")
+        if name == "gemini" and gemini_key:
+            try:
+                return _gemini(prompt, gemini_key)
+            except Exception as exc:
+                detail = _http_error_text(exc)
+                errors.append(f"Gemini: {detail}")
+
+    if not openai_key and not gemini_key:
+        _set_ai_error("No OPENAI_API_KEY or GEMINI_API_KEY set. Using fallback questions.")
+    elif errors:
+        _set_ai_error(" | ".join(errors) + " Using fallback questions.")
+    else:
+        _set_ai_error("AI provider returned an empty response. Using fallback questions.")
     return ""
+
+
+def _http_error_text(exc: Exception) -> str:
+    if isinstance(exc, urllib.error.HTTPError):
+        body = exc.read().decode("utf-8", errors="ignore")
+        return f"HTTP {exc.code} {body[:240]}"
+    return f"{type(exc).__name__}: {exc}"
 
 
 def _openai(prompt: str, key: str) -> str:
@@ -154,23 +202,48 @@ def _openai(prompt: str, key: str) -> str:
         },
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=45) as resp:
+    with urllib.request.urlopen(req, timeout=60) as resp:
         payload = json.loads(resp.read().decode("utf-8"))
     return payload["choices"][0]["message"]["content"]
 
 
 def _gemini(prompt: str, key: str) -> str:
-    model = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
-    url = (
-        f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
-    )
-    body = json.dumps(
-        {"contents": [{"parts": [{"text": "Return valid JSON only.\n\n" + prompt}]}]}
-    ).encode("utf-8")
-    req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"}, method="POST")
-    with urllib.request.urlopen(req, timeout=45) as resp:
-        payload = json.loads(resp.read().decode("utf-8"))
-    return payload["candidates"][0]["content"]["parts"][0]["text"]
+    configured = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash").strip()
+    models = []
+    for model in (configured, "gemini-2.0-flash", "gemini-1.5-flash", "gemini-flash-latest"):
+        if model and model not in models:
+            models.append(model)
+
+    last_error = None
+    for model in models:
+        url = (
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{model}:generateContent?key={key}"
+        )
+        body = json.dumps(
+            {
+                "contents": [{"parts": [{"text": "Return valid JSON only.\n\n" + prompt}]}],
+                "generationConfig": {"temperature": 0.4, "responseMimeType": "application/json"},
+            }
+        ).encode("utf-8")
+        req = urllib.request.Request(
+            url, data=body, headers={"Content-Type": "application/json"}, method="POST"
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                payload = json.loads(resp.read().decode("utf-8"))
+            candidates = payload.get("candidates") or []
+            if not candidates:
+                raise RuntimeError(f"{model} returned no candidates: {payload}")
+            parts = candidates[0].get("content", {}).get("parts") or []
+            text = "".join(part.get("text", "") for part in parts).strip()
+            if not text:
+                raise RuntimeError(f"{model} returned empty text: {payload}")
+            return text
+        except Exception as exc:
+            last_error = exc
+            continue
+    raise last_error or RuntimeError("Gemini request failed")
 
 
 def _fallback_summary(title: str, text: str) -> dict:
