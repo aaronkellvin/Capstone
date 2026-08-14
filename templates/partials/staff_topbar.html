@@ -20,6 +20,9 @@
     {% endfor %}
   </nav>
   <div class="topbar-actions">
+    {% if user and user.role == "teacher" %}
+      {% include "partials/header_messages.html" %}
+    {% endif %}
     {% include "partials/header_account.html" %}
   </div>
 </header>

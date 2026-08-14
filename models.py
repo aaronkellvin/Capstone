@@ -157,3 +157,29 @@ class QuizDraft(db.Model):
             return json.loads(self.questions_json or "[]")
         except json.JSONDecodeError:
             return []
+
+
+class Conversation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    teacher_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    student = db.relationship("User", foreign_keys=[student_id])
+    teacher = db.relationship("User", foreign_keys=[teacher_id])
+    messages = db.relationship(
+        "ChatMessage",
+        backref="conversation",
+        cascade="all, delete-orphan",
+        order_by="ChatMessage.id",
+    )
+    __table_args__ = (db.UniqueConstraint("student_id", "teacher_id", name="uq_conversation_pair"),)
+
+
+class ChatMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    conversation_id = db.Column(db.Integer, db.ForeignKey("conversation.id"), nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    read_at = db.Column(db.DateTime)
+    sender = db.relationship("User")

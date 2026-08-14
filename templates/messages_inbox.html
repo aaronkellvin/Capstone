@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Messages — Bloom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="app-body {% if is_teacher %}staff-body{% endif %}">
+  <div class="app-bg" aria-hidden="true">
+    <span class="ribbon ribbon-blue"></span>
+    <span class="ribbon ribbon-red"></span>
+    <span class="dot-field"></span>
+  </div>
+
+  {% if is_teacher %}
+    {% include "partials/staff_topbar.html" %}
+  {% else %}
+    {% include "partials/topbar.html" %}
+  {% endif %}
+
+  <main class="app-main">
+    {% include "partials/flash.html" %}
+    <section class="home-section">
+      <h1 class="section-title">Messages</h1>
+      <p class="section-note">
+        {% if is_teacher %}
+          Private academic chats with your students.
+        {% else %}
+          Chat with your teachers about lessons, assessments, and materials.
+        {% endif %}
+      </p>
+
+      {% if threads %}
+        <div class="hub-list" style="margin-top: 1rem;">
+          {% for thread in threads %}
+            <a class="hub-card message-row {% if thread.unread %}is-unread-card{% endif %}" href="{{ thread.href }}">
+              <span class="unread-dot {% if thread.unread %}is-on{% endif %}" aria-hidden="true"></span>
+              <span class="avatar avatar-lg" aria-hidden="true">{{ thread.initials }}</span>
+              <div>
+                <p class="hub-card-kicker">{{ thread.meta }}{% if thread.unread %} · {{ thread.unread }} new{% endif %}</p>
+                <h2 class="hub-card-title">{{ thread.name }}</h2>
+                <p class="hub-card-meta">{{ thread.preview }}</p>
+              </div>
+              <p class="message-when">{{ thread.when }}</p>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <article class="empty-state-card">
+          <p class="empty-kicker">Messages</p>
+          <h3 class="empty-title">{% if is_teacher %}No student messages yet{% else %}No teachers to message yet{% endif %}</h3>
+          <p class="empty-copy">
+            {% if is_teacher %}
+              When a student asks a question, it will appear here.
+            {% else %}
+              Your subject teachers will show up here when accounts are ready.
+            {% endif %}
+          </p>
+        </article>
+      {% endif %}
+    </section>
+  </main>
+
+  {% if not is_teacher %}
+    {% set active_tab = "home" %}
+    {% include "partials/student_tabbar.html" %}
+  {% endif %}
+  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
+</body>
+</html>

@@ -54,7 +54,11 @@
     </section>
 
     <div class="summary-footer">
-      <a class="btn-primary btn-inline" href="{{ url_for('subject_hub', slug=subject.slug, tab='practice') }}">Back to Practice</a>
+      {% if ask_teacher %}
+        <p class="section-note">Still confused? Ask {{ ask_teacher.name }} before you leave.</p>
+        <a class="btn-primary btn-inline" href="{{ ask_teacher.href }}">Ask Teacher</a>
+      {% endif %}
+      <a class="today-action today-action-soft" href="{{ url_for('subject_hub', slug=subject.slug, tab='practice') }}">Back to Practice</a>
       <a class="text-link" href="{{ url_for('home') }}">Go to Home</a>
     </div>
   </main>

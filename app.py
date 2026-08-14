@@ -6,13 +6,27 @@ import re
 from datetime import datetime, timedelta
 from functools import wraps
 
-from flask import Flask, flash, redirect, render_template, request, session, url_for
+from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
+from sqlalchemy import or_
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 from ai import generate_hots_questions, last_ai_error, summarize_material
 from extract import ExtractError, extract_text
-from models import Announcement, Assessment, Attempt, Material, Question, QuizDraft, Setting, Summary, User, db
+from models import (
+    Announcement,
+    Assessment,
+    Attempt,
+    ChatMessage,
+    Conversation,
+    Material,
+    Question,
+    QuizDraft,
+    Setting,
+    Summary,
+    User,
+    db,
+)
 
 
 def load_env():
@@ -39,6 +53,14 @@ app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
 app.config["UPLOAD_FOLDER"] = os.path.join(app.instance_path, "uploads")
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 db.init_app(app)
+
+
+@app.context_processor
+def inject_unread_messages():
+    user = current_user()
+    if not user:
+        return {"unread_messages": 0}
+    return {"unread_messages": unread_message_count(user["id"])}
 
 SUBJECTS = {
     "english": {"slug": "english", "name": "English", "announce": "English"},
@@ -116,6 +138,7 @@ def teacher_subject_slug(user) -> str:
 def teacher_nav():
     return [
         {"label": "Home", "endpoint": "teacher_home", "key": "home"},
+        {"label": "Messages", "endpoint": "messages_inbox", "key": "messages"},
         {"label": "Materials", "endpoint": "teacher_materials", "key": "materials"},
         {"label": "HOTS", "endpoint": "teacher_hots", "key": "hots"},
         {"label": "Monitor", "endpoint": "teacher_monitor", "key": "monitor"},
@@ -148,7 +171,153 @@ def announcements_context(user=None):
                 "href": url_for("announcements"),
             }
         )
-    return {"announcements_preview": preview, "unread_announcements": unread}
+    return {
+        "announcements_preview": preview,
+        "unread_announcements": unread,
+        "unread_messages": unread_message_count(user["id"]) if user else 0,
+    }
+
+
+def initials(name: str) -> str:
+    parts = [part for part in (name or "B").split(" ") if part]
+    if not parts:
+        return "B"
+    if len(parts) == 1:
+        return parts[0][:1].upper()
+    return (parts[0][:1] + parts[-1][:1]).upper()
+
+
+def relative_time(when) -> str:
+    if not when:
+        return ""
+    seconds = max(0, int((datetime.utcnow() - when).total_seconds()))
+    if seconds < 45:
+        return "Just now"
+    if seconds < 3600:
+        mins = max(1, seconds // 60)
+        return f"{mins} min ago"
+    if seconds < 86400:
+        hours = seconds // 3600
+        return f"{hours}h ago"
+    if seconds < 172800:
+        return "Yesterday"
+    return when.strftime("%b %d")
+
+
+def unread_message_count(user_id: int) -> int:
+    return (
+        ChatMessage.query.join(Conversation)
+        .filter(ChatMessage.sender_id != user_id)
+        .filter(ChatMessage.read_at.is_(None))
+        .filter(or_(Conversation.student_id == user_id, Conversation.teacher_id == user_id))
+        .count()
+    )
+
+
+def can_access_conversation(user, conversation: Conversation) -> bool:
+    if not conversation:
+        return False
+    if user["role"] == "student":
+        return conversation.student_id == user["id"]
+    if user["role"] == "teacher":
+        return conversation.teacher_id == user["id"]
+    return False
+
+
+def get_or_create_conversation(student_id: int, teacher_id: int) -> Conversation:
+    conversation = Conversation.query.filter_by(student_id=student_id, teacher_id=teacher_id).first()
+    if conversation:
+        return conversation
+    conversation = Conversation(student_id=student_id, teacher_id=teacher_id)
+    db.session.add(conversation)
+    db.session.commit()
+    return conversation
+
+
+def mark_conversation_read(conversation: Conversation, user_id: int):
+    unread = [
+        message
+        for message in conversation.messages
+        if message.sender_id != user_id and message.read_at is None
+    ]
+    if not unread:
+        return
+    now = datetime.utcnow()
+    for message in unread:
+        message.read_at = now
+    db.session.commit()
+
+
+def serialize_message(message: ChatMessage, user_id: int) -> dict:
+    mine = message.sender_id == user_id
+    status = "sent"
+    if mine and message.read_at:
+        status = "read"
+    return {
+        "id": message.id,
+        "body": message.body,
+        "mine": mine,
+        "status": status,
+        "created_label": relative_time(message.created_at),
+        "created_at": message.created_at.strftime("%b %d · %I:%M %p") if message.created_at else "",
+    }
+
+
+def conversation_preview(conversation: Conversation, user_id: int) -> dict:
+    other = conversation.teacher if conversation.student_id == user_id else conversation.student
+    last = conversation.messages[-1] if conversation.messages else None
+    unread = sum(1 for message in conversation.messages if message.sender_id != user_id and message.read_at is None)
+    return {
+        "id": conversation.id,
+        "other_id": other.id if other else 0,
+        "name": other.name if other else "Unknown",
+        "meta": (other.subject or other.role.title()) if other else "",
+        "initials": initials(other.name if other else "B"),
+        "preview": (last.body[:90] if last else "No messages yet"),
+        "when": relative_time(last.created_at if last else conversation.updated_at),
+        "unread": unread,
+        "href": url_for("messages_thread", user_id=other.id) if other else url_for("messages_inbox"),
+    }
+
+
+def same_section(user, other) -> bool:
+    left = (user.get("section") if isinstance(user, dict) else getattr(user, "section", None)) or ""
+    right = (other.get("section") if isinstance(other, dict) else getattr(other, "section", None)) or ""
+    if not left or not right:
+        return True
+    return left == right
+
+
+def allowed_chat_partner(user, other) -> bool:
+    if not other:
+        return False
+    if not same_section(user, other):
+        return False
+    if user["role"] == "student":
+        return other.role == "teacher"
+    if user["role"] == "teacher":
+        return other.role == "student"
+    return False
+
+
+def find_conversation(user, other):
+    if user["role"] == "student":
+        return Conversation.query.filter_by(student_id=user["id"], teacher_id=other.id).first()
+    return Conversation.query.filter_by(student_id=other.id, teacher_id=user["id"]).first()
+
+
+def ask_teacher_context(user, subject_name: str, topic: str):
+    if not user or user["role"] != "student" or not subject_name:
+        return None
+    teachers = User.query.filter_by(role="teacher", subject=subject_name).order_by(User.name).all()
+    teacher = next((item for item in teachers if same_section(user, item)), None) or (teachers[0] if teachers else None)
+    if not teacher:
+        return None
+    draft = f"Hi, I have a question about {topic}."
+    return {
+        "name": teacher.name,
+        "href": url_for("messages_thread", user_id=teacher.id, draft=draft),
+    }
 
 
 def session_user_payload(user: User) -> dict:
@@ -651,6 +820,7 @@ def subject_hub(slug):
         "pending_uploads": pending_uploads,
         "practice_items": practice_items,
         "result_items": result_items,
+        "ask_teacher": ask_teacher_context(user, meta["name"], meta["name"]),
     }
     context.update(announcements_context(user))
     return render_template("subject_hub.html", **context)
@@ -690,6 +860,7 @@ def summary_reader(slug, material_slug):
             "intro": material.summary.intro,
             "sections": material.summary.sections(),
         },
+        "ask_teacher": ask_teacher_context(user, meta["name"], material.title),
     }
     context.update(announcements_context(user))
     return render_template("summary_reader.html", **context)
@@ -840,6 +1011,7 @@ def attempt_review(attempt_id):
         "score_label": score_label,
         "encouragement": encouragement,
         "review_items": review_items,
+        "ask_teacher": ask_teacher_context(user, meta["name"], attempt.title),
     }
     context.update(announcements_context(user))
     return render_template("practice_result.html", **context)
@@ -868,6 +1040,9 @@ def assessment_lobby(slug):
         "can_start": taken < allowed and assessment.status == "published",
         "taken": taken,
         "allowed": allowed,
+        "ask_teacher": ask_teacher_context(
+            user, SUBJECTS[assessment.subject_slug]["name"], assessment.title
+        ),
     }
     context.update(announcements_context(user))
     return render_template("assessment_lobby.html", **context)
@@ -1100,6 +1275,17 @@ def teacher_home(user):
     drafts = Assessment.query.filter_by(subject_slug=slug, status="draft").count()
     published = Assessment.query.filter_by(subject_slug=slug, status="published").count()
     attention = []
+    unread = unread_message_count(user["id"])
+    if unread:
+        attention.append(
+            {
+                "kicker": "Messages",
+                "title": f"{unread} student message{'s' if unread != 1 else ''} waiting",
+                "meta": "Private academic chat with your students",
+                "action": "Open",
+                "href": url_for("messages_inbox"),
+            }
+        )
     for material in Material.query.filter_by(subject_slug=slug, status="pending"):
         attention.append(
             {
@@ -1656,6 +1842,167 @@ def admin_settings(user):
             },
         ],
         form_blocks=[],
+    )
+
+
+@app.route("/messages")
+def messages_inbox():
+    user = require_user()
+    if not user:
+        return redirect(url_for("login"))
+    if user["role"] == "admin":
+        flash("Messages are for students and teachers.", "danger")
+        return redirect(url_for("home"))
+
+    threads = []
+    if user["role"] == "student":
+        teachers = User.query.filter_by(role="teacher").order_by(User.subject, User.name).all()
+        for teacher in teachers:
+            if not same_section(user, teacher):
+                continue
+            conversation = Conversation.query.filter_by(student_id=user["id"], teacher_id=teacher.id).first()
+            if conversation and conversation.messages:
+                threads.append(conversation_preview(conversation, user["id"]))
+            else:
+                threads.append(
+                    {
+                        "id": 0,
+                        "other_id": teacher.id,
+                        "name": teacher.name,
+                        "meta": teacher.subject or "Teacher",
+                        "initials": initials(teacher.name),
+                        "preview": "Start a private question about a lesson or assessment",
+                        "when": "",
+                        "unread": 0,
+                        "href": url_for("messages_thread", user_id=teacher.id),
+                    }
+                )
+    else:
+        conversations = (
+            Conversation.query.filter_by(teacher_id=user["id"])
+            .order_by(Conversation.updated_at.desc())
+            .all()
+        )
+        threads = [
+            conversation_preview(item, user["id"])
+            for item in conversations
+            if item.messages and item.student and same_section(user, item.student)
+        ]
+        threads.sort(key=lambda item: (0 if item["unread"] else 1, item["when"] == ""))
+
+    context = {
+        "user": user,
+        "threads": threads,
+        "is_teacher": user["role"] == "teacher",
+        "topbar_sub": "Messages",
+        "role_nav": teacher_nav() if user["role"] == "teacher" else None,
+        "active_nav": "messages",
+    }
+    context.update(announcements_context(user))
+    return render_template("messages_inbox.html", **context)
+
+
+@app.route("/messages/with/<int:user_id>", methods=["GET", "POST"])
+def messages_thread(user_id):
+    user = require_user()
+    if not user:
+        return redirect(url_for("login"))
+    if user["role"] == "admin":
+        flash("Messages are for students and teachers.", "danger")
+        return redirect(url_for("home"))
+
+    other = db.session.get(User, user_id)
+    if not other or not allowed_chat_partner(user, other):
+        flash(
+            "You can only message your teachers."
+            if user["role"] == "student"
+            else "You can only message students in your section.",
+            "danger",
+        )
+        return redirect(url_for("messages_inbox"))
+
+    conversation = find_conversation(user, other)
+    if user["role"] == "teacher" and (not conversation or not conversation.messages):
+        flash("That student has not started a conversation yet.", "danger")
+        return redirect(url_for("messages_inbox"))
+
+    if request.method == "POST":
+        body = (request.form.get("body") or "").strip()
+        if not body:
+            flash("Please type a message first.", "danger")
+        elif len(body) > 2000:
+            flash("Messages are limited to 2,000 characters.", "danger")
+        else:
+            if user["role"] == "student":
+                conversation = get_or_create_conversation(user["id"], other.id)
+            elif not conversation:
+                flash("That student has not started a conversation yet.", "danger")
+                if request.headers.get("X-Requested-With") == "fetch":
+                    return jsonify({"ok": False, "error": "Could not send that message."}), 400
+                return redirect(url_for("messages_inbox"))
+            if conversation and can_access_conversation(user, conversation):
+                db.session.add(
+                    ChatMessage(conversation_id=conversation.id, sender_id=user["id"], body=body)
+                )
+                conversation.updated_at = datetime.utcnow()
+                db.session.commit()
+                if request.headers.get("X-Requested-With") == "fetch":
+                    last = conversation.messages[-1]
+                    return jsonify({"ok": True, "message": serialize_message(last, user["id"])})
+            else:
+                flash("You do not have access to that conversation.", "danger")
+        if request.headers.get("X-Requested-With") == "fetch":
+            return jsonify({"ok": False, "error": "Could not send that message."}), 400
+        return redirect(url_for("messages_thread", user_id=other.id))
+
+    if conversation:
+        mark_conversation_read(conversation, user["id"])
+    draft = (request.args.get("draft") or "").strip()[:2000]
+    messages = [serialize_message(item, user["id"]) for item in (conversation.messages if conversation else [])]
+    context = {
+        "user": user,
+        "other": {
+            "id": other.id,
+            "name": other.name,
+            "meta": other.subject or other.role.title(),
+            "initials": initials(other.name),
+        },
+        "messages": messages,
+        "draft": draft,
+        "poll_url": url_for("messages_updates", user_id=other.id),
+        "send_url": url_for("messages_thread", user_id=other.id),
+        "topbar_sub": "Messages",
+        "role_nav": teacher_nav() if user["role"] == "teacher" else None,
+        "active_nav": "messages",
+    }
+    context.update(announcements_context(user))
+    return render_template("messages_thread.html", **context)
+
+
+@app.route("/messages/with/<int:user_id>/updates")
+def messages_updates(user_id):
+    user = require_user()
+    if not user:
+        return jsonify({"ok": False}), 401
+    other = db.session.get(User, user_id)
+    if not other or not allowed_chat_partner(user, other):
+        return jsonify({"ok": False}), 403
+    conversation = find_conversation(user, other)
+    if not conversation:
+        return jsonify({"ok": True, "messages": [], "read_ids": [], "unread_messages": unread_message_count(user["id"])})
+    if not can_access_conversation(user, conversation):
+        return jsonify({"ok": False}), 403
+    mark_conversation_read(conversation, user["id"])
+    after = request.args.get("after", type=int) or 0
+    fresh = [item for item in conversation.messages if item.id > after]
+    read_ids = [item.id for item in conversation.messages if item.sender_id == user["id"] and item.read_at]
+    return jsonify(
+        {
+            "ok": True,
+            "messages": [serialize_message(item, user["id"]) for item in fresh],
+            "read_ids": read_ids,
+            "unread_messages": unread_message_count(user["id"]),
+        }
     )
 
 

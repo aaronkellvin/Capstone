@@ -50,6 +50,9 @@
       <a class="btn-primary btn-inline" href="{{ url_for('practice_setup', subject_slug=subject.slug, material_slug=summary.slug) }}">
         Practice this lesson
       </a>
+      {% if ask_teacher %}
+        <a class="today-action today-action-soft" href="{{ ask_teacher.href }}">Ask Teacher</a>
+      {% endif %}
       <a class="text-link" href="{{ url_for('subject_hub', slug=subject.slug, tab='study') }}">Back to materials</a>
     </div>
   </main>

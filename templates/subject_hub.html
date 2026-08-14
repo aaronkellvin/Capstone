@@ -38,6 +38,9 @@
         <span style="width: {{ subject.progress_percent }}%;"></span>
       </div>
       <p class="hub-next">{{ subject.next_action }}</p>
+      {% if ask_teacher %}
+        <a class="text-link ask-teacher-link" href="{{ ask_teacher.href }}">Ask {{ ask_teacher.name }}</a>
+      {% endif %}
     </section>
 
     <nav class="hub-tabs" aria-label="{{ subject.name }} sections">

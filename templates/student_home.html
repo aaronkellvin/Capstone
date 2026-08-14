@@ -80,6 +80,23 @@
       </div>
     </section>
 
+    <section class="home-section" aria-labelledby="messages-title">
+      <div class="section-head">
+        <div>
+          <h2 id="messages-title" class="section-title section-title-sm">Chat with Teacher</h2>
+          <p class="section-note">Private questions about lessons, assessments, and materials.</p>
+        </div>
+      </div>
+      <a class="today-card today-announcement" href="{{ url_for('messages_inbox') }}">
+        <div class="today-copy">
+          <p class="today-kicker">{% if unread_messages %}{{ unread_messages }} new{% else %}Messages{% endif %}</p>
+          <h3 class="today-title">Ask your English, Math, or Science teacher</h3>
+          <p class="today-meta">Teachers reply here. This is not a class forum.</p>
+        </div>
+        <span class="today-action">Open Messages</span>
+      </a>
+    </section>
+
     <section class="home-section subjects-showcase" aria-labelledby="subjects-title">
       <div class="section-head section-head-row">
         <div>

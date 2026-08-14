@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ other.name }} — Messages — Bloom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body class="app-body {% if user.role == 'teacher' %}staff-body{% endif %}">
+  <div class="app-bg" aria-hidden="true">
+    <span class="ribbon ribbon-blue"></span>
+    <span class="ribbon ribbon-red"></span>
+    <span class="dot-field"></span>
+  </div>
+
+  {% if user.role == "teacher" %}
+    {% include "partials/staff_topbar.html" %}
+  {% else %}
+    {% include "partials/topbar.html" %}
+  {% endif %}
+
+  <main class="app-main chat-main">
+    {% include "partials/flash.html" %}
+    <section class="chat-shell" data-poll-url="{{ poll_url }}" data-send-url="{{ send_url }}">
+      <header class="chat-head">
+        <a class="hub-back" href="{{ url_for('messages_inbox') }}">Messages</a>
+        <div class="chat-person">
+          <span class="avatar" aria-hidden="true">{{ other.initials }}</span>
+          <div>
+            <h1 class="chat-name">{{ other.name }}</h1>
+            <p class="chat-meta">{{ other.meta }} · Private academic chat</p>
+          </div>
+        </div>
+      </header>
+
+      <div class="chat-thread" id="chat-thread">
+        {% if messages %}
+          {% for item in messages %}
+            <article class="chat-bubble {% if item.mine %}is-mine{% else %}is-theirs{% endif %}" data-id="{{ item.id }}">
+              <p class="chat-text">{{ item.body }}</p>
+              <p class="chat-stamp">{{ item.created_label }}{% if item.mine %} · {{ "Read" if item.status == "read" else "Sent" }}{% endif %}</p>
+            </article>
+          {% endfor %}
+        {% else %}
+          <div class="chat-empty" id="chat-empty">
+            <p>No messages yet. Ask about a lesson, assessment, or material.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <form class="chat-composer" id="chat-form" method="POST" action="{{ send_url }}">
+        <label class="sr-only" for="chat-body">Type a message</label>
+        <textarea id="chat-body" name="body" rows="2" maxlength="2000" placeholder="Type a message..." required>{{ draft }}</textarea>
+        <button type="submit" class="icon-btn chat-send" aria-label="Send">
+          <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3.4 11.2 20.2 3.6a.8.8 0 0 1 1.1 1.1L13.7 21.5a.8.8 0 0 1-1.5.1l-2.6-6.3-6.3-2.6a.8.8 0 0 1 .1-1.5Z"/></svg>
+        </button>
+        <p class="chat-status" id="chat-status" hidden role="status" aria-live="polite"></p>
+      </form>
+    </section>
+  </main>
+
+  {% if user.role != "teacher" %}
+    {% set active_tab = "home" %}
+    {% include "partials/student_tabbar.html" %}
+  {% endif %}
+  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/messages.js') }}"></script>
+</body>
+</html>
