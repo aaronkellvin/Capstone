@@ -39,29 +39,26 @@
         <div class="weekly-goal" aria-label="Your progress">
           <div class="weekly-goal-top">
             <span>Your progress</span>
-            <strong>
-              {% if weekly_goal.has_progress %}
-                {{ weekly_goal.percent }}%
-              {% else %}
-                No progress yet
-              {% endif %}
-            </strong>
+            <strong>{{ weekly_goal.percent }}%</strong>
           </div>
           <div
-            class="goal-bar {% if not weekly_goal.has_progress %}is-empty{% endif %}"
+            class="goal-bar {% if weekly_goal.percent <= 0 %}is-empty{% endif %}"
             role="progressbar"
             aria-valuemin="0"
             aria-valuemax="100"
             aria-valuenow="{{ weekly_goal.percent }}"
+            aria-valuetext="{% if weekly_goal.percent <= 0 %}Not started{% elif weekly_goal.percent >= 100 %}Completed{% else %}{{ weekly_goal.percent }}% complete{% endif %}"
             aria-label="Course progress"
           >
             <span style="width: {{ weekly_goal.percent }}%;"></span>
           </div>
           <p class="goal-hint">
-            {% if weekly_goal.has_progress %}
-              {{ weekly_goal.percent }}% complete. {{ weekly_goal.hint }}
+            {% if weekly_goal.percent <= 0 %}
+              Not started. {{ weekly_goal.hint }}
+            {% elif weekly_goal.percent >= 100 %}
+              Completed. {{ weekly_goal.hint }}
             {% else %}
-              No progress yet. {{ weekly_goal.hint }}
+              {{ weekly_goal.percent }}% complete. {{ weekly_goal.hint }}
             {% endif %}
           </p>
         </div>
@@ -134,18 +131,21 @@
             </div>
             <p class="subject-name">{{ subject.name }}</p>
             <p class="subject-progress">
-              {% if subject.has_progress %}
-                {{ subject.progress_percent }}% complete · {{ subject.progress_insight }}
+              {% if subject.progress_percent <= 0 %}
+                Not started
+              {% elif subject.progress_percent >= 100 %}
+                Completed · {{ subject.progress_insight }}
               {% else %}
-                No progress yet
+                {{ subject.progress_percent }}% complete · {{ subject.progress_insight }}
               {% endif %}
             </p>
             <div
-              class="subject-meter {% if not subject.has_progress %}is-empty{% endif %}"
+              class="subject-meter {% if subject.progress_percent <= 0 %}is-empty{% endif %}"
               role="progressbar"
               aria-valuemin="0"
               aria-valuemax="100"
               aria-valuenow="{{ subject.progress_percent }}"
+              aria-valuetext="{% if subject.progress_percent <= 0 %}Not started{% elif subject.progress_percent >= 100 %}Completed{% else %}{{ subject.progress_percent }}% complete{% endif %}"
               aria-label="{{ subject.name }} progress"
             >
               <span style="width: {{ subject.progress_percent }}%;"></span>

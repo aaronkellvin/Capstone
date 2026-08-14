@@ -34,7 +34,7 @@
       <a class="hub-back" href="{{ url_for('home') }}">Back to Home</a>
       <h1 id="hub-title" class="section-title">{{ subject.name }}</h1>
       <p class="section-note">{{ subject.teacher }} · {{ subject.progress_label }}</p>
-      <div class="subject-meter hub-meter" aria-hidden="true">
+      <div class="subject-meter hub-meter {% if subject.progress_percent <= 0 %}is-empty{% endif %}" aria-hidden="true">
         <span style="width: {{ subject.progress_percent }}%;"></span>
       </div>
       <p class="hub-next">{{ subject.next_action }}</p>

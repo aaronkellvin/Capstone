@@ -790,19 +790,37 @@ body {
   font-weight: 700;
 }
 
-.goal-bar {
+.goal-bar,
+.subject-meter {
   margin-top: 0.55rem;
-  height: 0.55rem;
+  height: 0.7rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.22);
   overflow: hidden;
+  flex-shrink: 0;
+  background-color: #e7eef8;
+  background-image: repeating-linear-gradient(
+    -52deg,
+    rgba(11, 61, 145, 0.12) 0 0.32rem,
+    rgba(11, 61, 145, 0.04) 0.32rem 0.64rem
+  );
+  border: 1px solid rgba(11, 61, 145, 0.22);
+  box-shadow: inset 0 1px 2px rgba(11, 61, 145, 0.08);
 }
 
-.goal-bar span {
+.goal-bar.is-empty,
+.subject-meter.is-empty {
+  background-color: #dfe8f5;
+  border-color: rgba(11, 61, 145, 0.28);
+}
+
+.goal-bar span,
+.subject-meter span {
   display: block;
   height: 100%;
+  min-height: 0.7rem;
   border-radius: inherit;
-  background: #fff;
+  background: linear-gradient(90deg, var(--letran-blue-soft), var(--letran-blue));
+  transition: width 450ms var(--ease);
 }
 
 .goal-hint {
@@ -853,22 +871,6 @@ body {
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--muted);
-}
-
-.subject-meter {
-  height: 0.58rem;
-  border-radius: 999px;
-  background: rgba(11, 61, 145, 0.12);
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.subject-meter span {
-  display: block;
-  height: 100%;
-  min-height: 0.58rem;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--letran-blue-soft), var(--letran-blue));
 }
 
 .subject-next {
@@ -1526,10 +1528,16 @@ body {
 
 .take-progress {
   margin: 0.9rem 0 1rem;
-  height: 0.55rem;
+  height: 0.62rem;
   border-radius: 999px;
-  background: rgba(11, 61, 145, 0.1);
   overflow: hidden;
+  background-color: #e7eef8;
+  background-image: repeating-linear-gradient(
+    -52deg,
+    rgba(11, 61, 145, 0.12) 0 0.32rem,
+    rgba(11, 61, 145, 0.04) 0.32rem 0.64rem
+  );
+  border: 1px solid rgba(11, 61, 145, 0.22);
 }
 
 .take-progress span {
@@ -2127,13 +2135,7 @@ button:disabled,
 }
 
 .subject-meter {
-  height: 0.62rem;
-  background: rgba(11, 61, 145, 0.12);
-}
-
-.subject-meter span {
-  min-height: 0.62rem;
-  transition: width 450ms var(--ease);
+  height: 0.7rem;
 }
 
 .subject-footer {
@@ -2759,8 +2761,7 @@ html.pref-reduce-motion *::after {
 }
 
 .home-hero .goal-bar {
-  height: 0.7rem;
-  background: rgba(11, 61, 145, 0.12);
+  height: 0.72rem;
 }
 
 .home-hero .goal-bar span {

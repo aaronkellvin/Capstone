@@ -673,7 +673,14 @@ def home():
                 "slug": slug,
                 "name": meta["name"],
                 "teacher": teacher.name if teacher else "Subject teacher",
-                "progress_label": f"{percent}% complete · {insight}" if has_progress else "No progress yet",
+                "progress_label": (
+                    "Not started"
+                    if percent <= 0
+                    else "Completed"
+                    if percent >= 100
+                    else f"{percent}% complete"
+                )
+                + (f" · {insight}" if percent > 0 else ""),
                 "progress_insight": insight,
                 "progress_percent": percent,
                 "has_progress": has_progress,
@@ -700,9 +707,9 @@ def home():
             "percent": overall,
             "has_progress": bool(tracked),
             "hint": (
-                "Based on your English, Math, and Science work."
-                if tracked
-                else "Start a summary or Practice Check to begin tracking progress."
+                "Start a summary or Practice Check to begin tracking progress."
+                if overall <= 0
+                else "Based on your English, Math, and Science work."
             ),
         },
         "today_items": today,
@@ -735,7 +742,14 @@ def subject_hub(slug):
         "slug": slug,
         "name": meta["name"],
         "teacher": teacher.name if teacher else "Subject teacher",
-        "progress_label": f"{percent}% complete · {insight}" if has_progress else "No progress yet",
+        "progress_label": (
+            "Not started"
+            if percent <= 0
+            else "Completed"
+            if percent >= 100
+            else f"{percent}% complete"
+        )
+        + (f" · {insight}" if percent > 0 else ""),
         "progress_percent": percent,
         "next_action": insight,
     }
