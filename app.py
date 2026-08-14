@@ -344,7 +344,9 @@ def bloom_progress(user_id: int, subject_slug: str) -> tuple[int, str, bool]:
             bloom = item.get("bloom")
             if bloom in blooms and item.get("status") == "good":
                 blooms[bloom] += 1
-    percent = int(sum(percents) / len(percents)) if percents else min(40 + 8 * len(attempts), 90)
+    percent = int(sum(percents) / len(percents)) if percents else 0
+    if not percents:
+        return 0, "Keep practicing HOTS items from approved lessons", False
     strongest = max(blooms, key=blooms.get)
     if max(blooms.values()) == 0:
         next_line = "Keep practicing HOTS items from approved lessons"
@@ -362,7 +364,8 @@ def build_today(user_id: int) -> list[dict]:
         taken = Attempt.query.filter_by(
             user_id=user_id, assessment_id=assessment.id, kind="assessment"
         ).count()
-        allowed = assessment.attempt_limit + (1 if assessment.extra_attempt else 0)
+        limit = assessment.attempt_limit if assessment.attempt_limit is not None else 1
+        allowed = limit + (1 if assessment.extra_attempt else 0)
         if taken >= allowed:
             continue
         due = "Due soon"
@@ -371,13 +374,14 @@ def build_today(user_id: int) -> list[dict]:
                 due = "Due tomorrow — start now"
             elif assessment.deadline.date() == now.date():
                 due = "Due today — start now"
+        attempt_label = "1 attempt" if allowed == 1 else f"{allowed} attempts"
         items.append(
             {
                 "type": "assessment",
                 "priority": "primary",
                 "kicker": f"{due} · {SUBJECTS[assessment.subject_slug]['name']}",
                 "title": assessment.title,
-                "meta": "1 attempt · Assistive check · Posted by your teacher",
+                "meta": f"{attempt_label} · Assistive check · Posted by your teacher",
                 "action": "Start now",
                 "href": url_for("assessment_lobby", slug=assessment.slug),
             }
@@ -662,10 +666,22 @@ def home():
     for slug, meta in SUBJECTS.items():
         percent, insight, has_progress = bloom_progress(user["id"], slug)
         teacher = User.query.filter_by(role="teacher", subject=meta["name"]).first()
-        due = Assessment.query.filter_by(subject_slug=slug, status="published").count()
         next_action = "Next: Explore approved lessons"
-        if due:
+        published = Assessment.query.filter_by(subject_slug=slug, status="published").all()
+        open_hots = False
+        for assessment in published:
+            taken = Attempt.query.filter_by(
+                user_id=user["id"], assessment_id=assessment.id, kind="assessment"
+            ).count()
+            limit = assessment.attempt_limit if assessment.attempt_limit is not None else 1
+            allowed = limit + (1 if assessment.extra_attempt else 0)
+            if taken < allowed:
+                open_hots = True
+                break
+        if open_hots:
             next_action = "Next: Open a HOTS Assessment"
+        elif published:
+            next_action = "Next: Review your last result"
         elif Material.query.filter_by(subject_slug=slug, status="approved").first():
             next_action = "Next: Read a summary or start practice"
         subjects.append(
