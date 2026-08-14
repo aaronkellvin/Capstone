@@ -1,3 +1,4 @@
+{% include "partials/prefs_boot.html" %}
 <header class="app-topbar">
   <a class="topbar-brand" href="{{ url_for('home') }}">
     <img
@@ -9,22 +10,26 @@
     />
     <div class="topbar-text">
       <p class="topbar-title">Bloom</p>
-      <p class="topbar-sub">{{ topbar_sub }}</p>
+      <p class="topbar-kicker">Study assistant</p>
     </div>
   </a>
 
+  {% if topbar_sub %}
+    <p class="topbar-context">{{ topbar_sub }}</p>
+  {% endif %}
+
   <div class="topbar-actions">
-    <div class="notify-wrap">
+    <div class="menu-wrap notify-wrap">
       <button
         type="button"
-        class="bell-btn"
+        class="icon-btn"
         id="notify-toggle"
         aria-label="Announcements"
         aria-haspopup="true"
         aria-expanded="false"
         aria-controls="notify-panel"
       >
-        <svg class="bell-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path
             d="M12 22a2.2 2.2 0 0 0 2.2-2.2h-4.4A2.2 2.2 0 0 0 12 22Zm7-5.2V11a7 7 0 1 0-14 0v5.8L3 18.6V20h18v-1.4l-2-1.8Z"
             fill="currentColor"
@@ -35,13 +40,13 @@
         {% endif %}
       </button>
 
-      <div class="notify-panel" id="notify-panel" hidden role="region" aria-label="Announcements preview">
-        <div class="notify-head">
-          <p class="notify-title">Announcements</p>
+      <div class="menu-panel notify-panel" id="notify-panel" hidden role="region" aria-label="Announcements preview">
+        <div class="menu-head">
+          <p class="menu-title">Announcements</p>
           {% if unread_announcements %}
             <p class="notify-count">{{ unread_announcements }} unread</p>
           {% else %}
-            <p class="notify-count">All caught up</p>
+            <p class="notify-count notify-count-quiet">All caught up</p>
           {% endif %}
         </div>
 
@@ -62,5 +67,7 @@
         <a class="notify-all" href="{{ url_for('announcements') }}">View all announcements</a>
       </div>
     </div>
+
+    {% include "partials/header_account.html" %}
   </div>
 </header>

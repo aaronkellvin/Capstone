@@ -1042,6 +1042,7 @@ def profile():
             panels=[{"kicker": "Account", "title": user["name"], "meta": f"{user['email']} · {user['role']}", "action": None, "action_href": None, "soft": True}],
             form_blocks=[
                 {
+                    "id": "account",
                     "title": "Change password",
                     "note": "Update your temporary password.",
                     "action": url_for("profile"),

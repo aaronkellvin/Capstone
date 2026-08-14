@@ -1,30 +1,68 @@
 (() => {
-  const toggle = document.getElementById("notify-toggle");
-  const panel = document.getElementById("notify-panel");
-  if (toggle && panel) {
-    const close = () => {
-      panel.hidden = true;
-      toggle.setAttribute("aria-expanded", "false");
-    };
-    const open = () => {
-      panel.hidden = false;
-      toggle.setAttribute("aria-expanded", "true");
-    };
+  const popovers = [
+    ["notify-toggle", "notify-panel"],
+    ["profile-toggle", "profile-panel"],
+    ["settings-toggle", "settings-panel"],
+  ]
+    .map(([toggleId, panelId]) => ({
+      toggle: document.getElementById(toggleId),
+      panel: document.getElementById(panelId),
+    }))
+    .filter((item) => item.toggle && item.panel);
 
-    toggle.addEventListener("click", (event) => {
+  const closePopover = (item) => {
+    item.panel.hidden = true;
+    item.toggle.setAttribute("aria-expanded", "false");
+  };
+
+  const closeAll = () => popovers.forEach(closePopover);
+
+  const openPopover = (item) => {
+    closeAll();
+    item.panel.hidden = false;
+    item.toggle.setAttribute("aria-expanded", "true");
+  };
+
+  popovers.forEach((item) => {
+    item.toggle.addEventListener("click", (event) => {
       event.stopPropagation();
-      if (panel.hidden) open();
-      else close();
+      if (item.panel.hidden) openPopover(item);
+      else closePopover(item);
     });
-    document.addEventListener("click", (event) => {
-      if (!panel.hidden && !panel.contains(event.target) && event.target !== toggle) {
-        close();
+  });
+
+  document.addEventListener("click", (event) => {
+    popovers.forEach((item) => {
+      if (item.panel.hidden) return;
+      if (!item.panel.contains(event.target) && !item.toggle.contains(event.target)) {
+        closePopover(item);
       }
     });
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") close();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeAll();
+  });
+
+  const prefKey = (name) => `bloom-pref-${name}`;
+  const applyPref = (name, on) => {
+    const root = document.documentElement;
+    if (name === "large-type") root.classList.toggle("pref-large-type", on);
+    if (name === "reduce-motion") root.classList.toggle("pref-reduce-motion", on);
+    if (name === "notify-badge") root.classList.toggle("pref-hide-badge", !on);
+  };
+
+  document.querySelectorAll("[data-pref]").forEach((input) => {
+    const name = input.getAttribute("data-pref");
+    const stored = localStorage.getItem(prefKey(name));
+    const on = name === "notify-badge" ? stored !== "0" : stored === "1";
+    input.checked = on;
+    applyPref(name, on);
+    input.addEventListener("change", () => {
+      localStorage.setItem(prefKey(name), input.checked ? "1" : "0");
+      applyPref(name, input.checked);
     });
-  }
+  });
 
   const overlay = (message) => {
     let node = document.getElementById("qol-overlay");

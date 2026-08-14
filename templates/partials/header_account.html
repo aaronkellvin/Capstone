@@ -1,0 +1,86 @@
+{# Account cluster: profile avatar + settings. Expects `user`. #}
+{% set name_parts = (user.name or "Bloom").split(" ") %}
+{% set avatar_initials = (name_parts[0][:1] ~ (name_parts[-1][:1] if name_parts|length > 1 else ""))|upper %}
+
+<div class="account-cluster">
+  <div class="menu-wrap">
+    <button
+      type="button"
+      class="icon-btn avatar-btn"
+      id="profile-toggle"
+      aria-label="Account menu"
+      aria-haspopup="true"
+      aria-expanded="false"
+      aria-controls="profile-panel"
+    >
+      <span class="avatar" aria-hidden="true">{{ avatar_initials }}</span>
+    </button>
+    <div class="menu-panel profile-panel" id="profile-panel" hidden role="menu" aria-label="Account">
+      <div class="profile-card">
+        <span class="avatar avatar-lg" aria-hidden="true">{{ avatar_initials }}</span>
+        <div>
+          <p class="profile-card-name">{{ user.name }}</p>
+          <p class="profile-card-meta">{{ user.email }}</p>
+          <p class="profile-card-role">{{ user.role|capitalize }}{% if user.section %} · {{ user.section }}{% endif %}</p>
+        </div>
+      </div>
+      <a class="menu-link" role="menuitem" href="{{ url_for('profile') }}">View Profile</a>
+      <a class="menu-link" role="menuitem" href="{{ url_for('profile') }}#account">Account</a>
+      <a class="menu-link menu-link-danger" role="menuitem" href="{{ url_for('logout') }}">Log out</a>
+    </div>
+  </div>
+
+  <div class="menu-wrap">
+    <button
+      type="button"
+      class="icon-btn"
+      id="settings-toggle"
+      aria-label="Settings"
+      aria-haspopup="true"
+      aria-expanded="false"
+      aria-controls="settings-panel"
+    >
+      <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path fill="currentColor" d="M19.1 12.9a7.5 7.5 0 0 0 .1-.9 7.5 7.5 0 0 0-.1-.9l2-1.6a.5.5 0 0 0 .1-.6l-1.9-3.3a.5.5 0 0 0-.6-.2l-2.4 1a7 7 0 0 0-1.6-.9l-.4-2.5a.5.5 0 0 0-.5-.4h-3.8a.5.5 0 0 0-.5.4l-.4 2.5a7 7 0 0 0-1.6.9l-2.4-1a.5.5 0 0 0-.6.2L2.7 9.9a.5.5 0 0 0 .1.6l2 1.6a7.5 7.5 0 0 0-.1.9 7.5 7.5 0 0 0 .1.9l-2 1.6a.5.5 0 0 0-.1.6l1.9 3.3a.5.5 0 0 0 .6.2l2.4-1a7 7 0 0 0 1.6.9l.4 2.5a.5.5 0 0 0 .5.4h3.8a.5.5 0 0 0 .5-.4l.4-2.5a7 7 0 0 0 1.6-.9l2.4 1a.5.5 0 0 0 .6-.2l1.9-3.3a.5.5 0 0 0-.1-.6Zm-7.1 2.2A3.1 3.1 0 1 1 15.1 12 3.1 3.1 0 0 1 12 15.1Z"/>
+      </svg>
+    </button>
+    <div class="menu-panel settings-panel" id="settings-panel" hidden role="region" aria-label="Settings">
+      <div class="menu-head">
+        <p class="menu-title">Settings</p>
+        <p class="menu-sub">Saved on this device</p>
+      </div>
+
+      <div class="settings-group">
+        <p class="settings-label">Appearance</p>
+        <p class="settings-readonly">Letran light theme for this pilot</p>
+      </div>
+
+      <div class="settings-group">
+        <p class="settings-label">Accessibility</p>
+        <label class="settings-toggle">
+          <span>Comfortable text</span>
+          <input type="checkbox" data-pref="large-type" />
+        </label>
+        <label class="settings-toggle">
+          <span>Reduce motion</span>
+          <input type="checkbox" data-pref="reduce-motion" />
+        </label>
+      </div>
+
+      {% if user.role == "student" %}
+        <div class="settings-group">
+          <p class="settings-label">Notifications</p>
+          <label class="settings-toggle">
+            <span>Show unread badge</span>
+            <input type="checkbox" data-pref="notify-badge" checked />
+          </label>
+        </div>
+      {% endif %}
+
+      <div class="settings-group">
+        <p class="settings-label">Language</p>
+        <p class="settings-readonly">English only for this pilot</p>
+      </div>
+    </div>
+  </div>
+</div>

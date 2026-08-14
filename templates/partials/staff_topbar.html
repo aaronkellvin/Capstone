@@ -1,4 +1,5 @@
-{# Shared staff top nav. Expects: role_nav (list of {label, endpoint, key}), active_nav, topbar_sub #}
+{# Shared staff top nav. Expects: role_nav, active_nav, topbar_sub, user #}
+{% include "partials/prefs_boot.html" %}
 <header class="app-topbar staff-topbar">
   <a class="topbar-brand" href="{{ url_for('home') }}">
     <img
@@ -10,13 +11,15 @@
     />
     <div class="topbar-text">
       <p class="topbar-title">Bloom</p>
-      <p class="topbar-sub">{{ topbar_sub }}</p>
+      <p class="topbar-kicker">{{ topbar_sub }}</p>
     </div>
   </a>
   <nav class="staff-nav" aria-label="Main">
     {% for item in role_nav %}
       <a class="staff-nav-link {% if active_nav == item.key %}active{% endif %}" href="{{ url_for(item.endpoint) }}">{{ item.label }}</a>
     {% endfor %}
-    <a class="staff-nav-link" href="{{ url_for('logout') }}">Sign out</a>
   </nav>
+  <div class="topbar-actions">
+    {% include "partials/header_account.html" %}
+  </div>
 </header>

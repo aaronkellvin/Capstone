@@ -30,19 +30,29 @@
       {% endif %}
     {% endwith %}
 
+    <section class="profile-hero">
+      {% set name_parts = user.name.split(" ") %}
+      <span class="avatar avatar-xl" aria-hidden="true">{{ (name_parts[0][:1] ~ (name_parts[-1][:1] if name_parts|length > 1 else ""))|upper }}</span>
+      <div>
+        <p class="hero-kicker">Your account</p>
+        <h1 class="section-title">{{ user.name }}</h1>
+        <p class="section-note">{{ user.email }} · {{ user.role|capitalize }}</p>
+      </div>
+    </section>
+
     <section class="lobby-card">
-      <h1 class="section-title">Profile</h1>
-      <p class="section-note">Your Bloom account details</p>
+      <h2 class="hub-panel-title">Account details</h2>
+      <p class="section-note">School information used in Bloom</p>
 
       <dl class="profile-facts">
         <div><dt>Name</dt><dd>{{ user.name }}</dd></div>
         <div><dt>School email</dt><dd>{{ user.email }}</dd></div>
         <div><dt>Role</dt><dd>{{ user.role|capitalize }}</dd></div>
-        <div><dt>Section</dt><dd>Grade 7 · Pilot Section</dd></div>
+        <div><dt>Section</dt><dd>{{ user.section or "Grade 7 · Pilot Section" }}</dd></div>
       </dl>
     </section>
 
-    <section class="lobby-card" style="margin-top: 1rem;">
+    <section class="lobby-card" id="account" style="margin-top: 1rem;">
       <h2 class="hub-panel-title">Change password</h2>
       <p class="section-note">Use this after signing in with a temporary password.</p>
       <form class="login-form" method="POST" action="{{ url_for('profile') }}">

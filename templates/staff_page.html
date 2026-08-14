@@ -68,7 +68,7 @@
 
       {% if form_blocks %}
         {% for block in form_blocks %}
-          <section class="lobby-card" style="margin-top: 1rem;">
+          <section class="lobby-card" {% if block.id %}id="{{ block.id }}"{% endif %} style="margin-top: 1rem;">
             <h2 class="hub-panel-title">{{ block.title }}</h2>
             <p class="section-note">{{ block.note }}</p>
             <form class="login-form" method="POST" action="{{ block.action }}" {% if block.enctype %}enctype="{{ block.enctype }}"{% endif %} {% if block.loading %}data-loading="{{ block.loading }}"{% endif %}>

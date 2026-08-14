@@ -1,0 +1,10 @@
+<script>
+  (function () {
+    try {
+      var root = document.documentElement;
+      if (localStorage.getItem("bloom-pref-large-type") === "1") root.classList.add("pref-large-type");
+      if (localStorage.getItem("bloom-pref-reduce-motion") === "1") root.classList.add("pref-reduce-motion");
+      if (localStorage.getItem("bloom-pref-notify-badge") === "0") root.classList.add("pref-hide-badge");
+    } catch (error) {}
+  })();
+</script>
