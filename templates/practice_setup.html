@@ -29,26 +29,48 @@
 
       <form class="practice-form" method="GET" action="{{ url_for('practice_take', subject_slug=subject.slug, material_slug=material_slug) }}" data-loading="Generating your Practice Check…">
         <fieldset class="practice-fieldset">
+          <legend>Choose difficulty</legend>
+          <p class="section-note">How challenging do you want your practice?</p>
+          <div class="difficulty-grid">
+            {% for option in difficulties %}
+              <label class="difficulty-card">
+                <input
+                  type="radio"
+                  name="difficulty"
+                  value="{{ option.key }}"
+                  {% if selected_difficulty == option.key %}checked{% endif %}
+                />
+                <span class="difficulty-copy">
+                  <span class="difficulty-name">{{ option.label }}</span>
+                  <span class="difficulty-hint">{{ option.hint }}</span>
+                  <span class="difficulty-state" aria-hidden="true">Selected</span>
+                </span>
+              </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+
+        <fieldset class="practice-fieldset">
           <legend>Choose focus</legend>
-          <label class="choice"><input type="radio" name="focus" value="mixed" checked /> Mixed HOTS</label>
-          <label class="choice"><input type="radio" name="focus" value="c4" /> Analyze</label>
-          <label class="choice"><input type="radio" name="focus" value="c5" /> Evaluate</label>
-          <label class="choice"><input type="radio" name="focus" value="c6" /> Create</label>
+          <label class="choice"><input type="radio" name="focus" value="mixed" {% if selected_focus == 'mixed' %}checked{% endif %} /> Mixed HOTS</label>
+          <label class="choice"><input type="radio" name="focus" value="c4" {% if selected_focus == 'c4' %}checked{% endif %} /> Analyze</label>
+          <label class="choice"><input type="radio" name="focus" value="c5" {% if selected_focus == 'c5' %}checked{% endif %} /> Evaluate</label>
+          <label class="choice"><input type="radio" name="focus" value="c6" {% if selected_focus == 'c6' %}checked{% endif %} /> Create</label>
         </fieldset>
 
         <div class="field">
           <label for="count">How many questions?</label>
           <select id="count" name="count">
-            <option value="3" selected>3</option>
-            <option value="5">5</option>
+            <option value="3" {% if selected_count == 3 %}selected{% endif %}>3</option>
+            <option value="5" {% if selected_count == 5 %}selected{% endif %}>5</option>
           </select>
         </div>
 
         <fieldset class="practice-fieldset">
           <legend>Include</legend>
-          <label class="choice"><input type="checkbox" name="types" value="mcq" checked /> Multiple choice</label>
-          <label class="choice"><input type="checkbox" name="types" value="essay" checked /> Essay</label>
-          <label class="choice"><input type="checkbox" name="types" value="problem" checked /> Problem-solving</label>
+          <label class="choice"><input type="checkbox" name="types" value="mcq" {% if 'mcq' in selected_types %}checked{% endif %} /> Multiple choice</label>
+          <label class="choice"><input type="checkbox" name="types" value="essay" {% if 'essay' in selected_types %}checked{% endif %} /> Essay</label>
+          <label class="choice"><input type="checkbox" name="types" value="problem" {% if 'problem' in selected_types %}checked{% endif %} /> Problem-solving</label>
         </fieldset>
 
         <button type="submit" class="btn-primary">Generate Practice Check</button>

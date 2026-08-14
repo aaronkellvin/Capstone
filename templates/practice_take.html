@@ -26,6 +26,7 @@
         <div>
           <p class="hero-kicker summary-kicker">{{ subject.name }} · {{ bloom_label }}</p>
           <h1 id="take-title" class="take-title">{{ material_title }} Practice</h1>
+          <p class="section-note">Difficulty: <strong>{{ difficulty_name }}</strong> · {{ questions|length }} questions</p>
         </div>
         <p class="take-progress-label"><span id="progress-text">1</span> / {{ questions|length }}</p>
       </div>

@@ -21,9 +21,13 @@
 
   <main class="app-main">
     <section class="result-hero" aria-labelledby="result-title">
-      <p class="hero-kicker">{{ subject.name }} · Practice Check</p>
+      <p class="hero-kicker">{{ subject.name }} · {% if kind == 'assessment' %}HOTS Assessment{% else %}Practice Check{% endif %}</p>
       <h1 id="result-title" class="hero-title">Nice work. Let’s review and improve.</h1>
-      <p class="hero-note">{{ material_title }} · Assistive practice only</p>
+      <p class="hero-note">
+        {{ material_title }}
+        {% if difficulty_name %} · Difficulty: <strong>{{ difficulty_name }}</strong>{% endif %}
+        · Assistive practice only
+      </p>
       <div class="result-score-box">
         <p class="result-score">{{ score_label }}</p>
         <p class="result-message">{{ encouragement }}</p>

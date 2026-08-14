@@ -6,8 +6,10 @@ import re
 from datetime import datetime, timedelta
 from functools import wraps
 
+from urllib.parse import urlencode
+
 from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
-from sqlalchemy import or_
+from sqlalchemy import inspect as sa_inspect, or_, text
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
@@ -62,16 +64,78 @@ def inject_unread_messages():
         return {"unread_messages": 0}
     return {"unread_messages": unread_message_count(user["id"])}
 
+
+@app.context_processor
+def inject_difficulty_helpers():
+    return {"difficulty_label": difficulty_label}
+
+
 SUBJECTS = {
     "english": {"slug": "english", "name": "English", "announce": "English"},
     "mathematics": {"slug": "mathematics", "name": "Mathematics", "announce": "Math"},
     "science": {"slug": "science", "name": "Science", "announce": "Science"},
 }
 
+DIFFICULTIES = {
+    "easy": {
+        "key": "easy",
+        "label": "Easy",
+        "hint": "Build your understanding with more approachable questions.",
+    },
+    "medium": {
+        "key": "medium",
+        "label": "Medium",
+        "hint": "Practice with a balanced level of challenge.",
+    },
+    "hard": {
+        "key": "hard",
+        "label": "Hard",
+        "hint": "Challenge yourself with more complex problems.",
+    },
+}
+
 
 def slugify(value: str) -> str:
     value = re.sub(r"[^a-zA-Z0-9]+", "-", (value or "").strip().lower()).strip("-")
     return value or "item"
+
+
+def normalize_difficulty(value: str | None) -> str:
+    key = (value or "").strip().lower()
+    return key if key in DIFFICULTIES else "medium"
+
+
+def difficulty_label(value: str | None) -> str:
+    return DIFFICULTIES[normalize_difficulty(value)]["label"]
+
+
+def practice_setup_url(subject_slug, material_slug, difficulty="medium", focus="mixed", count=3, types=None):
+    base = url_for("practice_setup", subject_slug=subject_slug, material_slug=material_slug)
+    pairs = [
+        ("difficulty", normalize_difficulty(difficulty)),
+        ("focus", focus or "mixed"),
+        ("count", str(count or 3)),
+    ]
+    for item in types or []:
+        pairs.append(("types", item))
+    return f"{base}?{urlencode(pairs)}"
+
+
+def ensure_schema():
+    inspector = sa_inspect(db.engine)
+    tables = set(inspector.get_table_names())
+    additions = (
+        ("quiz_draft", "difficulty", "VARCHAR(20) DEFAULT 'medium'"),
+        ("attempt", "difficulty", "VARCHAR(20)"),
+        ("assessment", "difficulty", "VARCHAR(20)"),
+    )
+    with db.engine.begin() as conn:
+        for table, column, ddl in additions:
+            if table not in tables:
+                continue
+            columns = {col["name"] for col in inspector.get_columns(table)}
+            if column not in columns:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}"))
 
 
 def unique_slug(base: str, model, field="slug") -> str:
@@ -610,6 +674,7 @@ def seed_demo_content():
 
 with app.app_context():
     db.create_all()
+    ensure_schema()
     seed()
 
 
@@ -895,11 +960,28 @@ def practice_setup(subject_slug, material_slug):
     if not meta or not material:
         flash("That practice setup is not available.", "danger")
         return redirect(url_for("home"))
+    selected_focus = request.args.get("focus", "mixed")
+    if selected_focus not in {"mixed", "c4", "c5", "c6"}:
+        selected_focus = "mixed"
+    try:
+        selected_count = max(1, min(int(request.args.get("count", 3)), 5))
+    except ValueError:
+        selected_count = 3
+    selected_types = request.args.getlist("types") or ["mcq", "essay", "problem"]
+    selected_difficulty = normalize_difficulty(
+        request.args.get("difficulty") or session.get("practice_difficulty")
+    )
+    session["practice_difficulty"] = selected_difficulty
     context = {
         "user": user,
         "subject": {"slug": subject_slug, "name": meta["name"]},
         "material_slug": material.slug,
         "material_title": material.title,
+        "difficulties": list(DIFFICULTIES.values()),
+        "selected_difficulty": selected_difficulty,
+        "selected_focus": selected_focus,
+        "selected_count": selected_count,
+        "selected_types": selected_types,
         "back_href": url_for("summary_reader", slug=subject_slug, material_slug=material.slug)
         if material.summary
         else url_for("subject_hub", slug=subject_slug, tab="study"),
@@ -925,10 +1007,20 @@ def practice_take(subject_slug, material_slug):
         count = max(1, min(int(request.args.get("count", 3)), 5))
     except ValueError:
         count = 3
-    questions = generate_hots_questions(material.title, material.extracted_text, meta["name"], focus, count, types)
+    difficulty = normalize_difficulty(request.args.get("difficulty") or session.get("practice_difficulty"))
+    session["practice_difficulty"] = difficulty
+    questions = generate_hots_questions(
+        material.title, material.extracted_text, meta["name"], focus, count, types, difficulty
+    )
     if not questions:
-        flash("Could not generate practice questions from this lesson yet.", "danger")
-        return redirect(url_for("practice_setup", subject_slug=subject_slug, material_slug=material_slug))
+        flash(
+            "We couldn't generate your practice right now. "
+            f"Your selected difficulty: {difficulty_label(difficulty)}.",
+            "danger",
+        )
+        return redirect(
+            practice_setup_url(subject_slug, material_slug, difficulty, focus, count, types)
+        )
     if last_ai_error():
         flash(
             "AI generation failed, so Bloom used basic fallback questions. "
@@ -944,6 +1036,7 @@ def practice_take(subject_slug, material_slug):
         material_slug=material_slug,
         title=material.title,
         bloom_label=bloom_label,
+        difficulty=difficulty,
         questions_json=json.dumps(questions),
     )
     db.session.add(draft)
@@ -956,6 +1049,8 @@ def practice_take(subject_slug, material_slug):
         "material_title": material.title,
         "questions": questions,
         "bloom_label": bloom_label,
+        "difficulty_key": difficulty,
+        "difficulty_name": difficulty_label(difficulty),
     }
     context.update(announcements_context(user))
     return render_template("practice_take.html", **context)
@@ -981,6 +1076,7 @@ def practice_submit(subject_slug, material_slug):
         score_total_auto=auto_total,
         review_json=json.dumps(review_items),
         encouragement=encouragement,
+        difficulty=draft.difficulty,
     )
     db.session.add(attempt)
     db.session.delete(draft)
@@ -1031,6 +1127,8 @@ def attempt_review(attempt_id):
         "encouragement": encouragement,
         "review_items": review_items,
         "ask_teacher": ask_teacher_context(user, meta["name"], attempt.title),
+        "difficulty_name": difficulty_label(attempt.difficulty) if attempt.difficulty else None,
+        "kind": attempt.kind,
     }
     context.update(announcements_context(user))
     return render_template("practice_result.html", **context)
@@ -1055,6 +1153,7 @@ def assessment_lobby(slug):
             "subject": SUBJECTS[assessment.subject_slug]["name"],
             "title": assessment.title,
             "deadline_label": assessment.deadline.strftime("Due %b %d · %I:%M %p") if assessment.deadline else "Open until your teacher closes it",
+            "difficulty_name": difficulty_label(assessment.difficulty) if assessment.difficulty else None,
         },
         "can_start": taken < allowed and assessment.status == "published",
         "taken": taken,
@@ -1092,6 +1191,7 @@ def assessment_take(slug):
             "slug": assessment.slug,
             "subject": SUBJECTS[assessment.subject_slug]["name"],
             "title": assessment.title,
+            "difficulty_name": difficulty_label(assessment.difficulty) if assessment.difficulty else None,
         },
         "questions": questions,
     }
@@ -1130,6 +1230,7 @@ def assessment_submit(slug):
         score_total_auto=auto_total,
         review_json=json.dumps(review_items),
         encouragement=encouragement,
+        difficulty=assessment.difficulty,
     )
     db.session.add(attempt)
     db.session.commit()
@@ -1193,6 +1294,7 @@ def results():
                 "subject": SUBJECTS.get(attempt.subject_slug, {}).get("name", ""),
                 "title": attempt.title,
                 "meta": attempt_meta(attempt),
+                "difficulty": difficulty_label(attempt.difficulty) if attempt.difficulty else None,
                 "action": "Review",
                 "href": url_for("attempt_review", attempt_id=attempt.id),
             }
@@ -1451,8 +1553,15 @@ def teacher_hots(user):
             except ValueError:
                 count = 5
             bloom = request.form.get("bloom") or "mixed"
+            difficulty = normalize_difficulty(request.form.get("difficulty"))
             questions = generate_hots_questions(
-                material.title, material.extracted_text, SUBJECTS[slug]["name"], bloom, count, ["mcq", "essay", "problem"]
+                material.title,
+                material.extracted_text,
+                SUBJECTS[slug]["name"],
+                bloom,
+                count,
+                ["mcq", "essay", "problem"],
+                difficulty,
             )
             assessment = Assessment(
                 slug=unique_slug(f"{material.title}-hots", Assessment),
@@ -1461,6 +1570,7 @@ def teacher_hots(user):
                 material_id=material.id,
                 created_by=user["id"],
                 status="draft",
+                difficulty=difficulty,
             )
             db.session.add(assessment)
             db.session.flush()
@@ -1505,6 +1615,7 @@ def teacher_hots(user):
                     question.bloom,
                     1,
                     [question.qtype],
+                    question.assessment.difficulty or "medium",
                 )
                 if not generated:
                     flash("Could not regenerate that question.", "danger")
@@ -1573,7 +1684,11 @@ def teacher_monitor(user):
             {
                 "kicker": assessment.status.title(),
                 "title": assessment.title,
-                "meta": f"{len(attempts)}/{students} submitted · Avg auto {avg} · Extra attempt {'on' if assessment.extra_attempt else 'off'}",
+                "meta": (
+                    f"{len(attempts)}/{students} submitted · Avg auto {avg} · "
+                    f"{difficulty_label(assessment.difficulty) if assessment.difficulty else 'Medium'} · "
+                    f"Extra attempt {'on' if assessment.extra_attempt else 'off'}"
+                ),
                 "assessment_id": assessment.id,
                 "status": assessment.status,
                 "release_scores": assessment.release_scores,

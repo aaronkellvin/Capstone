@@ -62,6 +62,7 @@ class Assessment(db.Model):
     release_scores = db.Column(db.Boolean, default=False)
     release_answers = db.Column(db.Boolean, default=False)
     release_feedback = db.Column(db.Boolean, default=False)
+    difficulty = db.Column(db.String(20), default="medium")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     material = db.relationship("Material")
@@ -115,6 +116,7 @@ class Attempt(db.Model):
     score_total_auto = db.Column(db.Integer, default=0)
     review_json = db.Column(db.Text, default="[]")
     encouragement = db.Column(db.Text, default="")
+    difficulty = db.Column(db.String(20))
     submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship("User")
@@ -149,6 +151,7 @@ class QuizDraft(db.Model):
     material_slug = db.Column(db.String(160), nullable=False)
     title = db.Column(db.String(200), nullable=False)
     bloom_label = db.Column(db.String(80), default="Mixed HOTS")
+    difficulty = db.Column(db.String(20), default="medium")
     questions_json = db.Column(db.Text, default="[]")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 

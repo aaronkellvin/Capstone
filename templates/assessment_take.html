@@ -24,7 +24,10 @@
     <section class="take-shell">
       <div class="take-top">
         <div>
-          <p class="hero-kicker summary-kicker">{{ assessment.subject }} · 1 attempt</p>
+          <p class="hero-kicker summary-kicker">
+            {{ assessment.subject }} · 1 attempt
+            {% if assessment.difficulty_name %} · {{ assessment.difficulty_name }}{% endif %}
+          </p>
           <h1 class="take-title">{{ assessment.title }}</h1>
         </div>
         <p class="take-progress-label"><span id="progress-text">1</span> / {{ questions|length }}</p>

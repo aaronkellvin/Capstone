@@ -35,7 +35,7 @@
         {% for item in result_items %}
           <article class="hub-card">
             <div>
-              <p class="hub-card-kicker">{{ item.kind }} · {{ item.subject }}</p>
+              <p class="hub-card-kicker">{{ item.kind }} · {{ item.subject }}{% if item.difficulty %} · {{ item.difficulty }}{% endif %}</p>
               <h2 class="hub-card-title">{{ item.title }}</h2>
               <p class="hub-card-meta">{{ item.meta }}</p>
             </div>

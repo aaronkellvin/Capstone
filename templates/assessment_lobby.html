@@ -25,7 +25,10 @@
       <a class="hub-back" href="{{ url_for('subject_hub', slug=assessment.subject_slug) }}">Back to {{ assessment.subject }}</a>
       <p class="hero-kicker">{{ assessment.subject }}</p>
       <h1 id="lobby-title" class="section-title">{{ assessment.title }}</h1>
-      <p class="section-note">{{ assessment.deadline_label }}</p>
+      <p class="section-note">
+        {{ assessment.deadline_label }}
+        {% if assessment.difficulty_name %} · Difficulty: <strong>{{ assessment.difficulty_name }}</strong>{% endif %}
+      </p>
 
       <ul class="lobby-checklist">
         {% if allowed > 1 %}

@@ -40,7 +40,9 @@ Lesson text:
     }
 
 
-def generate_hots_questions(title: str, text: str, subject: str, bloom: str, count: int, types: list[str]) -> list[dict]:
+def generate_hots_questions(
+    title: str, text: str, subject: str, bloom: str, count: int, types: list[str], difficulty: str = "medium"
+) -> list[dict]:
     bloom_line = {
         "mixed": "Mix Analyze (C4), Evaluate (C5), and Create (C6).",
         "c4": "All questions must target Analyze (C4).",
@@ -51,10 +53,30 @@ def generate_hots_questions(title: str, text: str, subject: str, bloom: str, cou
         "Create": "All questions must target Create (C6).",
         "Mixed C4–C6": "Mix Analyze (C4), Evaluate (C5), and Create (C6).",
     }.get(bloom, "Mix Analyze (C4), Evaluate (C5), and Create (C6).")
+    difficulty_key = (difficulty or "medium").strip().lower()
+    if difficulty_key not in {"easy", "medium", "hard"}:
+        difficulty_key = "medium"
+    difficulty_line = {
+        "easy": (
+            "Difficulty: Easy. Keep the same Bloom level. Use familiar Grade 7 contexts, a clear scenario, "
+            "one main relationship, little ambiguity, and more accessible distractors. Do not make the question longer just to seem easier."
+        ),
+        "medium": (
+            "Difficulty: Medium. Keep the same Bloom level. Use moderate complexity: some interpretation, "
+            "a few relevant factors, and plausible distractors. Do not make the question longer just to seem harder."
+        ),
+        "hard": (
+            "Difficulty: Hard. Keep the same Bloom level. Use a more complex scenario with interacting variables, "
+            "more to evaluate, greater ambiguity, sophisticated distractors, and more reasoning steps. "
+            "Do not make the question longer just to seem harder. Difficulty comes from cognitive complexity, not length."
+        ),
+    }[difficulty_key]
     allowed = types or ["mcq", "essay", "problem"]
     prompt = f"""You generate HOTS questions for Grade 7 {subject}.
 Use ONLY the uploaded lesson text. No outside facts.
 {bloom_line}
+{difficulty_line}
+Difficulty must NOT change the Bloom's taxonomy level. An Easy Analyze question is still Analyze; a Hard Analyze question is still Analyze.
 Allowed types: {", ".join(allowed)}.
 Create exactly {count} questions.
 Return JSON:
@@ -80,7 +102,7 @@ Lesson text:
     data = _complete_json(prompt)
     questions = data.get("questions") or []
     if not questions:
-        return _fallback_questions(title, text, count, allowed)
+        return _fallback_questions(title, text, count, allowed, difficulty_key)
     return [_normalize_question(item, index) for index, item in enumerate(questions[:count], start=1)]
 
 
@@ -91,11 +113,14 @@ def _normalize_question(item: dict, index: int) -> dict:
     options = item.get("options") or []
     if qtype != "mcq":
         options = []
+    bloom = item.get("bloom") or "Analyze"
+    if bloom not in {"Analyze", "Evaluate", "Create"}:
+        bloom = "Analyze"
     return {
         "id": index,
         "type": qtype,
         "type_label": {"mcq": "Multiple choice", "essay": "Essay", "problem": "Problem-solving"}[qtype],
-        "bloom": item.get("bloom") or "Analyze",
+        "bloom": bloom,
         "prompt": item.get("prompt") or "Explain a key idea from the lesson.",
         "citation": item.get("citation") or "source text",
         "options": options,
@@ -265,30 +290,65 @@ def _fallback_summary(title: str, text: str) -> dict:
     }
 
 
-def _fallback_questions(title: str, text: str, count: int, allowed: list[str]) -> list[dict]:
+def _fallback_questions(title: str, text: str, count: int, allowed: list[str], difficulty: str = "medium") -> list[dict]:
     sentences = _sentences(text) or [f"{title} is the focus of this lesson."]
     blooms = ["Analyze", "Evaluate", "Create"]
     types_cycle = [t for t in ["mcq", "essay", "problem"] if t in allowed] or ["mcq"]
+    stems = {
+        "easy": {
+            "mcq": "Based on the lesson about {title}, which statement clearly matches this idea: “{snippet}”?",
+            "essay": "Using the lesson on {title}, explain this idea in your own words with one detail from the text: “{snippet}”",
+            "problem": "Give a simple Grade 7 example that uses this idea from {title}: “{snippet}”",
+        },
+        "medium": {
+            "mcq": "Based on the lesson about {title}, which statement best matches this idea: “{snippet}”?",
+            "essay": "Using the lesson on {title}, evaluate this idea and explain with evidence: “{snippet}”",
+            "problem": "Create an original Grade 7 example that applies this idea from {title}: “{snippet}”",
+        },
+        "hard": {
+            "mcq": "Based on the lesson about {title}, which statement best accounts for how this idea connects to other parts of the lesson: “{snippet}”?",
+            "essay": "Using the lesson on {title}, judge this idea, weigh another possibility from the text, and justify your claim: “{snippet}”",
+            "problem": "Design a Grade 7 situation with two interacting factors that applies this idea from {title}: “{snippet}”",
+        },
+    }
+    bank = stems.get(difficulty) or stems["medium"]
     questions = []
     for index in range(count):
         snippet = sentences[index % len(sentences)][:180]
         qtype = types_cycle[index % len(types_cycle)]
         bloom = blooms[index % 3]
+        prompt = bank[qtype].format(title=title, snippet=snippet)
         if qtype == "mcq":
+            if difficulty == "easy":
+                options = [
+                    {"id": "a", "text": "It is unrelated to the uploaded lesson."},
+                    {"id": "b", "text": "It reflects a main idea from the uploaded material."},
+                    {"id": "c", "text": "It should be ignored because it is only an example."},
+                    {"id": "d", "text": "It replaces the need for evidence from the text."},
+                ]
+            elif difficulty == "hard":
+                options = [
+                    {"id": "a", "text": "It is a side detail that does not change the lesson’s main relationship."},
+                    {"id": "b", "text": "It reflects a main idea and how it connects to other parts of the uploaded material."},
+                    {"id": "c", "text": "It is useful only as an isolated example with no further effect."},
+                    {"id": "d", "text": "It can replace evidence because the wording sounds academic."},
+                ]
+            else:
+                options = [
+                    {"id": "a", "text": "It is unrelated to the uploaded lesson."},
+                    {"id": "b", "text": "It reflects a main idea from the uploaded material."},
+                    {"id": "c", "text": "It should be ignored because it is only an example."},
+                    {"id": "d", "text": "It replaces the need for evidence from the text."},
+                ]
             questions.append(
                 {
                     "id": index + 1,
                     "type": "mcq",
                     "type_label": "Multiple choice",
                     "bloom": bloom,
-                    "prompt": f"Based on the lesson about {title}, which statement best matches this idea: “{snippet}”?",
+                    "prompt": prompt,
                     "citation": f"p. {index + 1}",
-                    "options": [
-                        {"id": "a", "text": "It is unrelated to the uploaded lesson."},
-                        {"id": "b", "text": "It reflects a main idea from the uploaded material."},
-                        {"id": "c", "text": "It should be ignored because it is only an example."},
-                        {"id": "d", "text": "It replaces the need for evidence from the text."},
-                    ],
+                    "options": options,
                     "answer": "b",
                     "explanation": "The best choice stays grounded in the uploaded lesson instead of outside ideas.",
                     "rubric": None,
@@ -301,7 +361,7 @@ def _fallback_questions(title: str, text: str, count: int, allowed: list[str]) -
                     "type": "essay",
                     "type_label": "Essay",
                     "bloom": bloom,
-                    "prompt": f"Using the lesson on {title}, evaluate this idea and explain with evidence: “{snippet}”",
+                    "prompt": prompt,
                     "citation": f"p. {index + 1}",
                     "options": [],
                     "answer": None,
@@ -316,7 +376,7 @@ def _fallback_questions(title: str, text: str, count: int, allowed: list[str]) -
                     "type": "problem",
                     "type_label": "Problem-solving",
                     "bloom": bloom,
-                    "prompt": f"Create an original Grade 7 example that applies this idea from {title}: “{snippet}”",
+                    "prompt": prompt,
                     "citation": f"p. {index + 1}",
                     "options": [],
                     "answer": None,

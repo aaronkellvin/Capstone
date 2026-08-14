@@ -64,6 +64,15 @@
               <option value="5" selected>5</option>
             </select>
           </div>
+          <div class="field">
+            <label for="difficulty">Difficulty</label>
+            <select id="difficulty" name="difficulty">
+              <option value="easy">Easy</option>
+              <option value="medium" selected>Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+          <p class="section-note">Difficulty changes how complex the scenarios are. Bloom’s level still stays Analyze, Evaluate, or Create.</p>
           <button type="submit" class="btn-primary">Generate HOTS set</button>
         </form>
       {% else %}
@@ -78,6 +87,7 @@
         <h2 class="hub-panel-title">{{ assessment.title }}</h2>
         <p class="section-note">
           {{ assessment.questions|length }} questions
+          {% if assessment.difficulty %} · Difficulty: {{ difficulty_label(assessment.difficulty) }}{% endif %}
           {% if assessment.deadline %} · Due {{ assessment.deadline.strftime("%b %d · %I:%M %p") }}{% endif %}
         </p>
 
