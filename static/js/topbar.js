@@ -136,7 +136,7 @@
   }
 
   document.querySelectorAll("form").forEach((form) => {
-    if (form.id === "practice-take-form" || form.id === "chat-form") return;
+    if (form.id === "practice-take-form" || form.id === "chat-form" || form.id === "announce-mark-all") return;
     form.addEventListener("submit", (event) => {
       if (form.dataset.confirm && !window.confirm(form.dataset.confirm)) {
         event.preventDefault();

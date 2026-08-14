@@ -22,89 +22,171 @@
   <main class="app-main">
   {% include "partials/flash.html" %}
 
-    <section class="home-section announce-page" aria-labelledby="announce-title">
-      <h1 id="announce-title" class="section-title">Announcements</h1>
-      <p class="section-note">
-        Stay updated with important information from your teachers.
-        {% if unread_count %}
-          {{ unread_count }} unread.
+    <section
+      class="home-section announce-page"
+      aria-labelledby="announce-title"
+      data-filter="{{ filter }}"
+      data-restore-id="{{ restore_id or '' }}"
+      data-list-href="{{ list_href }}"
+      data-mark-all-url="{{ mark_all_url }}"
+    >
+      <div class="announce-heading">
+        <h1 id="announce-title" class="section-title">Announcements</h1>
+        {% if has_announcements %}
+          <form
+            id="announce-mark-all"
+            class="announce-mark-all-form"
+            method="POST"
+            action="{{ mark_all_url }}"
+            {% if not unread_count %}hidden{% endif %}
+          >
+            <input type="hidden" name="filter" value="{{ filter }}" />
+            <input type="hidden" name="q" value="{{ q }}" />
+            <input type="hidden" name="selected_id" id="announce-selected-id" value="{{ selected.id if selected else '' }}" />
+            <button type="submit" class="announce-mark-all">Mark all as read</button>
+          </form>
         {% endif %}
-      </p>
+      </div>
+      <p class="section-note">Stay updated with important messages and information from your teachers.</p>
 
       {% if has_announcements %}
+        <form class="announce-search" method="GET" action="{{ search_action }}" role="search">
+          {% if filter != 'all' %}
+            <input type="hidden" name="filter" value="{{ filter }}" />
+          {% endif %}
+          <label class="sr-only" for="announce-q">Search announcements</label>
+          <input
+            id="announce-q"
+            name="q"
+            type="search"
+            value="{{ q }}"
+            placeholder="Search announcements..."
+            autocomplete="off"
+          />
+        </form>
+
         <div class="filter-chips" role="tablist" aria-label="Announcement filters">
-          <a class="chip-link {% if filter == 'all' %}active{% endif %}" href="{{ url_for('announcements') }}">All</a>
-          <a class="chip-link {% if filter == 'unread' %}active{% endif %}" href="{{ url_for('announcements', filter='unread') }}">Unread</a>
-          <a class="chip-link {% if filter == 'English' %}active{% endif %}" href="{{ url_for('announcements', filter='English') }}">English</a>
-          <a class="chip-link {% if filter == 'Math' %}active{% endif %}" href="{{ url_for('announcements', filter='Math') }}">Math</a>
-          <a class="chip-link {% if filter == 'Science' %}active{% endif %}" href="{{ url_for('announcements', filter='Science') }}">Science</a>
+          <a class="chip-link {% if filter == 'all' %}active{% endif %}" href="{{ chip_all }}">All</a>
+          <a
+            class="chip-link {% if filter == 'unread' %}active{% endif %}"
+            id="announce-chip-unread"
+            href="{{ chip_unread }}"
+            data-count="{{ unread_count }}"
+          >Unread{% if unread_count %} · {{ unread_count }}{% endif %}</a>
+          {% if show_subject_filters %}
+            {% for chip in subject_chips %}
+              <a class="chip-link {% if filter == chip.name %}active{% endif %}" href="{{ chip.href }}">{{ chip.name }}</a>
+            {% endfor %}
+          {% endif %}
         </div>
 
         <div class="announce-layout {% if selected %}is-open{% endif %}">
           <div class="announce-list-pane">
-            <h2 class="announce-pane-label" id="announce-list-label">Announcements</h2>
-            {% if announcements %}
-              <div class="announce-list" role="list" aria-labelledby="announce-list-label">
-                {% for note in announcements %}
-                  <a
-                    class="announce-item {% if note.unread %}is-unread{% endif %} {% if note.selected %}is-selected{% endif %}"
-                    href="{{ note.href }}"
-                    role="listitem"
-                    {% if note.selected %}aria-current="page"{% endif %}
-                  >
-                    <span class="unread-dot {% if note.unread %}is-on{% endif %}" aria-hidden="true"></span>
-                    <div class="announce-item-copy">
-                      <p class="announce-item-title">
-                        {{ note.title }}
-                        {% if note.unread %}<span class="sr-only">Unread</span>{% endif %}
-                      </p>
-                      <p class="announce-item-meta">{{ note.subject }} · {{ note.teacher }}</p>
-                      <p class="announce-item-when">{{ note.when }}</p>
-                      <p class="announce-item-preview">{{ note.preview }}</p>
-                    </div>
-                  </a>
-                {% endfor %}
-              </div>
+            {% if groups %}
+              {% for group in groups %}
+                <section class="announce-group" data-group="{{ group.key }}">
+                  <h2 class="announce-pane-label">{{ group.label }}</h2>
+                  <div class="announce-list" role="list">
+                    {% for note in group.notes %}
+                      <a
+                        class="announce-item {% if note.unread %}is-unread{% endif %} {% if note.selected %}is-selected{% endif %}"
+                        href="{{ note.href }}"
+                        role="listitem"
+                        data-id="{{ note.id }}"
+                        data-search="{{ note.search }}"
+                        {% if note.selected %}aria-current="page"{% endif %}
+                      >
+                        <span class="unread-dot {% if note.unread %}is-on{% endif %}" aria-hidden="true"></span>
+                        <div class="announce-item-copy">
+                          <p class="announce-item-title">
+                            {{ note.title }}
+                            <span class="announce-new" {% if not note.unread %}hidden{% endif %}>New</span>
+                            {% if note.unread %}<span class="sr-only announce-unread-label">Unread</span>{% endif %}
+                          </p>
+                          <p class="announce-item-meta">{{ note.teacher }} · {{ note.subject }}</p>
+                          <p class="announce-item-when" title="{{ note.posted }}">{{ note.when }}</p>
+                          {% if note.preview %}
+                            <p class="announce-item-preview">{{ note.preview }}</p>
+                          {% endif %}
+                        </div>
+                      </a>
+                    {% endfor %}
+                  </div>
+                </section>
+              {% endfor %}
+              <article class="empty-state-card announce-search-empty" id="announce-search-empty" hidden>
+                <p class="empty-kicker">Search</p>
+                <h3 class="empty-title">No announcements found</h3>
+                <p class="empty-copy">Try a different search.</p>
+              </article>
+              <article class="empty-state-card" id="announce-filter-empty" hidden>
+                <p class="empty-kicker">Announcements</p>
+                <h3 class="empty-title">You’re all caught up</h3>
+                <p class="empty-copy">You’ve read all your announcements.</p>
+                <a class="today-action today-action-soft" href="{{ url_for('announcements') }}">View all announcements</a>
+              </article>
             {% else %}
               <article class="empty-state-card">
                 <p class="empty-kicker">Announcements</p>
                 <h3 class="empty-title">
-                  {% if filter == 'unread' %}You’re all caught up{% else %}No announcements in this filter{% endif %}
+                  {% if q %}
+                    No announcements found
+                  {% elif filter == 'unread' %}
+                    You’re all caught up
+                  {% else %}
+                    No announcements in this filter
+                  {% endif %}
                 </h3>
                 <p class="empty-copy">
-                  {% if filter == 'unread' %}
-                    You have no unread announcements right now.
+                  {% if q %}
+                    Try a different search.
+                  {% elif filter == 'unread' %}
+                    You’ve read all your announcements.
                   {% else %}
                     Try another filter, or check back after your teacher posts an update.
                   {% endif %}
                 </p>
+                {% if q or filter != 'all' %}
+                  <a class="today-action today-action-soft" href="{{ url_for('announcements') }}">View all announcements</a>
+                {% endif %}
               </article>
             {% endif %}
           </div>
 
           <section class="announce-detail-pane" aria-live="polite">
-            {% if selected %}
-              <article class="announce-detail {% if arrive %}is-arrive{% endif %}" data-announce-id="{{ selected.id }}">
-                <a class="hub-back announce-back" href="{{ list_href }}">All announcements</a>
-                <p class="announce-detail-kicker">{{ selected.subject }}</p>
-                <h2 class="announce-detail-title">{{ selected.title }}</h2>
-                <p class="announce-detail-by">Posted by {{ selected.teacher }}</p>
-                <p class="announce-detail-date">{{ selected.posted }}</p>
-                <div class="announce-detail-body">
-                  {% if selected.body %}
-                    {{ selected.body }}
-                  {% else %}
-                    No additional details were included with this announcement.
-                  {% endif %}
-                </div>
-              </article>
-            {% else %}
-              <div class="announce-detail announce-detail-empty">
-                <span class="today-icon announce-empty-icon" data-type="announcement" aria-hidden="true"></span>
-                <h2 class="announce-detail-title">Select an announcement</h2>
-                <p class="section-note">Choose a message on the left to read the full update from your teacher.</p>
+            <h2 class="announce-pane-label">Message</h2>
+            <a class="hub-back announce-back" id="announce-back" href="{{ list_href }}" {% if not selected %}hidden{% endif %}>← Back to announcements</a>
+            <article
+              class="announce-detail {% if arrive %}is-arrive{% endif %}"
+              id="announce-detail"
+              {% if not selected %}hidden{% endif %}
+              {% if selected %}data-announce-id="{{ selected.id }}"{% endif %}
+            >
+              <p class="announce-detail-kicker" id="announce-detail-kicker">{% if selected %}{{ selected.subject }}{% endif %}</p>
+              <h2 class="announce-detail-title" id="announce-detail-title">{% if selected %}{{ selected.title }}{% endif %}</h2>
+              <p class="announce-detail-by" id="announce-detail-by">{% if selected %}{{ selected.teacher }}{% endif %}</p>
+              <p class="announce-detail-date" id="announce-detail-date" {% if selected %}title="{{ selected.posted }}"{% endif %}>{% if selected %}{{ selected.posted }}{% endif %}</p>
+              <div class="announce-detail-body" id="announce-detail-body">
+                {% if selected and selected.body_blocks %}
+                  {% for para in selected.body_blocks %}
+                    <p>{% for line in para -%}{{ line }}{% if not loop.last %}<br>{% endif %}{%- endfor %}</p>
+                  {% endfor %}
+                {% elif selected %}
+                  <p>No additional details were included with this announcement.</p>
+                {% endif %}
               </div>
-            {% endif %}
+            </article>
+            <div class="announce-detail announce-skeleton" id="announce-skeleton" hidden>
+              <span class="announce-skel announce-skel-kicker"></span>
+              <span class="announce-skel announce-skel-title"></span>
+              <span class="announce-skel announce-skel-meta"></span>
+              <span class="announce-skel announce-skel-body"></span>
+            </div>
+            <div class="announce-detail announce-detail-empty" id="announce-detail-empty" {% if selected %}hidden{% endif %}>
+              <span class="today-icon announce-empty-icon" data-type="announcement" aria-hidden="true"></span>
+              <h2 class="announce-detail-title">Select an announcement</h2>
+              <p class="section-note">Choose a message to read the full update. Earlier posts stay in this list.</p>
+            </div>
           </section>
         </div>
       {% else %}
@@ -112,7 +194,7 @@
           <span class="today-icon announce-empty-icon" data-type="announcement" aria-hidden="true"></span>
           <p class="empty-kicker">Announcements</p>
           <h3 class="empty-title">No announcements yet</h3>
-          <p class="empty-copy">Your teachers haven’t posted any announcements. We’ll let you know when something new arrives.</p>
+          <p class="empty-copy">Your teachers haven’t posted anything yet. New announcements will appear here.</p>
         </article>
       {% endif %}
     </section>

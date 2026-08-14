@@ -56,6 +56,7 @@
               <a
                 class="notify-item {% if note.unread %}is-unread{% endif %}"
                 href="{{ note.href }}"
+                data-id="{{ note.id }}"
               >
                 <p class="notify-subject">{{ note.subject }}{% if note.unread %} · New{% endif %}</p>
                 <p class="notify-item-title">{{ note.title }}</p>
@@ -67,7 +68,7 @@
           {% endfor %}
         </ul>
 
-        <a class="notify-all" href="{{ url_for('announcements') }}">View all announcements</a>
+        <a class="notify-all" href="{{ url_for('announcements') }}">View announcement history</a>
       </div>
     </div>
 

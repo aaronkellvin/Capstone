@@ -256,37 +256,152 @@ def mark_announcement_read(user_id: int, announcement_id: int) -> bool:
     return True
 
 
-def announcement_href(announcement_id, filter_name="all", arrive=False):
+def mark_all_announcements_read(user_id: int) -> int:
+    notes = Announcement.query.all()
+    read_ids = announcement_read_ids(user_id)
+    pending = [note.id for note in notes if note.id not in read_ids]
+    if not pending:
+        return 0
+    now = datetime.utcnow()
+    for announcement_id in pending:
+        db.session.add(AnnouncementRead(user_id=user_id, announcement_id=announcement_id, read_at=now))
+    try:
+        db.session.commit()
+        return len(pending)
+    except Exception:
+        db.session.rollback()
+        added = 0
+        for announcement_id in pending:
+            if mark_announcement_read(user_id, announcement_id):
+                added += 1
+        return added
+
+
+def wants_json_response() -> bool:
+    return request.headers.get("X-Requested-With") == "fetch"
+
+
+def selected_announcement_payload(item: dict) -> dict:
+    return {
+        "id": item["id"],
+        "title": item["title"],
+        "subject": item["subject"],
+        "teacher": item["teacher"],
+        "posted": item["posted"],
+        "when": item["when"],
+        "body_blocks": item["body_blocks"],
+        "href": item["href"],
+    }
+
+
+def announcements_url(announcement_id=None, filter_name="all", q="", arrive=False, view=""):
     kwargs = {}
     if filter_name and filter_name != "all":
         kwargs["filter"] = filter_name
+    if q:
+        kwargs["q"] = q
     if arrive:
         kwargs["arrive"] = 1
-    return url_for("announcements", announcement_id=announcement_id, **kwargs)
+    if view:
+        kwargs["view"] = view
+    if announcement_id:
+        return url_for("announcements", announcement_id=announcement_id, **kwargs)
+    return url_for("announcements", **kwargs)
 
 
-def serialize_announcement(note, read_ids, selected_id=None, filter_name="all"):
-    body = (note.body or "").strip()
+def announcement_when_label(when) -> str:
+    if not when:
+        return ""
+    today = datetime.utcnow().date()
+    day = when.date()
+    clock = when.strftime("%I:%M %p").lstrip("0")
+    if day == today:
+        return f"Today · {clock}"
+    if day == today - timedelta(days=1):
+        return f"Yesterday · {clock}"
+    return when.strftime("%b %d, %Y")
+
+
+def announcement_bucket(when) -> str:
+    if not when:
+        return "earlier"
+    day = when.date()
+    today = datetime.utcnow().date()
+    if day == today:
+        return "today"
+    if day == today - timedelta(days=1):
+        return "yesterday"
+    return "earlier"
+
+
+def normalize_announcement_body(text: str) -> str:
+    if not text:
+        return ""
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    lines = [line.rstrip() for line in text.split("\n")]
+    while lines and not lines[0]:
+        lines.pop(0)
+    while lines and not lines[-1]:
+        lines.pop()
+    indents = [len(line) - len(line.lstrip(" ")) for line in lines if line.strip()]
+    pad = min(indents) if indents else 0
+    if pad:
+        lines = [line[pad:] if line else line for line in lines]
+    cleaned = []
+    blank = 0
+    for line in lines:
+        if line.strip():
+            blank = 0
+            cleaned.append(line)
+        else:
+            blank += 1
+            if blank == 1:
+                cleaned.append("")
+    return "\n".join(cleaned)
+
+
+def announcement_body_blocks(text: str) -> list[list[str]]:
+    normalized = normalize_announcement_body(text)
+    if not normalized:
+        return []
+    blocks = []
+    for chunk in re.split(r"\n\s*\n", normalized):
+        lines = chunk.split("\n")
+        if any(line.strip() for line in lines):
+            blocks.append(lines)
+    return blocks
+
+
+def serialize_announcement(note, read_ids, selected_id=None, filter_name="all", q=""):
+    body = normalize_announcement_body(note.body or "")
     preview = " ".join(body.split())
-    if len(preview) > 110:
-        cut = preview[:107]
+    if len(preview) > 90:
+        cut = preview[:87]
         preview = (cut.rsplit(" ", 1)[0] if " " in cut else cut) + "…"
-    if not preview:
-        preview = "Open to read this announcement."
     teacher_name = note.teacher.name if note.teacher else "Your teacher"
+    search = " ".join(
+        part for part in (note.title, body, note.subject, teacher_name) if part
+    ).lower()
     return {
         "id": note.id,
         "subject": note.subject,
         "title": note.title,
         "body": body,
+        "body_blocks": announcement_body_blocks(body),
         "preview": preview,
         "teacher": teacher_name,
         "initials": initials(teacher_name),
-        "when": relative_time(note.created_at),
-        "posted": note.created_at.strftime("%B %d, %Y · %I:%M %p") if note.created_at else "",
+        "when": announcement_when_label(note.created_at),
+        "posted": (
+            f"{note.created_at.strftime('%B %d, %Y').replace(' 0', ' ')} · {note.created_at.strftime('%I:%M %p').lstrip('0')}"
+            if note.created_at
+            else ""
+        ),
+        "bucket": announcement_bucket(note.created_at),
+        "search": search,
         "unread": note.id not in read_ids,
         "selected": selected_id == note.id,
-        "href": announcement_href(note.id, filter_name),
+        "href": announcements_url(note.id, filter_name, q),
     }
 
 
@@ -298,26 +413,55 @@ def note_matches_filter(note, filter_name, read_ids):
     return True
 
 
+def note_matches_search(note, q: str) -> bool:
+    if not q:
+        return True
+    haystack = " ".join(
+        part
+        for part in (
+            note.title,
+            note.body,
+            note.subject,
+            note.teacher.name if note.teacher else "",
+        )
+        if part
+    ).lower()
+    return q in haystack
+
+
+def group_announcements(notes):
+    groups = []
+    for key, label in (("today", "Today"), ("yesterday", "Yesterday"), ("earlier", "Earlier")):
+        items = [note for note in notes if note["bucket"] == key]
+        if items:
+            groups.append({"key": key, "label": label, "notes": items})
+    return groups
+
+
 def announcements_context(user=None):
     if not user:
         return {"announcements_preview": [], "unread_announcements": 0, "unread_messages": 0}
     read_ids = announcement_read_ids(user["id"])
-    notes = Announcement.query.order_by(Announcement.created_at.desc()).limit(4).all()
+    notes = Announcement.query.order_by(Announcement.created_at.desc()).all()
+    unread = [note for note in notes if note.id not in read_ids]
+    rest = [note for note in notes if note.id in read_ids]
+    preview_notes = (unread + rest)[:6]
     preview = []
-    for note in notes:
+    for note in preview_notes:
         preview.append(
             {
                 "id": note.id,
                 "subject": note.subject,
                 "title": note.title,
-                "meta": note.created_at.strftime("%b %d") + (f" · {note.teacher.name}" if note.teacher else ""),
+                "meta": announcement_when_label(note.created_at)
+                + (f" · {note.teacher.name}" if note.teacher else ""),
                 "unread": note.id not in read_ids,
-                "href": announcement_href(note.id, arrive=True),
+                "href": announcements_url(note.id, arrive=True),
             }
         )
     return {
         "announcements_preview": preview,
-        "unread_announcements": unread_announcement_count(user["id"]),
+        "unread_announcements": len(unread),
         "unread_messages": unread_message_count(user["id"]),
     }
 
@@ -1447,61 +1591,134 @@ def announcements(announcement_id=None):
     filter_name = request.args.get("filter", "all")
     if filter_name not in {"all", "unread", "English", "Math", "Science"}:
         filter_name = "all"
+    q = (request.args.get("q") or "").strip()
     selected = None
     arrive = False
     if announcement_id:
         record = db.session.get(Announcement, announcement_id)
         if not record:
+            if wants_json_response():
+                return jsonify({"ok": False, "error": "That announcement is not available."}), 404
             flash("That announcement is not available.", "danger")
-            return redirect(url_for("announcements", filter=filter_name if filter_name != "all" else None))
+            return redirect(announcements_url(filter_name=filter_name, q=q))
         if not mark_announcement_read(user["id"], announcement_id):
+            if wants_json_response():
+                return jsonify({"ok": False, "error": "Unable to update notification status. Please try again."}), 400
             flash("Unable to update notification status. Please try again.", "danger")
-            return redirect(url_for("announcements", filter=filter_name if filter_name != "all" else None))
+            return redirect(announcements_url(filter_name=filter_name, q=q))
+        session["announce_selected_id"] = announcement_id
         arrive = request.args.get("arrive") == "1"
     read_ids = announcement_read_ids(user["id"])
     selected_id = announcement_id
     records = Announcement.query.order_by(Announcement.created_at.desc()).all()
     notes = []
     for note in records:
-        item = serialize_announcement(note, read_ids, selected_id, filter_name)
-        if note_matches_filter(note, filter_name, read_ids) or item["selected"]:
+        visible = note_matches_filter(note, filter_name, read_ids) and note_matches_search(note, q.lower())
+        item = serialize_announcement(note, read_ids, selected_id, filter_name, q)
+        if visible or item["selected"]:
             notes.append(item)
         if item["selected"]:
             selected = item
     if selected_id and not selected:
+        if wants_json_response():
+            return jsonify({"ok": False, "error": "That announcement is not available."}), 404
         flash("That announcement is not available.", "danger")
         return redirect(url_for("announcements"))
+    unread_count = unread_announcement_count(user["id"])
+    list_href = announcements_url(filter_name=filter_name, q=q, view="list")
+    if wants_json_response() and selected:
+        payload = jsonify(
+            {
+                "ok": True,
+                "unread_announcements": unread_count,
+                "selected": selected_announcement_payload(selected),
+                "list_href": list_href,
+            }
+        )
+        payload.headers["Cache-Control"] = "no-store"
+        return payload
+    restore_id = None
+    if not announcement_id and request.args.get("view") != "list":
+        restore_id = session.get("announce_selected_id")
+    subjects = sorted({note.subject for note in records if note.subject})
     context = {
         "user": user,
         "filter": filter_name,
+        "q": q,
         "announcements": notes,
+        "groups": group_announcements(notes),
         "selected": selected,
         "arrive": arrive,
         "has_announcements": bool(records),
-        "unread_count": unread_announcement_count(user["id"]),
-        "list_href": url_for("announcements", filter=filter_name if filter_name != "all" else None),
+        "unread_count": unread_count,
+        "restore_id": restore_id,
+        "show_subject_filters": len(subjects) > 1,
+        "subject_chips": [
+            {"name": subject, "href": announcements_url(filter_name=subject, q=q)} for subject in subjects
+        ],
+        "chip_all": announcements_url(q=q),
+        "chip_unread": announcements_url(filter_name="unread", q=q),
+        "list_href": list_href,
+        "search_action": url_for("announcements"),
+        "mark_all_url": url_for("announcement_mark_all_read"),
     }
     context.update(announcements_context(user))
     return render_template("announcements.html", **context)
+
+
+@app.route("/announcements/read-all", methods=["POST"])
+def announcement_mark_all_read():
+    user = require_user()
+    if not user:
+        if wants_json_response():
+            return jsonify({"ok": False, "error": "Please sign in to continue."}), 401
+        return redirect(url_for("login"))
+    if user["role"] != "student":
+        if wants_json_response():
+            return jsonify({"ok": False, "error": "You do not have access to that page."}), 403
+        return redirect(url_for("home"))
+    mark_all_announcements_read(user["id"])
+    filter_name = request.form.get("filter") or request.args.get("filter") or "all"
+    if filter_name not in {"all", "unread", "English", "Math", "Science"}:
+        filter_name = "all"
+    q = (request.form.get("q") or request.args.get("q") or "").strip()
+    selected_id = request.form.get("selected_id", type=int) or session.get("announce_selected_id")
+    if selected_id and not db.session.get(Announcement, selected_id):
+        selected_id = None
+    if filter_name == "unread":
+        filter_name = "all"
+    target = announcements_url(selected_id, filter_name, q)
+    if wants_json_response():
+        return jsonify(
+            {
+                "ok": True,
+                "unread_announcements": unread_announcement_count(user["id"]),
+                "selected_id": selected_id,
+                "reload": request.form.get("filter") == "unread",
+                "redirect": target,
+            }
+        )
+    return redirect(target)
 
 
 @app.route("/announcements/<int:announcement_id>/read", methods=["POST"])
 def announcement_mark_read(announcement_id):
     user = require_user()
     if not user:
-        if request.headers.get("X-Requested-With") == "fetch":
+        if wants_json_response():
             return jsonify({"ok": False, "error": "Please sign in to continue."}), 401
         return redirect(url_for("login"))
     if user["role"] != "student":
-        if request.headers.get("X-Requested-With") == "fetch":
+        if wants_json_response():
             return jsonify({"ok": False, "error": "You do not have access to that page."}), 403
         return redirect(url_for("home"))
     if not mark_announcement_read(user["id"], announcement_id):
-        if request.headers.get("X-Requested-With") == "fetch":
+        if wants_json_response():
             return jsonify({"ok": False, "error": "Unable to update notification status. Please try again."}), 400
         flash("Unable to update notification status. Please try again.", "danger")
         return redirect(url_for("announcements"))
-    if request.headers.get("X-Requested-With") == "fetch":
+    session["announce_selected_id"] = announcement_id
+    if wants_json_response():
         return jsonify(
             {
                 "ok": True,
@@ -1841,7 +2058,7 @@ def teacher_announce(user):
     label = SUBJECTS[slug]["announce"]
     if request.method == "POST":
         title = request.form.get("title", "").strip()
-        body = request.form.get("body", "").strip()
+        body = normalize_announcement_body(request.form.get("body", ""))
         if not title:
             flash("Please add a title.", "danger")
         else:
