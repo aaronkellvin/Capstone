@@ -429,19 +429,6 @@ def build_today(user_id: int) -> list[dict]:
                 "href": url_for("subject_hub", slug=pending.subject_slug, tab="study"),
             }
         )
-    note = Announcement.query.order_by(Announcement.created_at.desc()).first()
-    if note:
-        items.append(
-            {
-                "type": "announcement",
-                "priority": "tertiary",
-                "kicker": f"Announcement · {note.subject}",
-                "title": note.title,
-                "meta": "Also available anytime from the bell",
-                "action": "Open",
-                "href": url_for("announcements"),
-            }
-        )
     return items[:5]
 
 
@@ -704,11 +691,6 @@ def home():
             }
         )
     today = build_today(user["id"])
-    guide_title = "Ready when you are"
-    guide_note = "Balanced plan for today: study a summary, try a Practice Check, and complete due assessments."
-    if today:
-        guide_title = today[0]["title"]
-        guide_note = today[0]["kicker"]
     overall = 0
     tracked = [item for item in subjects if item["has_progress"]]
     if tracked:
@@ -717,8 +699,7 @@ def home():
         "user": user,
         "greeting": f"Hi, {first_name}",
         "topbar_sub": f"Hi, {first_name}",
-        "guide_title": guide_title,
-        "guide_note": guide_note,
+        "guide_note": "Your next steps are listed in Today. Progress below reflects English, Math, and Science.",
         "weekly_goal": {
             "percent": overall,
             "has_progress": bool(tracked),

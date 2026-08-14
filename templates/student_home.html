@@ -32,7 +32,7 @@
     <section class="home-hero" aria-labelledby="guide-title">
       <div class="home-hero-copy">
         <p class="hero-kicker">Your study companion</p>
-        <h1 id="guide-title" class="hero-title">{{ guide_title }}</h1>
+        <h1 id="guide-title" class="hero-title">{{ greeting }}</h1>
         <p class="hero-note">{{ guide_note }}</p>
       </div>
       {% if weekly_goal %}
@@ -83,7 +83,15 @@
               <p class="today-meta">{{ item.meta }}</p>
             </div>
             <a class="today-action {% if item.priority != 'primary' %}today-action-soft{% endif %}" href="{{ item.href }}">
-              {{ item.action }}
+              {% if item.type == "upload" %}
+                See status
+              {% elif item.type == "result" %}
+                Review
+              {% elif item.type == "assessment" or item.type == "practice" %}
+                Start
+              {% else %}
+                {{ item.action }}
+              {% endif %}
             </a>
           </article>
         {% else %}
@@ -103,13 +111,13 @@
           <p class="section-note">Private questions about lessons, assessments, and materials.</p>
         </div>
       </div>
-      <a class="today-card today-announcement" href="{{ url_for('messages_inbox') }}">
-        <div class="today-copy">
-          <p class="today-kicker">{% if unread_messages %}{{ unread_messages }} new{% else %}Messages{% endif %}</p>
-          <h3 class="today-title">Ask your English, Math, or Science teacher</h3>
-          <p class="today-meta">Teachers reply here. This is not a class forum.</p>
+      <a class="home-chat" href="{{ url_for('messages_inbox') }}">
+        <div class="home-chat-copy">
+          <p class="home-chat-kicker">{% if unread_messages %}{{ unread_messages }} new{% else %}Messages{% endif %}</p>
+          <p class="home-chat-title">Ask your English, Math, or Science teacher</p>
+          <p class="home-chat-meta">Teachers reply here. This is not a class forum.</p>
         </div>
-        <span class="today-action">Open Messages</span>
+        <span class="home-chat-go">Open Messages</span>
       </a>
     </section>
 

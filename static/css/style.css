@@ -388,7 +388,7 @@ body {
 .app-body {
   min-height: 100vh;
   background: var(--sky);
-  padding-bottom: 5.5rem;
+  padding-bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
 }
 
 .app-bg {
@@ -1988,7 +1988,7 @@ button:disabled,
 }
 
 .today-icon::before {
-  content: \"\";
+  content: "";
   position: absolute;
   inset: 0.55rem;
   border-radius: 4px;
@@ -1996,29 +1996,52 @@ button:disabled,
   opacity: 0.85;
 }
 
-.today-icon[data-type=\"assessment\"] {
+.today-icon[data-type="assessment"] {
   background: linear-gradient(145deg, rgba(200, 16, 46, 0.12), rgba(232, 90, 107, 0.18));
 }
 
-.today-icon[data-type=\"assessment\"]::before {
+.today-icon[data-type="assessment"]::before {
   background: var(--letran-red);
+  border-radius: 0;
   clip-path: polygon(50% 8%, 92% 30%, 92% 70%, 50% 92%, 8% 70%, 8% 30%);
 }
 
-.today-icon[data-type=\"practice\"]::before {
+.today-icon[data-type="practice"]::before {
   background: var(--accent-teal);
-  border-radius: 3px;
+  border-radius: 2px;
+  clip-path: polygon(30% 16%, 74% 16%, 74% 84%, 26% 84%, 26% 28%);
 }
 
-.today-icon[data-type=\"result\"]::before {
+.today-icon[data-type="result"]::before {
   background: var(--letran-blue-soft);
+  border-radius: 0;
   clip-path: polygon(10% 70%, 35% 45%, 55% 60%, 90% 20%, 95% 28%, 55% 80%, 35% 62%, 18% 80%);
 }
 
-.today-icon[data-type=\"announcement\"]::before,
-.today-icon[data-type=\"upload\"]::before {
+.today-icon[data-type="upload"]::before {
   background: var(--accent-amber);
-  border-radius: 50%;
+  border-radius: 0;
+  inset: 0.38rem;
+  clip-path: polygon(50% 12%, 74% 38%, 60% 38%, 60% 68%, 40% 68%, 40% 38%, 26% 38%);
+}
+
+.today-icon[data-type="upload"]::after {
+  content: "";
+  position: absolute;
+  left: 0.55rem;
+  right: 0.55rem;
+  bottom: 0.42rem;
+  height: 0.22rem;
+  border-radius: 2px;
+  background: var(--accent-amber);
+  opacity: 0.85;
+}
+
+.today-icon[data-type="announcement"]::before {
+  background: var(--accent-violet);
+  border-radius: 0;
+  inset: 0.38rem;
+  clip-path: polygon(14% 16%, 86% 16%, 86% 58%, 40% 58%, 22% 80%, 28% 58%, 14% 58%);
 }
 
 .today-action,
@@ -2198,6 +2221,54 @@ button:disabled,
   font-weight: 600;
   color: var(--muted);
   line-height: 1.45;
+}
+
+.home-chat {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.85rem;
+  align-items: center;
+  padding: 0.9rem 1.05rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: inherit;
+}
+
+.home-chat:hover {
+  border-color: rgba(11, 61, 145, 0.22);
+}
+
+.home-chat-kicker {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--quiet);
+}
+
+.home-chat-title {
+  margin-top: 0.2rem;
+  font-family: "Fredoka", "Nunito", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--letran-blue);
+}
+
+.home-chat-meta {
+  margin-top: 0.15rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.home-chat-go {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--letran-blue);
+  white-space: nowrap;
 }
 
 /* Cards / hubs / empty */
@@ -2778,6 +2849,31 @@ html.pref-reduce-motion *::after {
     display: none;
   }
 
+  .app-topbar {
+    gap: 0.45rem;
+    padding: 0.55rem 0.7rem;
+  }
+
+  .topbar-brand {
+    gap: 0.45rem;
+  }
+
+  .topbar-brand img,
+  .topbar-logo {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .topbar-actions,
+  .account-cluster {
+    gap: 0.22rem;
+  }
+
+  .icon-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
   .staff-topbar .staff-nav {
     order: 3;
     flex-basis: 100%;
@@ -2786,6 +2882,16 @@ html.pref-reduce-motion *::after {
 
   .menu-panel {
     width: min(calc(100vw - 1.2rem), 320px);
+  }
+}
+
+@media (max-height: 700px) {
+  .app-body {
+    padding-bottom: calc(6.25rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .subjects-showcase {
+    margin-bottom: 0.75rem;
   }
 }
 
