@@ -529,8 +529,8 @@ def attempt_meta(attempt: Attempt) -> str:
     ):
         return f"{date_label} · Score pending release"
     if attempt.score_total_auto:
-        return f"{date_label} · {attempt.score_auto}/{attempt.score_total_auto} auto"
-    return date_label
+        return f"{date_label} · {attempt.score_auto}/{attempt.score_total_auto} correct"
+    return f"{date_label} · Not auto-scored"
 
 
 def attach_summary(material: Material):

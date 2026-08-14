@@ -44,10 +44,17 @@
         {% else %}
           <article class="empty-state-card">
             <p class="empty-kicker">Results</p>
-            <h3 class="empty-title">No results in this filter yet</h3>
-            <p class="empty-copy">Finished practice and released assessments will show up here.</p>
+            <h3 class="empty-title">You’re all caught up</h3>
+            <p class="empty-copy">New results will appear here after your next practice or assessment.</p>
           </article>
         {% endfor %}
+        {% if result_items %}
+          <article class="empty-state-card">
+            <p class="empty-kicker">Results</p>
+            <h3 class="empty-title">You’re all caught up</h3>
+            <p class="empty-copy">New results will appear here after your next practice or assessment.</p>
+          </article>
+        {% endif %}
       </div>
     </section>
   </main>
