@@ -331,10 +331,10 @@ def session_user_payload(user: User) -> dict:
     }
 
 
-def bloom_progress(user_id: int, subject_slug: str) -> tuple[int, str]:
+def bloom_progress(user_id: int, subject_slug: str) -> tuple[int, str, bool]:
     attempts = Attempt.query.filter_by(user_id=user_id, subject_slug=subject_slug).all()
     if not attempts:
-        return 0, "Start with a summary or Practice Check"
+        return 0, "Start with a summary or Practice Check", False
     percents = []
     blooms = {"Analyze": 0, "Evaluate": 0, "Create": 0}
     for attempt in attempts:
@@ -350,7 +350,7 @@ def bloom_progress(user_id: int, subject_slug: str) -> tuple[int, str]:
         next_line = "Keep practicing HOTS items from approved lessons"
     else:
         next_line = f"Getting stronger in {strongest}"
-    return percent, next_line
+    return percent, next_line, True
 
 
 def build_today(user_id: int) -> list[dict]:
@@ -660,7 +660,7 @@ def home():
     first_name = user["name"].split(" ")[0]
     subjects = []
     for slug, meta in SUBJECTS.items():
-        percent, insight = bloom_progress(user["id"], slug)
+        percent, insight, has_progress = bloom_progress(user["id"], slug)
         teacher = User.query.filter_by(role="teacher", subject=meta["name"]).first()
         due = Assessment.query.filter_by(subject_slug=slug, status="published").count()
         next_action = "Next: Explore approved lessons"
@@ -673,8 +673,10 @@ def home():
                 "slug": slug,
                 "name": meta["name"],
                 "teacher": teacher.name if teacher else "Subject teacher",
-                "progress_label": f"Progress {percent}% · {insight}",
+                "progress_label": f"{percent}% complete · {insight}" if has_progress else "No progress yet",
+                "progress_insight": insight,
                 "progress_percent": percent,
+                "has_progress": has_progress,
                 "next_action": next_action,
             }
         )
@@ -684,7 +686,10 @@ def home():
     if today:
         guide_title = today[0]["title"]
         guide_note = today[0]["kicker"]
-    practice_count = Attempt.query.filter_by(user_id=user["id"], kind="practice").count()
+    overall = 0
+    tracked = [item for item in subjects if item["has_progress"]]
+    if tracked:
+        overall = int(round(sum(item["progress_percent"] for item in tracked) / len(tracked)))
     context = {
         "user": user,
         "greeting": f"Hi, {first_name}",
@@ -692,10 +697,13 @@ def home():
         "guide_title": guide_title,
         "guide_note": guide_note,
         "weekly_goal": {
-            "done": min(practice_count, 3),
-            "target": 3,
-            "percent": int(min(practice_count, 3) / 3 * 100),
-            "hint": "Gentle goal only — no streak pressure. Practice Checks help you grow.",
+            "percent": overall,
+            "has_progress": bool(tracked),
+            "hint": (
+                "Based on your English, Math, and Science work."
+                if tracked
+                else "Start a summary or Practice Check to begin tracking progress."
+            ),
         },
         "today_items": today,
         "subjects": subjects,
@@ -722,12 +730,12 @@ def subject_hub(slug):
         tab = "assessments"
 
     teacher = User.query.filter_by(role="teacher", subject=meta["name"]).first()
-    percent, insight = bloom_progress(user["id"], slug)
+    percent, insight, has_progress = bloom_progress(user["id"], slug)
     subject = {
         "slug": slug,
         "name": meta["name"],
         "teacher": teacher.name if teacher else "Subject teacher",
-        "progress_label": f"Progress {percent}% · {insight}",
+        "progress_label": f"{percent}% complete · {insight}" if has_progress else "No progress yet",
         "progress_percent": percent,
         "next_action": insight,
     }

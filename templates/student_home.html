@@ -36,15 +36,34 @@
         <p class="hero-note">{{ guide_note }}</p>
       </div>
       {% if weekly_goal %}
-        <div class="weekly-goal" aria-label="Weekly practice goal">
+        <div class="weekly-goal" aria-label="Your progress">
           <div class="weekly-goal-top">
-            <span>This week’s practice goal</span>
-            <strong>{{ weekly_goal.done }}/{{ weekly_goal.target }}</strong>
+            <span>Your progress</span>
+            <strong>
+              {% if weekly_goal.has_progress %}
+                {{ weekly_goal.percent }}%
+              {% else %}
+                No progress yet
+              {% endif %}
+            </strong>
           </div>
-          <div class="goal-bar" aria-hidden="true">
+          <div
+            class="goal-bar {% if not weekly_goal.has_progress %}is-empty{% endif %}"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="{{ weekly_goal.percent }}"
+            aria-label="Course progress"
+          >
             <span style="width: {{ weekly_goal.percent }}%;"></span>
           </div>
-          <p class="goal-hint">{{ weekly_goal.hint }}</p>
+          <p class="goal-hint">
+            {% if weekly_goal.has_progress %}
+              {{ weekly_goal.percent }}% complete. {{ weekly_goal.hint }}
+            {% else %}
+              No progress yet. {{ weekly_goal.hint }}
+            {% endif %}
+          </p>
         </div>
       {% endif %}
     </section>
@@ -114,8 +133,21 @@
               <span class="subject-open">Open</span>
             </div>
             <p class="subject-name">{{ subject.name }}</p>
-            <p class="subject-progress">{{ subject.progress_label }}</p>
-            <div class="subject-meter" aria-hidden="true">
+            <p class="subject-progress">
+              {% if subject.has_progress %}
+                {{ subject.progress_percent }}% complete · {{ subject.progress_insight }}
+              {% else %}
+                No progress yet
+              {% endif %}
+            </p>
+            <div
+              class="subject-meter {% if not subject.has_progress %}is-empty{% endif %}"
+              role="progressbar"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="{{ subject.progress_percent }}"
+              aria-label="{{ subject.name }} progress"
+            >
               <span style="width: {{ subject.progress_percent }}%;"></span>
             </div>
             <div class="subject-footer">
