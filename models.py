@@ -138,6 +138,18 @@ class Announcement(db.Model):
     teacher = db.relationship("User")
 
 
+class AnnouncementRead(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    announcement_id = db.Column(db.Integer, db.ForeignKey("announcement.id"), nullable=False)
+    read_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user = db.relationship("User")
+    announcement = db.relationship("Announcement")
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "announcement_id", name="uq_announcement_read"),
+    )
+
+
 class Setting(db.Model):
     key = db.Column(db.String(80), primary_key=True)
     value = db.Column(db.String(255), default="")

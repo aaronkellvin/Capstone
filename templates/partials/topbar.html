@@ -53,7 +53,11 @@
         <ul class="notify-list">
           {% for note in announcements_preview %}
             <li>
-              <a class="notify-item {% if note.unread %}is-unread{% endif %}" href="{{ note.href }}">
+              <a
+                class="notify-item {% if note.unread %}is-unread{% endif %}"
+                href="{{ note.href }}"
+                data-mark-announcement="{{ note.id }}"
+              >
                 <p class="notify-subject">{{ note.subject }}{% if note.unread %} · New{% endif %}</p>
                 <p class="notify-item-title">{{ note.title }}</p>
                 <p class="notify-meta">{{ note.meta }}</p>

@@ -17,6 +17,7 @@ from ai import generate_hots_questions, last_ai_error, summarize_material
 from extract import ExtractError, extract_text
 from models import (
     Announcement,
+    AnnouncementRead,
     Assessment,
     Attempt,
     ChatMessage,
@@ -220,25 +221,62 @@ def admin_nav():
     ]
 
 
+def announcement_read_ids(user_id: int) -> set[int]:
+    return {
+        row.announcement_id
+        for row in AnnouncementRead.query.filter_by(user_id=user_id).all()
+    }
+
+
+def unread_announcement_count(user_id: int) -> int:
+    read_ids = announcement_read_ids(user_id)
+    query = Announcement.query
+    if read_ids:
+        query = query.filter(~Announcement.id.in_(read_ids))
+    return query.count()
+
+
+def mark_announcement_read(user_id: int, announcement_id: int) -> bool:
+    announcement = db.session.get(Announcement, announcement_id)
+    if not announcement:
+        return False
+    existing = AnnouncementRead.query.filter_by(
+        user_id=user_id, announcement_id=announcement_id
+    ).first()
+    if existing:
+        return True
+    try:
+        db.session.add(AnnouncementRead(user_id=user_id, announcement_id=announcement_id))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        if AnnouncementRead.query.filter_by(user_id=user_id, announcement_id=announcement_id).first():
+            return True
+        return False
+    return True
+
+
 def announcements_context(user=None):
-    last_seen = session.get("announcements_seen_id", 0)
-    unread = Announcement.query.filter(Announcement.id > last_seen).count()
+    if not user:
+        return {"announcements_preview": [], "unread_announcements": 0, "unread_messages": 0}
+    read_ids = announcement_read_ids(user["id"])
     notes = Announcement.query.order_by(Announcement.created_at.desc()).limit(4).all()
     preview = []
     for note in notes:
         preview.append(
             {
+                "id": note.id,
                 "subject": note.subject,
                 "title": note.title,
                 "meta": note.created_at.strftime("%b %d") + (f" · {note.teacher.name}" if note.teacher else ""),
-                "unread": note.id > last_seen,
-                "href": url_for("announcements"),
+                "unread": note.id not in read_ids,
+                "href": url_for("announcement_open", announcement_id=note.id),
             }
         )
     return {
         "announcements_preview": preview,
-        "unread_announcements": unread,
-        "unread_messages": unread_message_count(user["id"]) if user else 0,
+        "unread_announcements": unread_announcement_count(user["id"]),
+        "unread_messages": unread_message_count(user["id"]),
     }
 
 
@@ -1365,26 +1403,78 @@ def announcements():
         return redirect(url_for("home"))
     filter_name = request.args.get("filter", "all")
     query = Announcement.query.order_by(Announcement.created_at.desc())
-    last_seen = session.get("announcements_seen_id", 0)
+    read_ids = announcement_read_ids(user["id"])
+    try:
+        highlight = int(request.args.get("highlight") or 0)
+    except ValueError:
+        highlight = 0
     notes = []
     for note in query.all():
         if filter_name != "all" and note.subject != filter_name:
             continue
         notes.append(
             {
+                "id": note.id,
                 "subject": note.subject,
                 "title": note.title,
                 "body": note.body,
                 "meta": note.created_at.strftime("%b %d") + (f" · {note.teacher.name}" if note.teacher else ""),
-                "unread": note.id > last_seen,
+                "unread": note.id not in read_ids,
+                "href": url_for("announcement_open", announcement_id=note.id),
             }
         )
-    latest = Announcement.query.order_by(Announcement.id.desc()).first()
-    if latest:
-        session["announcements_seen_id"] = latest.id
-    context = {"user": user, "filter": filter_name, "announcements": notes}
+    context = {
+        "user": user,
+        "filter": filter_name,
+        "announcements": notes,
+        "highlight": highlight,
+    }
     context.update(announcements_context(user))
     return render_template("announcements.html", **context)
+
+
+@app.route("/announcements/<int:announcement_id>")
+def announcement_open(announcement_id):
+    user = require_user()
+    if not user:
+        return redirect(url_for("login"))
+    if user["role"] != "student":
+        return redirect(url_for("home"))
+    announcement = db.session.get(Announcement, announcement_id)
+    if not announcement:
+        flash("That announcement is not available.", "danger")
+        return redirect(url_for("announcements"))
+    if not mark_announcement_read(user["id"], announcement_id):
+        flash("Unable to update notification status. Please try again.", "danger")
+        return redirect(url_for("announcements"))
+    return redirect(url_for("announcements", highlight=announcement_id))
+
+
+@app.route("/announcements/<int:announcement_id>/read", methods=["POST"])
+def announcement_mark_read(announcement_id):
+    user = require_user()
+    if not user:
+        if request.headers.get("X-Requested-With") == "fetch":
+            return jsonify({"ok": False, "error": "Please sign in to continue."}), 401
+        return redirect(url_for("login"))
+    if user["role"] != "student":
+        if request.headers.get("X-Requested-With") == "fetch":
+            return jsonify({"ok": False, "error": "You do not have access to that page."}), 403
+        return redirect(url_for("home"))
+    if not mark_announcement_read(user["id"], announcement_id):
+        if request.headers.get("X-Requested-With") == "fetch":
+            return jsonify({"ok": False, "error": "Unable to update notification status. Please try again."}), 400
+        flash("Unable to update notification status. Please try again.", "danger")
+        return redirect(url_for("announcements"))
+    if request.headers.get("X-Requested-With") == "fetch":
+        return jsonify(
+            {
+                "ok": True,
+                "announcement_id": announcement_id,
+                "unread_announcements": unread_announcement_count(user["id"]),
+            }
+        )
+    return redirect(url_for("announcements", highlight=announcement_id))
 
 
 @app.route("/teacher")

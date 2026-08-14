@@ -35,14 +35,19 @@
 
       <div class="hub-list" style="margin-top: 1rem;">
         {% for note in announcements %}
-          <article class="hub-card hub-card-stack {% if note.unread %}is-unread-card{% endif %}">
+          <a
+            class="hub-card hub-card-stack {% if note.unread %}is-unread-card{% endif %}{% if highlight == note.id %} is-highlight{% endif %}"
+            href="{{ note.href }}"
+            data-mark-announcement="{{ note.id }}"
+            {% if highlight == note.id %}id="announcement-{{ note.id }}"{% endif %}
+          >
             <div>
               <p class="hub-card-kicker">{{ note.subject }}{% if note.unread %} · Unread{% endif %}</p>
               <h2 class="hub-card-title">{{ note.title }}</h2>
               {% if note.body %}<p class="hub-card-meta">{{ note.body }}</p>{% endif %}
               <p class="hub-card-meta">{{ note.meta }}</p>
             </div>
-          </article>
+          </a>
         {% else %}
           <article class="empty-state-card">
             <p class="empty-kicker">Announcements</p>

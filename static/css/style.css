@@ -1151,6 +1151,16 @@ body {
   box-shadow: 0 8px 18px rgba(11, 61, 145, 0.07);
 }
 
+a.hub-card {
+  text-decoration: none;
+  color: inherit;
+}
+
+.hub-card.is-highlight {
+  border-color: var(--letran-blue);
+  box-shadow: var(--shadow-sm);
+}
+
 .hub-card-kicker {
   font-size: 0.72rem;
   font-weight: 800;
