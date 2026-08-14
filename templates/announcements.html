@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Announcements — Bloom</title>
+  <title>{% if selected %}{{ selected.title }} — {% endif %}Announcements — Bloom</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
 </head>
-<body class="app-body">
+<body class="app-body announce-body">
   <div class="app-bg" aria-hidden="true">
     <span class="ribbon ribbon-blue"></span>
     <span class="ribbon ribbon-red"></span>
@@ -22,45 +22,105 @@
   <main class="app-main">
   {% include "partials/flash.html" %}
 
-    <section class="home-section">
-      <h1 class="section-title">Announcements</h1>
-      <p class="section-note">Subject updates from your teachers.</p>
+    <section class="home-section announce-page" aria-labelledby="announce-title">
+      <h1 id="announce-title" class="section-title">Announcements</h1>
+      <p class="section-note">
+        Stay updated with important information from your teachers.
+        {% if unread_count %}
+          {{ unread_count }} unread.
+        {% endif %}
+      </p>
 
-      <div class="filter-chips">
-        <a class="chip-link {% if filter == 'all' %}active{% endif %}" href="{{ url_for('announcements', filter='all') }}">All</a>
-        <a class="chip-link {% if filter == 'English' %}active{% endif %}" href="{{ url_for('announcements', filter='English') }}">English</a>
-        <a class="chip-link {% if filter == 'Math' %}active{% endif %}" href="{{ url_for('announcements', filter='Math') }}">Math</a>
-        <a class="chip-link {% if filter == 'Science' %}active{% endif %}" href="{{ url_for('announcements', filter='Science') }}">Science</a>
-      </div>
+      {% if has_announcements %}
+        <div class="filter-chips" role="tablist" aria-label="Announcement filters">
+          <a class="chip-link {% if filter == 'all' %}active{% endif %}" href="{{ url_for('announcements') }}">All</a>
+          <a class="chip-link {% if filter == 'unread' %}active{% endif %}" href="{{ url_for('announcements', filter='unread') }}">Unread</a>
+          <a class="chip-link {% if filter == 'English' %}active{% endif %}" href="{{ url_for('announcements', filter='English') }}">English</a>
+          <a class="chip-link {% if filter == 'Math' %}active{% endif %}" href="{{ url_for('announcements', filter='Math') }}">Math</a>
+          <a class="chip-link {% if filter == 'Science' %}active{% endif %}" href="{{ url_for('announcements', filter='Science') }}">Science</a>
+        </div>
 
-      <div class="hub-list" style="margin-top: 1rem;">
-        {% for note in announcements %}
-          <a
-            class="hub-card hub-card-stack {% if note.unread %}is-unread-card{% endif %}{% if highlight == note.id %} is-highlight{% endif %}"
-            href="{{ note.href }}"
-            data-mark-announcement="{{ note.id }}"
-            {% if highlight == note.id %}id="announcement-{{ note.id }}"{% endif %}
-          >
-            <div>
-              <p class="hub-card-kicker">{{ note.subject }}{% if note.unread %} · Unread{% endif %}</p>
-              <h2 class="hub-card-title">{{ note.title }}</h2>
-              {% if note.body %}<p class="hub-card-meta">{{ note.body }}</p>{% endif %}
-              <p class="hub-card-meta">{{ note.meta }}</p>
-            </div>
-          </a>
-        {% else %}
-          <article class="empty-state-card">
-            <p class="empty-kicker">Announcements</p>
-            <h3 class="empty-title">No announcements in this filter</h3>
-            <p class="empty-copy">When teachers post subject updates, they will appear here.</p>
-          </article>
-        {% endfor %}
-      </div>
+        <div class="announce-layout {% if selected %}is-open{% endif %}">
+          <div class="announce-list-pane">
+            <h2 class="announce-pane-label" id="announce-list-label">Announcements</h2>
+            {% if announcements %}
+              <div class="announce-list" role="list" aria-labelledby="announce-list-label">
+                {% for note in announcements %}
+                  <a
+                    class="announce-item {% if note.unread %}is-unread{% endif %} {% if note.selected %}is-selected{% endif %}"
+                    href="{{ note.href }}"
+                    role="listitem"
+                    {% if note.selected %}aria-current="page"{% endif %}
+                  >
+                    <span class="unread-dot {% if note.unread %}is-on{% endif %}" aria-hidden="true"></span>
+                    <div class="announce-item-copy">
+                      <p class="announce-item-title">
+                        {{ note.title }}
+                        {% if note.unread %}<span class="sr-only">Unread</span>{% endif %}
+                      </p>
+                      <p class="announce-item-meta">{{ note.subject }} · {{ note.teacher }}</p>
+                      <p class="announce-item-when">{{ note.when }}</p>
+                      <p class="announce-item-preview">{{ note.preview }}</p>
+                    </div>
+                  </a>
+                {% endfor %}
+              </div>
+            {% else %}
+              <article class="empty-state-card">
+                <p class="empty-kicker">Announcements</p>
+                <h3 class="empty-title">
+                  {% if filter == 'unread' %}You’re all caught up{% else %}No announcements in this filter{% endif %}
+                </h3>
+                <p class="empty-copy">
+                  {% if filter == 'unread' %}
+                    You have no unread announcements right now.
+                  {% else %}
+                    Try another filter, or check back after your teacher posts an update.
+                  {% endif %}
+                </p>
+              </article>
+            {% endif %}
+          </div>
+
+          <section class="announce-detail-pane" aria-live="polite">
+            {% if selected %}
+              <article class="announce-detail {% if arrive %}is-arrive{% endif %}" data-announce-id="{{ selected.id }}">
+                <a class="hub-back announce-back" href="{{ list_href }}">All announcements</a>
+                <p class="announce-detail-kicker">{{ selected.subject }}</p>
+                <h2 class="announce-detail-title">{{ selected.title }}</h2>
+                <p class="announce-detail-by">Posted by {{ selected.teacher }}</p>
+                <p class="announce-detail-date">{{ selected.posted }}</p>
+                <div class="announce-detail-body">
+                  {% if selected.body %}
+                    {{ selected.body }}
+                  {% else %}
+                    No additional details were included with this announcement.
+                  {% endif %}
+                </div>
+              </article>
+            {% else %}
+              <div class="announce-detail announce-detail-empty">
+                <span class="today-icon announce-empty-icon" data-type="announcement" aria-hidden="true"></span>
+                <h2 class="announce-detail-title">Select an announcement</h2>
+                <p class="section-note">Choose a message on the left to read the full update from your teacher.</p>
+              </div>
+            {% endif %}
+          </section>
+        </div>
+      {% else %}
+        <article class="empty-state-card">
+          <span class="today-icon announce-empty-icon" data-type="announcement" aria-hidden="true"></span>
+          <p class="empty-kicker">Announcements</p>
+          <h3 class="empty-title">No announcements yet</h3>
+          <p class="empty-copy">Your teachers haven’t posted any announcements. We’ll let you know when something new arrives.</p>
+        </article>
+      {% endif %}
     </section>
   </main>
 
   {% set active_tab = "home" %}
   {% include "partials/student_tabbar.html" %}
   <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/announcements.js') }}"></script>
 </body>
 </html>

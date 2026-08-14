@@ -1156,11 +1156,6 @@ a.hub-card {
   color: inherit;
 }
 
-.hub-card.is-highlight {
-  border-color: var(--letran-blue);
-  box-shadow: var(--shadow-sm);
-}
-
 .hub-card-kicker {
   font-size: 0.72rem;
   font-weight: 800;
@@ -3209,5 +3204,209 @@ a.message-row:hover {
 @media (prefers-reduced-motion: reduce) {
   a.message-row {
     transition: none;
+  }
+}
+
+/* ========== Student announcements inbox ========== */
+.announce-body .app-main {
+  width: min(100%, 1040px);
+}
+
+.announce-page .filter-chips {
+  margin-bottom: 1.1rem;
+}
+
+.announce-layout {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.announce-pane-label {
+  margin: 0 0 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--quiet);
+}
+
+.announce-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.announce-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.7rem;
+  align-items: start;
+  min-width: 0;
+  padding: 0.85rem 0.9rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: inherit;
+}
+
+.announce-item:hover {
+  border-color: rgba(11, 61, 145, 0.22);
+}
+
+.announce-item-copy {
+  min-width: 0;
+}
+
+.announce-item-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.announce-item.is-unread .announce-item-title {
+  font-weight: 800;
+}
+
+.announce-item-meta,
+.announce-item-when,
+.announce-item-preview {
+  margin-top: 0.18rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.announce-item-preview {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.announce-item.is-selected {
+  background: var(--panel-soft);
+  border-color: var(--letran-blue);
+  box-shadow: inset 3px 0 0 var(--letran-blue);
+}
+
+.announce-item.is-unread:not(.is-selected) {
+  background: rgba(230, 126, 34, 0.05);
+  border-color: rgba(230, 126, 34, 0.18);
+}
+
+.announce-detail {
+  min-width: 0;
+  padding: 1.15rem 1.15rem 1.25rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+}
+
+.announce-detail-empty {
+  display: grid;
+  justify-items: start;
+  align-content: start;
+  gap: 0.35rem;
+  min-height: 14rem;
+}
+
+.announce-empty-icon {
+  margin-bottom: 0.45rem;
+}
+
+.announce-back {
+  min-height: 2.4rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.announce-detail-kicker {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--quiet);
+}
+
+.announce-detail-title {
+  margin-top: 0.35rem;
+  font-family: "Fredoka", "Nunito", sans-serif;
+  font-size: clamp(1.35rem, 4vw, 1.7rem);
+  font-weight: 650;
+  color: var(--letran-blue);
+  line-height: 1.2;
+}
+
+.announce-detail-by,
+.announce-detail-date {
+  margin-top: 0.28rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.announce-detail-body {
+  margin-top: 1.1rem;
+  padding-top: 1.05rem;
+  border-top: 1px solid var(--line);
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: 1.55;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.announce-detail.is-arrive {
+  animation: announce-arrive 1.35s var(--ease);
+}
+
+@keyframes announce-arrive {
+  0% {
+    box-shadow: 0 0 0 3px rgba(11, 61, 145, 0.28);
+  }
+  100% {
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+@media (max-width: 839px) {
+  .announce-layout.is-open .announce-list-pane {
+    display: none;
+  }
+
+  .announce-layout:not(.is-open) .announce-detail-pane {
+    display: none;
+  }
+}
+
+@media (min-width: 840px) {
+  .announce-layout {
+    grid-template-columns: minmax(16.5rem, 21rem) minmax(0, 1fr);
+    align-items: start;
+    gap: 1.15rem;
+  }
+
+  .announce-list-pane {
+    position: sticky;
+    top: 5.2rem;
+    max-height: calc(100vh - 8.75rem);
+    overflow: auto;
+    padding-right: 0.15rem;
+  }
+
+  .announce-back {
+    display: none;
+  }
+
+  .announce-layout.is-open .announce-list-pane,
+  .announce-layout:not(.is-open) .announce-detail-pane {
+    display: block;
   }
 }

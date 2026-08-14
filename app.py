@@ -256,6 +256,48 @@ def mark_announcement_read(user_id: int, announcement_id: int) -> bool:
     return True
 
 
+def announcement_href(announcement_id, filter_name="all", arrive=False):
+    kwargs = {}
+    if filter_name and filter_name != "all":
+        kwargs["filter"] = filter_name
+    if arrive:
+        kwargs["arrive"] = 1
+    return url_for("announcements", announcement_id=announcement_id, **kwargs)
+
+
+def serialize_announcement(note, read_ids, selected_id=None, filter_name="all"):
+    body = (note.body or "").strip()
+    preview = " ".join(body.split())
+    if len(preview) > 110:
+        cut = preview[:107]
+        preview = (cut.rsplit(" ", 1)[0] if " " in cut else cut) + "…"
+    if not preview:
+        preview = "Open to read this announcement."
+    teacher_name = note.teacher.name if note.teacher else "Your teacher"
+    return {
+        "id": note.id,
+        "subject": note.subject,
+        "title": note.title,
+        "body": body,
+        "preview": preview,
+        "teacher": teacher_name,
+        "initials": initials(teacher_name),
+        "when": relative_time(note.created_at),
+        "posted": note.created_at.strftime("%B %d, %Y · %I:%M %p") if note.created_at else "",
+        "unread": note.id not in read_ids,
+        "selected": selected_id == note.id,
+        "href": announcement_href(note.id, filter_name),
+    }
+
+
+def note_matches_filter(note, filter_name, read_ids):
+    if filter_name == "unread":
+        return note.id not in read_ids
+    if filter_name in {"English", "Math", "Science"}:
+        return note.subject == filter_name
+    return True
+
+
 def announcements_context(user=None):
     if not user:
         return {"announcements_preview": [], "unread_announcements": 0, "unread_messages": 0}
@@ -270,7 +312,7 @@ def announcements_context(user=None):
                 "title": note.title,
                 "meta": note.created_at.strftime("%b %d") + (f" · {note.teacher.name}" if note.teacher else ""),
                 "unread": note.id not in read_ids,
-                "href": url_for("announcement_open", announcement_id=note.id),
+                "href": announcement_href(note.id, arrive=True),
             }
         )
     return {
@@ -1395,59 +1437,52 @@ def profile():
 
 
 @app.route("/announcements")
-def announcements():
+@app.route("/announcements/<int:announcement_id>")
+def announcements(announcement_id=None):
     user = require_user()
     if not user:
         return redirect(url_for("login"))
     if user["role"] != "student":
         return redirect(url_for("home"))
     filter_name = request.args.get("filter", "all")
-    query = Announcement.query.order_by(Announcement.created_at.desc())
+    if filter_name not in {"all", "unread", "English", "Math", "Science"}:
+        filter_name = "all"
+    selected = None
+    arrive = False
+    if announcement_id:
+        record = db.session.get(Announcement, announcement_id)
+        if not record:
+            flash("That announcement is not available.", "danger")
+            return redirect(url_for("announcements", filter=filter_name if filter_name != "all" else None))
+        if not mark_announcement_read(user["id"], announcement_id):
+            flash("Unable to update notification status. Please try again.", "danger")
+            return redirect(url_for("announcements", filter=filter_name if filter_name != "all" else None))
+        arrive = request.args.get("arrive") == "1"
     read_ids = announcement_read_ids(user["id"])
-    try:
-        highlight = int(request.args.get("highlight") or 0)
-    except ValueError:
-        highlight = 0
+    selected_id = announcement_id
+    records = Announcement.query.order_by(Announcement.created_at.desc()).all()
     notes = []
-    for note in query.all():
-        if filter_name != "all" and note.subject != filter_name:
-            continue
-        notes.append(
-            {
-                "id": note.id,
-                "subject": note.subject,
-                "title": note.title,
-                "body": note.body,
-                "meta": note.created_at.strftime("%b %d") + (f" · {note.teacher.name}" if note.teacher else ""),
-                "unread": note.id not in read_ids,
-                "href": url_for("announcement_open", announcement_id=note.id),
-            }
-        )
+    for note in records:
+        item = serialize_announcement(note, read_ids, selected_id, filter_name)
+        if note_matches_filter(note, filter_name, read_ids) or item["selected"]:
+            notes.append(item)
+        if item["selected"]:
+            selected = item
+    if selected_id and not selected:
+        flash("That announcement is not available.", "danger")
+        return redirect(url_for("announcements"))
     context = {
         "user": user,
         "filter": filter_name,
         "announcements": notes,
-        "highlight": highlight,
+        "selected": selected,
+        "arrive": arrive,
+        "has_announcements": bool(records),
+        "unread_count": unread_announcement_count(user["id"]),
+        "list_href": url_for("announcements", filter=filter_name if filter_name != "all" else None),
     }
     context.update(announcements_context(user))
     return render_template("announcements.html", **context)
-
-
-@app.route("/announcements/<int:announcement_id>")
-def announcement_open(announcement_id):
-    user = require_user()
-    if not user:
-        return redirect(url_for("login"))
-    if user["role"] != "student":
-        return redirect(url_for("home"))
-    announcement = db.session.get(Announcement, announcement_id)
-    if not announcement:
-        flash("That announcement is not available.", "danger")
-        return redirect(url_for("announcements"))
-    if not mark_announcement_read(user["id"], announcement_id):
-        flash("Unable to update notification status. Please try again.", "danger")
-        return redirect(url_for("announcements"))
-    return redirect(url_for("announcements", highlight=announcement_id))
 
 
 @app.route("/announcements/<int:announcement_id>/read", methods=["POST"])
@@ -1474,7 +1509,7 @@ def announcement_mark_read(announcement_id):
                 "unread_announcements": unread_announcement_count(user["id"]),
             }
         )
-    return redirect(url_for("announcements", highlight=announcement_id))
+    return redirect(url_for("announcements", announcement_id=announcement_id))
 
 
 @app.route("/teacher")

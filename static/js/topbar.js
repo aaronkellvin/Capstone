@@ -31,68 +31,6 @@
     });
   });
 
-  const applyAnnouncementRead = (id, unread) => {
-    document.querySelectorAll(`[data-mark-announcement="${id}"]`).forEach((node) => {
-      node.classList.remove("is-unread", "is-unread-card");
-      const subject = node.querySelector(".notify-subject");
-      if (subject) subject.textContent = subject.textContent.replace(/\s·\sNew$/, "");
-      const kicker = node.querySelector(".hub-card-kicker");
-      if (kicker) kicker.textContent = kicker.textContent.replace(/\s·\sUnread$/, "");
-    });
-    const toggle = document.getElementById("notify-toggle");
-    const countEl = document.querySelector("#notify-panel .notify-count");
-    if (!toggle) return;
-    let dot = toggle.querySelector(".bell-dot");
-    if (unread > 0) {
-      if (!dot) {
-        dot = document.createElement("span");
-        dot.className = "bell-dot";
-        toggle.appendChild(dot);
-      }
-      dot.textContent = String(unread);
-      if (countEl) {
-        countEl.classList.remove("notify-count-quiet");
-        countEl.textContent = `${unread} unread`;
-      }
-    } else {
-      if (dot) dot.remove();
-      if (countEl) {
-        countEl.classList.add("notify-count-quiet");
-        countEl.textContent = "All caught up";
-      }
-    }
-  };
-
-  document.querySelectorAll("[data-mark-announcement]").forEach((link) => {
-    link.addEventListener("click", async (event) => {
-      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
-      const unread = link.classList.contains("is-unread") || link.classList.contains("is-unread-card");
-      if (!unread && link.classList.contains("hub-card")) {
-        event.preventDefault();
-        return;
-      }
-      if (!unread) return;
-      event.preventDefault();
-      const id = link.getAttribute("data-mark-announcement");
-      try {
-        const response = await fetch(`/announcements/${id}/read`, {
-          method: "POST",
-          headers: { Accept: "application/json", "X-Requested-With": "fetch" },
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data.ok) throw new Error(data.error || "mark failed");
-        applyAnnouncementRead(id, data.unread_announcements);
-        if (link.classList.contains("hub-card")) return;
-        window.location.href = link.getAttribute("href");
-      } catch (error) {
-        window.alert("Unable to update notification status. Please try again.");
-      }
-    });
-  });
-
-  const highlighted = document.querySelector(".hub-card.is-highlight");
-  if (highlighted) highlighted.scrollIntoView({ block: "nearest" });
-
   document.addEventListener("click", (event) => {
     popovers.forEach((item) => {
       if (item.panel.hidden) return;

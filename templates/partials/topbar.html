@@ -56,7 +56,6 @@
               <a
                 class="notify-item {% if note.unread %}is-unread{% endif %}"
                 href="{{ note.href }}"
-                data-mark-announcement="{{ note.id }}"
               >
                 <p class="notify-subject">{{ note.subject }}{% if note.unread %} · New{% endif %}</p>
                 <p class="notify-item-title">{{ note.title }}</p>
