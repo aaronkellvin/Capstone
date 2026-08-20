@@ -6,89 +6,44 @@
   <title>Sign In — Bloom</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bloom-pro.css') }}" />
 </head>
 <body>
-  <main class="login-page">
-    <div class="stage" aria-hidden="true">
-      <span class="ribbon ribbon-blue"></span>
-      <span class="ribbon ribbon-red"></span>
-      <span class="blob blob-one"></span>
-      <span class="dot-field"></span>
-    </div>
-
-    <section class="pass" aria-labelledby="brand-name">
-      <!-- Level 1: Brand -->
-      <header class="brand-block">
-        <img
-          class="school-logo"
-          src="{{ url_for('static', filename='images/letran-calamba-logo.png') }}"
-          alt="Colegio de San Juan de Letran Calamba logo"
-          width="88"
-          height="88"
-        />
-        <h1 id="brand-name" class="brand-name">Bloom</h1>
-        <p class="brand-school">Colegio de San Juan de Letran Calamba</p>
-      </header>
-
-      <!-- Level 2: Task + action -->
-      <div class="pass-body">
-        <h2 class="task-label">Sign in</h2>
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <ul class="flash-list">
-              {% for category, message in messages %}
-                <li class="flash flash-{{ category }}">{{ message }}</li>
-              {% endfor %}
-            </ul>
-          {% endif %}
-        {% endwith %}
-
-        <form class="login-form" method="POST" action="{{ url_for('login') }}" data-loading="Signing in…">
-          <div class="field">
-            <label for="email">School Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              autocomplete="username"
-              required
-              autofocus
-              placeholder="you@letran-calamba.edu.ph"
-            />
-          </div>
-
-          <div class="field">
-            <label for="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              autocomplete="current-password"
-              required
-              placeholder="Enter your password"
-            />
-          </div>
-
-          <button type="submit" class="btn-primary">Sign In</button>
-        </form>
-
-        <details class="pilot-box">
-          <summary>Pilot accounts</summary>
-          <div class="pilot-actions">
-            <button type="button" class="today-action today-action-soft" data-fill-login="student@letran-calamba.edu.ph|student123">Student</button>
-            <button type="button" class="today-action today-action-soft" data-fill-login="teacher@letran-calamba.edu.ph|teacher123">Teacher</button>
-            <button type="button" class="today-action today-action-soft" data-fill-login="admin@letran-calamba.edu.ph|admin123">Admin</button>
-          </div>
-          <p class="login-help">English and Math teachers use english.teacher@ and math.teacher@ with teacher123.</p>
-        </details>
-
-        <p class="login-help">Need help? Ask your teacher or admin.</p>
+  <div class="pro-login">
+    <div class="pro-login-card">
+      <div class="pro-login-brand">
+        <img src="{{ url_for('static', filename='images/letran-calamba-logo.png') }}" alt="Letran Calamba logo" width="72" height="72" />
+        <h1 class="pro-login-title">Bloom</h1>
+        <p class="pro-login-school">Colegio de San Juan de Letran Calamba</p>
       </div>
-    </section>
-  </main>
+
+      {% include "partials/flash.html" %}
+
+      <h2 class="section-title section-title-sm pro-login-heading">Sign in</h2>
+      <form class="login-form" method="POST" action="{{ url_for('login') }}" data-loading="Signing in…">
+        <div class="field">
+          <label for="email">School Email</label>
+          <input type="email" id="email" name="email" autocomplete="username" required autofocus placeholder="you@letran-calamba.edu.ph" />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" autocomplete="current-password" required placeholder="Enter your password" />
+        </div>
+        <button type="submit" class="btn-primary">Sign In</button>
+      </form>
+
+      <details class="pro-login-pilots">
+        <summary>Pilot accounts</summary>
+        <div class="pro-login-actions">
+          <button type="button" class="today-action today-action-soft" data-fill-login="student@letran-calamba.edu.ph|student123">Student</button>
+          <button type="button" class="today-action today-action-soft" data-fill-login="teacher@letran-calamba.edu.ph|teacher123">Teacher</button>
+          <button type="button" class="today-action today-action-soft" data-fill-login="admin@letran-calamba.edu.ph|admin123">Admin</button>
+        </div>
+      </details>
+    </div>
+  </div>
   <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
 </body>
 </html>

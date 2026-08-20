@@ -1,78 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Home — Bloom</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-</head>
-<body class="app-body">
-  <div class="app-bg" aria-hidden="true">
-    <span class="ribbon ribbon-blue"></span>
-    <span class="ribbon ribbon-red"></span>
-    <span class="dot-field"></span>
+{% extends "layouts/pro.html" %}
+{% set active_tab = "home" %}
+{% block title %}Home — Bloom{% endblock %}
+{% block page_title %}{{ greeting }}{% endblock %}
+{% block page_subtitle %}{{ guide_note }}{% endblock %}
+{% block content %}
+  <div class="pro-stat-grid">
+    <article class="pro-stat pro-stat-blue">
+      <div>
+        <p class="pro-stat-label">Progress</p>
+        <p class="pro-stat-value">{{ weekly_goal.percent if weekly_goal else 0 }}%</p>
+      </div>
+      <a class="pro-stat-link" href="{{ url_for('practice') }}">View practice →</a>
+    </article>
+    <article class="pro-stat pro-stat-orange">
+      <div>
+        <p class="pro-stat-label">Today items</p>
+        <p class="pro-stat-value">{{ today_items|length }}</p>
+      </div>
+      <a class="pro-stat-link" href="#today-title">Jump to today →</a>
+    </article>
+    <article class="pro-stat pro-stat-green">
+      <div>
+        <p class="pro-stat-label">Subjects</p>
+        <p class="pro-stat-value">{{ subjects|length }}</p>
+      </div>
+      <a class="pro-stat-link" href="#subjects-title">Open subjects →</a>
+    </article>
+    <article class="pro-stat pro-stat-red">
+      <div>
+        <p class="pro-stat-label">Unread</p>
+        <p class="pro-stat-value">{{ unread_announcements or 0 }}</p>
+      </div>
+      <a class="pro-stat-link" href="{{ url_for('announcements') }}">Announcements →</a>
+    </article>
   </div>
 
-  {% include "partials/topbar.html" %}
-
-  <main class="app-main">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <ul class="flash-list home-flash">
-          {% for category, message in messages %}
-            <li class="flash flash-{{ category }}">{{ message }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
-
-    <section class="home-hero" aria-labelledby="guide-title">
-      <div class="home-hero-copy">
-        <p class="hero-kicker">Your study companion</p>
-        <h1 id="guide-title" class="hero-title">{{ greeting }}</h1>
-        <p class="hero-note">{{ guide_note }}</p>
-      </div>
-      {% if weekly_goal %}
-        <div class="weekly-goal" aria-label="Your progress">
-          <div class="weekly-goal-top">
-            <span>Your progress</span>
-            <strong>{{ weekly_goal.percent }}%</strong>
-          </div>
-          <div
-            class="goal-bar {% if weekly_goal.percent <= 0 %}is-empty{% endif %}"
-            role="progressbar"
-            aria-valuemin="0"
-            aria-valuemax="100"
-            aria-valuenow="{{ weekly_goal.percent }}"
-            aria-valuetext="{% if weekly_goal.percent <= 0 %}Not started{% elif weekly_goal.percent >= 100 %}Completed{% else %}{{ weekly_goal.percent }}% complete{% endif %}"
-            aria-label="Course progress"
-          >
-            <span style="width: {{ weekly_goal.percent }}%;"></span>
-          </div>
-          <p class="goal-hint">
-            {% if weekly_goal.percent <= 0 %}
-              Not started. {{ weekly_goal.hint }}
-            {% elif weekly_goal.percent >= 100 %}
-              Completed. {{ weekly_goal.hint }}
-            {% else %}
-              {{ weekly_goal.percent }}% complete. {{ weekly_goal.hint }}
-            {% endif %}
-          </p>
-        </div>
-      {% endif %}
-    </section>
-
-    <section class="home-section" aria-labelledby="today-title">
-      <div class="section-head">
-        <div>
-          <h2 id="today-title" class="section-title section-title-sm">Today</h2>
-          <p class="section-note">Up to 5 helpful next steps.</p>
-        </div>
-      </div>
-
+  <div class="pro-panel-grid">
+    <section class="pro-panel" aria-labelledby="today-title">
+      <h2 id="today-title">Today</h2>
+      <p>Up to 5 helpful next steps.</p>
       <div class="today-list">
         {% for item in today_items %}
           <article class="today-card today-{{ item.priority }} today-{{ item.type }}">
@@ -83,102 +49,113 @@
               <p class="today-meta">{{ item.meta }}</p>
             </div>
             <a class="today-action {% if item.priority != 'primary' %}today-action-soft{% endif %}" href="{{ item.href }}">
-              {% if item.type == "upload" %}
-                See status
-              {% elif item.type == "result" %}
-                Review
-              {% elif item.type == "assessment" or item.type == "practice" %}
-                Start
-              {% else %}
-                {{ item.action }}
-              {% endif %}
+              {% if item.type == "upload" %}See status
+              {% elif item.type == "result" %}Review
+              {% elif item.type == "assessment" or item.type == "practice" %}Start
+              {% else %}{{ item.action }}{% endif %}
             </a>
           </article>
         {% else %}
           <article class="empty-state-card">
             <p class="empty-kicker">Today</p>
             <h3 class="empty-title">You’re all caught up</h3>
-            <p class="empty-copy">Nice work. Pick a subject below for a calm Practice Check.</p>
+            <p class="empty-copy">When something needs attention, it will show up here.</p>
           </article>
         {% endfor %}
       </div>
     </section>
 
-    <section class="home-section" aria-labelledby="messages-title">
-      <div class="section-head">
-        <div>
-          <h2 id="messages-title" class="section-title section-title-sm">Chat with Teacher</h2>
-          <p class="section-note">Private questions about lessons, assessments, and materials.</p>
-        </div>
-      </div>
-      <a class="home-chat" href="{{ url_for('messages_inbox') }}">
-        <div class="home-chat-copy">
-          <p class="home-chat-kicker">{% if unread_messages %}{{ unread_messages }} new{% else %}Messages{% endif %}</p>
-          <p class="home-chat-title">Ask your English, Math, or Science teacher</p>
-          <p class="home-chat-meta">Teachers reply here. This is not a class forum.</p>
-        </div>
-        <span class="home-chat-go">Open Messages</span>
-      </a>
-    </section>
-
-    <section class="home-section subjects-showcase" aria-labelledby="subjects-title">
-      <div class="section-head section-head-row">
-        <div>
-          <h2 id="subjects-title" class="section-title section-title-sm">My Subjects</h2>
-          <p class="section-note">Progress first, then your next step.</p>
-        </div>
-        <p class="section-pill">Grade 7 · 3 subjects</p>
-      </div>
-
-      <div class="subject-grid">
-        {% for subject in subjects %}
-          <a class="subject-card subject-{{ subject.slug }}" href="{{ url_for('subject_hub', slug=subject.slug) }}">
-            <div class="subject-card-top">
-              <span class="subject-badge" aria-hidden="true">{{ subject.name[:1] }}</span>
-              <span class="subject-open">Open</span>
+    <section class="pro-panel">
+      <h2>Recent activity</h2>
+      <p>Quick pulse of what’s happening in Bloom.</p>
+      <ul class="pro-activity">
+        {% for item in today_items[:4] %}
+          <li>
+            <span class="pro-dot" aria-hidden="true"></span>
+            <div>
+              <strong>{{ item.title }}</strong>
+              <div class="today-meta">{{ item.meta }}</div>
             </div>
-            <p class="subject-name">{{ subject.name }}</p>
-            <p class="subject-progress">
-              {% if subject.progress_percent <= 0 %}
-                Not started
-              {% elif subject.progress_percent >= 100 %}
-                Completed · {{ subject.progress_insight }}
-              {% else %}
-                {{ subject.progress_percent }}% complete · {{ subject.progress_insight }}
-              {% endif %}
-            </p>
-            <div
-              class="subject-meter {% if subject.progress_percent <= 0 %}is-empty{% endif %}"
-              role="progressbar"
-              aria-valuemin="0"
-              aria-valuemax="100"
-              aria-valuenow="{{ subject.progress_percent }}"
-              aria-valuetext="{% if subject.progress_percent <= 0 %}Not started{% elif subject.progress_percent >= 100 %}Completed{% else %}{{ subject.progress_percent }}% complete{% endif %}"
-              aria-label="{{ subject.name }} progress"
-            >
-              <span style="width: {{ subject.progress_percent }}%;"></span>
+            <span class="today-meta">{{ item.kicker }}</span>
+          </li>
+        {% else %}
+          <li>
+            <span class="pro-dot" aria-hidden="true"></span>
+            <div>
+              <strong>No recent activity yet</strong>
+              <div class="today-meta">Start a summary or practice check to begin.</div>
             </div>
-            <div class="subject-footer">
-              <p class="subject-next">{{ subject.next_action }}</p>
-            </div>
-          </a>
+            <span class="today-meta">Now</span>
+          </li>
         {% endfor %}
-      </div>
-
-      <aside class="home-boost" aria-label="Study tip">
-        <div class="home-boost-mark" aria-hidden="true"></div>
-        <div>
-          <p class="home-boost-title">Keep growing your HOTS skills</p>
-          <p class="home-boost-copy">
-            Balanced learning works best: one assessment when due, short practice for confidence, and a quick summary review.
-          </p>
-        </div>
-      </aside>
+      </ul>
     </section>
-  </main>
 
-  {% set active_tab = "home" %}
-  {% include "partials/student_tabbar.html" %}
-  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
-</body>
-</html>
+    <section class="pro-panel">
+      <h2>Progress tracker</h2>
+      <p>Your pilot progress across Bloom.</p>
+      <div class="pro-progress">
+        <div class="pro-progress-row">
+          <header><span>Course progress</span><span>{{ weekly_goal.percent if weekly_goal else 0 }}%</span></header>
+          <div class="pro-progress-bar"><span class="bar-blue" style="width: {{ weekly_goal.percent if weekly_goal else 0 }}%;"></span></div>
+        </div>
+        <div class="pro-progress-row">
+          <header><span>Practice readiness</span><span>{% if today_items %}On track{% else %}Idle{% endif %}</span></header>
+          <div class="pro-progress-bar"><span class="bar-green" style="width: {% if today_items %}70{% else %}20{% endif %}%;"></span></div>
+        </div>
+        <div class="pro-progress-row">
+          <header><span>Subjects unlocked</span><span>{{ subjects|length }}/3</span></header>
+          <div class="pro-progress-bar"><span class="bar-cyan" style="width: {{ (subjects|length / 3 * 100)|int }}%;"></span></div>
+        </div>
+        <div class="pro-progress-row">
+          <header><span>Announcements</span><span>{% if unread_announcements %}New{% else %}Clear{% endif %}</span></header>
+          <div class="pro-progress-bar"><span class="bar-orange" style="width: {% if unread_announcements %}55{% else %}100{% endif %}%;"></span></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="home-section subjects-showcase" aria-labelledby="subjects-title">
+    <div class="section-head section-head-row">
+      <div>
+        <h2 id="subjects-title" class="section-title section-title-sm">My Subjects</h2>
+        <p class="section-note">Progress first, then your next step.</p>
+      </div>
+      <p class="section-pill">Grade 7 · 3 subjects</p>
+    </div>
+
+    <div class="subject-grid">
+      {% for subject in subjects %}
+        <a class="subject-card subject-{{ subject.slug }}" href="{{ url_for('subject_hub', slug=subject.slug) }}">
+          <div class="subject-card-top">
+            <span class="subject-badge" aria-hidden="true">{{ subject.name[:1] }}</span>
+            <span class="subject-open">Open</span>
+          </div>
+          <p class="subject-name">{{ subject.name }}</p>
+          <p class="subject-progress">
+            {% if subject.progress_percent <= 0 %}
+              Not started
+            {% elif subject.progress_percent >= 100 %}
+              Completed · {{ subject.progress_insight }}
+            {% else %}
+              {{ subject.progress_percent }}% complete · {{ subject.progress_insight }}
+            {% endif %}
+          </p>
+          <div
+            class="subject-meter {% if subject.progress_percent <= 0 %}is-empty{% endif %}"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="{{ subject.progress_percent }}"
+            aria-label="{{ subject.name }} progress"
+          >
+            <span style="width: {{ subject.progress_percent }}%;"></span>
+          </div>
+          <div class="subject-footer">
+            <p class="subject-next">{{ subject.next_action }}</p>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}

@@ -35,7 +35,7 @@
       </p>
 
       {% if threads %}
-        <div class="hub-list" style="margin-top: 1rem;">
+        <div class="hub-list stack-md">
           {% for thread in threads %}
             <a class="hub-card message-row {% if thread.unread %}is-unread-card{% endif %}" href="{{ thread.href }}">
               <span class="unread-dot {% if thread.unread %}is-on{% endif %}" aria-hidden="true"></span>

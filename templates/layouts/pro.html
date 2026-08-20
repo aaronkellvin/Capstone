@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Bloom{% endblock %}</title>
+  {% include "partials/prefs_boot.html" %}
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bloom-pro.css') }}" />
+  {% block head %}{% endblock %}
+</head>
+<body class="pro-body {% block body_class %}{% endblock %}">
+  {% include "partials/pro_sidebar.html" %}
+
+  <div class="pro-wrap">
+    {% include "partials/pro_topbar.html" %}
+
+    <main class="pro-main">
+      {% include "partials/flash.html" %}
+
+      {% block page_header %}
+        <section class="pro-hero">
+          <div class="pro-hero-copy">
+            <h1 class="pro-hero-title">{% block page_title %}Dashboard{% endblock %}</h1>
+            <p class="pro-hero-sub">{% block page_subtitle %}{% endblock %}</p>
+          </div>
+          <div class="pro-hero-aside">
+            {% block page_actions %}{% endblock %}
+          </div>
+        </section>
+      {% endblock %}
+
+      <div class="pro-content">
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/pro-shell.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

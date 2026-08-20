@@ -1,45 +1,22 @@
 {% include "partials/prefs_boot.html" %}
-<header class="app-topbar">
-  <a class="topbar-brand" href="{{ url_for('home') }}">
-    <img
-      class="topbar-logo"
-      src="{{ url_for('static', filename='images/letran-calamba-logo.png') }}"
-      alt=""
-      width="40"
-      height="40"
-    />
-    <div class="topbar-text">
-      <p class="topbar-title">Bloom</p>
-      <p class="topbar-kicker">Study assistant</p>
-    </div>
-  </a>
-
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/bloom-pro.css') }}" />
+{% include "partials/pro_sidebar.html" %}
+<header class="pro-topbar">
+  <button type="button" class="pro-menu-btn" id="sidebar-toggle" aria-label="Toggle sidebar">☰</button>
   {% if topbar_sub %}
-    <p class="topbar-context">{{ topbar_sub }}</p>
+    <p class="pro-context">{{ topbar_sub }}</p>
+  {% else %}
+    <p class="pro-context">Colegio de San Juan de Letran Calamba</p>
   {% endif %}
-
-  <div class="topbar-actions">
+  <div class="pro-top-actions">
     <div class="menu-wrap notify-wrap">
-      <button
-        type="button"
-        class="icon-btn"
-        id="notify-toggle"
-        aria-label="Announcements"
-        aria-haspopup="true"
-        aria-expanded="false"
-        aria-controls="notify-panel"
-      >
-        <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path
-            d="M12 22a2.2 2.2 0 0 0 2.2-2.2h-4.4A2.2 2.2 0 0 0 12 22Zm7-5.2V11a7 7 0 1 0-14 0v5.8L3 18.6V20h18v-1.4l-2-1.8Z"
-            fill="currentColor"
-          />
-        </svg>
-        {% if unread_announcements %}
-          <span class="bell-dot">{{ unread_announcements }}</span>
-        {% endif %}
+      <button type="button" class="icon-btn" id="notify-toggle" aria-label="Announcements" aria-haspopup="true" aria-expanded="false" aria-controls="notify-panel">
+        <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.2 2.2 0 0 0 2.2-2.2h-4.4A2.2 2.2 0 0 0 12 22Zm7-5.2V11a7 7 0 1 0-14 0v5.8L3 18.6V20h18v-1.4l-2-1.8Z" fill="currentColor"/></svg>
+        {% if unread_announcements %}<span class="bell-dot">{{ unread_announcements }}</span>{% endif %}
       </button>
-
       <div class="menu-panel notify-panel" id="notify-panel" hidden role="region" aria-label="Announcements preview">
         <div class="menu-head">
           <p class="menu-title">Announcements</p>
@@ -49,15 +26,10 @@
             <p class="notify-count notify-count-quiet">All caught up</p>
           {% endif %}
         </div>
-
         <ul class="notify-list">
           {% for note in announcements_preview %}
             <li>
-              <a
-                class="notify-item {% if note.unread %}is-unread{% endif %}"
-                href="{{ note.href }}"
-                data-id="{{ note.id }}"
-              >
+              <a class="notify-item {% if note.unread %}is-unread{% endif %}" href="{{ note.href }}" data-id="{{ note.id }}">
                 <p class="notify-subject">{{ note.subject }}{% if note.unread %} · New{% endif %}</p>
                 <p class="notify-item-title">{{ note.title }}</p>
                 <p class="notify-meta">{{ note.meta }}</p>
@@ -67,13 +39,11 @@
             <li class="notify-empty">No announcements yet.</li>
           {% endfor %}
         </ul>
-
         <a class="notify-all" href="{{ url_for('announcements') }}">View announcement history</a>
       </div>
     </div>
-
     {% include "partials/header_messages.html" %}
-
     {% include "partials/header_account.html" %}
   </div>
 </header>
+<script src="{{ url_for('static', filename='js/pro-shell.js') }}"></script>

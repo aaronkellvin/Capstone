@@ -82,7 +82,7 @@
     </section>
 
     {% for assessment in assessments %}
-      <section class="lobby-card" style="margin-top: 1rem;">
+      <section class="lobby-card stack-md">
         <p class="hub-card-kicker">{{ assessment.status.title() }}</p>
         <h2 class="hub-panel-title">{{ assessment.title }}</h2>
         <p class="section-note">
@@ -91,7 +91,7 @@
           {% if assessment.deadline %} · Due {{ assessment.deadline.strftime("%b %d · %I:%M %p") }}{% endif %}
         </p>
 
-        <div class="hub-list" style="margin-top: 0.85rem;">
+        <div class="hub-list stack-sm">
           {% for question in assessment.questions %}
             <article class="hub-card hub-card-stack">
               <div>
@@ -116,7 +116,7 @@
         </div>
 
         {% if assessment.status == "draft" %}
-          <form class="login-form" method="POST" action="{{ url_for('teacher_hots') }}" style="margin-top: 1rem;" data-confirm="Publish this HOTS assessment to the section?">
+          <form class="login-form stack-md" method="POST" action="{{ url_for('teacher_hots') }}" data-confirm="Publish this HOTS assessment to the section?">
             <input type="hidden" name="action" value="publish" />
             <input type="hidden" name="assessment_id" value="{{ assessment.id }}" />
             <div class="field">
@@ -128,7 +128,7 @@
         {% endif %}
       </section>
     {% else %}
-      <article class="empty-state-card" style="margin-top: 1rem;">
+      <article class="empty-state-card stack-md">
         <p class="empty-kicker">HOTS</p>
         <h3 class="empty-title">No HOTS sets yet</h3>
         <p class="empty-copy">Generate from an approved lesson, review each item, then publish.</p>

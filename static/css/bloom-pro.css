@@ -1,0 +1,894 @@
+/* Bloom Pro shell — dashboard look inspired by SB Admin Pro (custom, not licensed assets) */
+
+:root {
+  /* Surfaces — keep the Pro theme */
+  --pro-sidebar: #1b2e4b;
+  --pro-sidebar-2: #15253d;
+  --pro-topbar: #ffffff;
+  --pro-canvas: #f2f6fc;
+  --pro-card: #ffffff;
+  --pro-line: #e3ebf6;
+  --pro-shadow: 0 0.15rem 1.75rem 0 rgba(33, 40, 50, 0.15);
+  --pro-sidebar-w: 15.5rem;
+
+  /* Fills / accents — keep primary hues */
+  --pro-blue: #4e73df;
+  --pro-blue-strong: #3d62d1;
+  --pro-indigo: #6610f2;
+  --pro-cyan: #36b9cc;
+  --pro-green: #1cc88a;
+  --pro-orange: #f6c23e;
+  --pro-red: #e74a3b;
+
+  /* Text — WCAG AA */
+  --pro-ink: #1b2e4b;
+  --pro-heading: #16233d;
+  --pro-muted: #4e5d73;
+  --pro-quiet: #5a6b82;
+  --pro-sidebar-text: #d7e0ec;
+  --pro-sidebar-muted: #a8b6c9;
+  --pro-sidebar-active: #ffffff;
+  --pro-link: #2e59d9;
+  --pro-link-hover: #1a3fb8;
+  --pro-link-active: #1635a0;
+  --pro-on-accent: #ffffff;
+  --pro-on-light-accent: #1b2e4b;
+  --pro-placeholder: #5a6b82;
+  --pro-warning-text: #9a5808;
+  --pro-hero-muted: #e8eef8;
+
+  /* Bridge legacy tokens so every page shares this palette */
+  --ink: var(--pro-ink);
+  --heading: var(--pro-heading);
+  --muted: var(--pro-muted);
+  --quiet: var(--pro-quiet);
+  --text-link: var(--pro-link);
+  --text-link-hover: var(--pro-link-hover);
+  --text-link-active: var(--pro-link-active);
+  --text-on-dark: var(--pro-on-accent);
+  --text-on-dark-muted: var(--pro-hero-muted);
+  --placeholder: var(--pro-placeholder);
+  --warning-text: var(--pro-warning-text);
+}
+
+.pro-body,
+.app-body.staff-body,
+.app-body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--pro-canvas);
+  color: var(--pro-ink);
+  font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+/* Legacy page structure: sidebar + topbar + main in one grid */
+body.app-body {
+  display: grid;
+  grid-template-columns: var(--pro-sidebar-w) 1fr;
+  grid-template-rows: auto 1fr auto;
+}
+
+body.app-body > .app-bg,
+body.app-body > .app-tabbar {
+  display: none !important;
+}
+
+body.app-body > .pro-sidebar {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+body.app-body > .pro-topbar {
+  grid-column: 2;
+  grid-row: 1;
+  position: sticky;
+  top: 0;
+}
+
+body.app-body > .app-main,
+body.app-body > main.app-main {
+  grid-column: 2;
+  grid-row: 2;
+  width: auto;
+  max-width: none;
+  margin: 0;
+  padding: 1.25rem;
+}
+
+body.app-body.pro-sidebar-collapsed {
+  grid-template-columns: 0 1fr;
+}
+
+body.app-body.pro-sidebar-collapsed > .pro-sidebar {
+  transform: translateX(-100%);
+}
+
+.pro-body .app-bg,
+.pro-body .app-tabbar,
+.pro-body .app-topbar,
+.pro-body .staff-topbar {
+  display: none !important;
+}
+
+.pro-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--pro-sidebar-w);
+  background: linear-gradient(180deg, var(--pro-sidebar) 0%, var(--pro-sidebar-2) 100%);
+  color: var(--pro-sidebar-text);
+  display: flex;
+  flex-direction: column;
+  z-index: 1040;
+  transition: transform 0.2s ease;
+}
+
+.pro-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.15rem 1.1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pro-brand strong {
+  display: block;
+  color: var(--pro-on-accent);
+  font-size: 1rem;
+  line-height: 1.1;
+}
+
+.pro-brand span {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--pro-sidebar-muted);
+}
+
+.pro-nav {
+  padding: 0.75rem 0.65rem 1rem;
+  overflow: auto;
+  flex: 1;
+}
+
+.pro-nav-heading {
+  margin: 0.85rem 0.7rem 0.35rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pro-sidebar-muted);
+  font-weight: 700;
+}
+
+.pro-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 0.8rem;
+  margin: 0.15rem 0;
+  border-radius: 0.45rem;
+  color: var(--pro-sidebar-text);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.92rem;
+}
+
+.pro-nav-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--pro-on-accent);
+}
+
+.pro-nav-link:active {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--pro-on-accent);
+}
+
+.pro-nav-link.is-active {
+  background: rgba(78, 115, 223, 0.28);
+  color: var(--pro-sidebar-active);
+}
+
+.pro-nav-link.is-active:hover {
+  color: var(--pro-sidebar-active);
+}
+
+.pro-nav-ico {
+  width: 1.1rem;
+  text-align: center;
+  opacity: 0.85;
+}
+
+.pro-sidebar-foot {
+  padding: 0.9rem 1rem 1.1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pro-user-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.pro-user-chip strong {
+  display: block;
+  color: var(--pro-on-accent);
+  font-size: 0.86rem;
+}
+
+.pro-user-chip span {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--pro-sidebar-muted);
+}
+
+.pro-avatar {
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--pro-blue);
+  color: var(--pro-on-accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.pro-wrap {
+  margin-left: var(--pro-sidebar-w);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left 0.2s ease;
+}
+
+/* Gradient treatment for first page sections on legacy templates */
+body.app-body > .app-main > .home-hero,
+body.app-body > .app-main > .home-section:first-of-type > .section-title {
+  /* keep structure; hero-like panels get elevation from card rules */
+}
+
+body.app-body > .app-main > .home-section:first-child,
+body.app-body > .app-main > section.home-hero:first-of-type,
+body.app-body > .app-main > section.hub-hero:first-of-type,
+body.app-body > .app-main > section.profile-hero:first-of-type,
+body.app-body > .app-main > section.summary-hero:first-of-type,
+body.app-body > .app-main > section.result-hero:first-of-type,
+body.app-body > .app-main > section.home-section:first-of-type {
+  background: linear-gradient(135deg, #4e73df 0%, #224abe 45%, #6610f2 100%);
+  color: var(--pro-on-accent);
+  border-radius: 0.55rem;
+  padding: 1.35rem 1.4rem;
+  box-shadow: var(--pro-shadow);
+  margin-bottom: 1.1rem;
+}
+
+/* White text only on Pro page headers — never on nested cards */
+body.app-body > .app-main > section.home-section:first-of-type > .section-title,
+body.app-body > .app-main > section.home-section:first-of-type > h1,
+body.app-body > .app-main > section.home-hero:first-of-type > .hero-title,
+body.app-body > .app-main > section.home-hero:first-of-type > .hero-kicker,
+body.app-body > .app-main > section.result-hero:first-of-type > .hero-title,
+body.app-body > .app-main > section.result-hero:first-of-type > .hero-kicker,
+body.app-body > .app-main > section.result-hero:first-of-type .result-score,
+body.app-body > .app-main > section.hub-hero:first-of-type > .section-title,
+body.app-body > .app-main > section.hub-hero:first-of-type > h1,
+body.app-body > .app-main > section.hub-hero:first-of-type > .hub-back,
+body.app-body > .app-main > section.hub-hero:first-of-type > .hub-next,
+body.app-body > .app-main > section.hub-hero:first-of-type > .text-link,
+body.app-body > .app-main > section.hub-hero:first-of-type > .ask-teacher-link,
+body.app-body > .app-main > section.profile-hero:first-of-type .section-title,
+body.app-body > .app-main > section.profile-hero:first-of-type .hero-kicker {
+  color: var(--pro-on-accent);
+}
+
+body.app-body > .app-main > section.profile-hero:first-of-type .section-note {
+  color: var(--pro-hero-muted);
+}
+body.app-body > .app-main > section.summary-hero:first-of-type > .section-title,
+body.app-body > .app-main > section.summary-hero:first-of-type > h1,
+body.app-body > .app-main > section.summary-hero:first-of-type > .hub-back,
+body.app-body > .app-main > section.summary-hero:first-of-type > .hero-kicker,
+body.app-body > .app-main > section.home-section:first-of-type > .announce-heading > .section-title,
+body.app-body > .app-main > section.home-section:first-of-type > .announce-mark-all,
+body.app-body > .app-main > section.home-section:first-of-type .announce-heading .section-title,
+body.app-body > .app-main > section.home-section:first-of-type .announce-mark-all {
+  color: var(--pro-on-accent);
+}
+
+body.app-body > .app-main > section.home-section:first-of-type > .section-note,
+body.app-body > .app-main > section.home-hero:first-of-type > .hero-note,
+body.app-body > .app-main > section.result-hero:first-of-type > .hero-note,
+body.app-body > .app-main > section.result-hero:first-of-type .result-message,
+body.app-body > .app-main > section.hub-hero:first-of-type > .section-note,
+body.app-body > .app-main > section.profile-hero:first-of-type > .section-note,
+body.app-body > .app-main > section.summary-hero:first-of-type > .section-note,
+body.app-body > .app-main > section.home-section:first-of-type > .announce-heading + .section-note {
+  color: var(--pro-hero-muted);
+  opacity: 1;
+}
+
+body.app-body > .app-main > section.hub-hero:first-of-type > .hub-back:hover,
+body.app-body > .app-main > section.hub-hero:first-of-type > .text-link:hover,
+body.app-body > .app-main > section.summary-hero:first-of-type > .hub-back:hover,
+body.app-body > .app-main > section.home-section:first-of-type .announce-mark-all:hover {
+  color: var(--pro-hero-muted);
+}
+
+body.app-body > .app-main > section.home-section:first-of-type .hub-group-title,
+body.app-body > .app-main > section.home-section:first-of-type .announce-pane-label {
+  color: var(--pro-hero-muted);
+}
+
+/* Nested surfaces keep ink text on white cards */
+body.app-body > .app-main > section:first-of-type .hub-card,
+body.app-body > .app-main > section:first-of-type .today-card,
+body.app-body > .app-main > section:first-of-type .empty-state-card,
+body.app-body > .app-main > section:first-of-type .lobby-card,
+body.app-body > .app-main > section:first-of-type .announce-item,
+body.app-body > .app-main > section:first-of-type .announce-detail,
+body.app-body > .app-main > section:first-of-type .login-form,
+body.app-body > .app-main > section:first-of-type .chip-link,
+body.app-body > .app-main > section:first-of-type .filter-chips {
+  color: var(--pro-ink);
+}
+
+body.app-body > .app-main > section:first-of-type .hub-card .section-title,
+body.app-body > .app-main > section:first-of-type .hub-card-title,
+body.app-body > .app-main > section:first-of-type .empty-title,
+body.app-body > .app-main > section:first-of-type .hub-panel-title {
+  color: var(--pro-heading);
+}
+
+body.app-body > .app-main > section:first-of-type .hub-card-meta,
+body.app-body > .app-main > section:first-of-type .hub-card-kicker,
+body.app-body > .app-main > section:first-of-type .empty-copy,
+body.app-body > .app-main > section:first-of-type .empty-kicker,
+body.app-body > .app-main > section:first-of-type .today-meta,
+body.app-body > .app-main > section:first-of-type .lobby-card .section-note {
+  color: var(--pro-muted);
+}
+
+body.app-body > .app-main > section:first-of-type .chip-link {
+  color: var(--pro-link);
+}
+
+body.app-body > .app-main > section:first-of-type .chip-link.active {
+  color: var(--pro-on-accent);
+}
+
+/* Do not restyle standalone content cards as heroes */
+body.app-body > .app-main > section.lobby-card:first-of-type,
+body.app-body > .app-main > section.placeholder-card:first-of-type,
+body.app-body > .app-main > section.take-shell:first-of-type {
+  background: var(--pro-card);
+  color: var(--pro-ink);
+  box-shadow: var(--pro-shadow);
+}
+
+.pro-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  height: 3.75rem;
+  background: var(--pro-topbar);
+  border-bottom: 1px solid var(--pro-line);
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0 1.1rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(33, 40, 50, 0.04);
+}
+
+.pro-menu-btn {
+  border: 1px solid var(--pro-line);
+  background: #fff;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  color: var(--pro-ink);
+}
+
+.pro-context {
+  margin: 0;
+  color: var(--pro-muted);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.pro-top-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.pro-main {
+  padding: 0 0 2rem;
+}
+
+.pro-hero {
+  margin: 0 1.25rem;
+  margin-top: 1.25rem;
+  padding: 1.5rem 1.5rem 3.25rem;
+  border-radius: 0.55rem;
+  color: var(--pro-on-accent);
+  background: linear-gradient(135deg, #4e73df 0%, #224abe 45%, #6610f2 100%);
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  box-shadow: var(--pro-shadow);
+}
+
+.pro-hero-title {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 700;
+}
+
+.pro-hero-sub {
+  margin: 0.4rem 0 0;
+  color: var(--pro-hero-muted);
+  max-width: 40rem;
+  font-size: 0.95rem;
+}
+
+.pro-content {
+  margin: -2rem 1.25rem 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Map existing Bloom cards into Pro dashboard cards */
+.pro-body .home-hero,
+.pro-body .weekly-goal,
+.pro-body .today-card,
+.pro-body .hub-card,
+.pro-body .lobby-card,
+.pro-body .empty-state-card,
+.pro-body .announce-card,
+.pro-body .result-card,
+.pro-body .subject-card {
+  background: var(--pro-card);
+  border: 1px solid rgba(227, 235, 246, 0.9);
+  border-radius: 0.55rem;
+  box-shadow: var(--pro-shadow);
+}
+
+.pro-body .home-section,
+.pro-body .section-head {
+  margin-top: 1.1rem;
+}
+
+.pro-body .section-title,
+.pro-body .hub-panel-title,
+.pro-body .hero-title,
+.pro-body .empty-title,
+.app-body .section-title,
+.app-body .hub-panel-title,
+.app-body .empty-title {
+  color: var(--pro-heading);
+}
+
+.pro-body .section-note,
+.pro-body .hero-note,
+.pro-body .hub-card-meta,
+.pro-body .today-meta,
+.app-body .section-note,
+.app-body .hub-card-meta,
+.app-body .today-meta {
+  color: var(--pro-muted);
+}
+
+.pro-body .today-action,
+.pro-body .btn-primary,
+.app-body .today-action:not(.today-action-soft),
+.app-body .btn-primary {
+  background: var(--pro-blue-strong);
+  border-color: var(--pro-blue-strong);
+  color: var(--pro-on-accent);
+  box-shadow: none;
+}
+
+.pro-body .today-action:hover,
+.pro-body .btn-primary:hover,
+.app-body .today-action:not(.today-action-soft):hover,
+.app-body .btn-primary:hover {
+  background: var(--pro-link-hover);
+  border-color: var(--pro-link-hover);
+  color: var(--pro-on-accent);
+  filter: none;
+}
+
+.pro-body .today-action:active,
+.pro-body .btn-primary:active,
+.app-body .today-action:not(.today-action-soft):active,
+.app-body .btn-primary:active {
+  background: var(--pro-link-active);
+  border-color: var(--pro-link-active);
+}
+
+.pro-body .today-action-soft,
+.app-body .today-action-soft {
+  background: #eaecf4;
+  color: var(--pro-link);
+}
+
+.pro-body .today-action-soft:hover,
+.app-body .today-action-soft:hover {
+  color: var(--pro-link-hover);
+  background: #e2e6f3;
+}
+
+.pro-body .flash-list {
+  margin: 1rem 1.25rem 0;
+}
+
+.pro-body .flash {
+  border-radius: 0.45rem;
+  box-shadow: none;
+}
+
+.pro-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.pro-stat {
+  border-radius: 0.55rem;
+  padding: 1rem 1.1rem;
+  color: var(--pro-on-accent);
+  box-shadow: var(--pro-shadow);
+  min-height: 6.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.pro-stat-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+}
+
+.pro-stat-value {
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.pro-stat-link {
+  color: inherit;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.pro-stat-link:hover,
+.pro-stat-link:focus-visible {
+  text-decoration: underline;
+}
+
+.pro-stat-blue { background: linear-gradient(135deg, #4e73df, #224abe); }
+.pro-stat-orange,
+.pro-stat-green {
+  color: var(--pro-on-light-accent);
+}
+.pro-stat-orange { background: linear-gradient(135deg, #f6c23e, #dda20a); }
+.pro-stat-green { background: linear-gradient(135deg, #1cc88a, #13855c); }
+.pro-stat-red { background: linear-gradient(135deg, #e74a3b, #be2617); }
+
+.pro-panel-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr;
+  gap: 1rem;
+}
+
+.pro-panel {
+  background: var(--pro-card);
+  border-radius: 0.55rem;
+  box-shadow: var(--pro-shadow);
+  border: 1px solid rgba(227, 235, 246, 0.9);
+  padding: 1.1rem 1.15rem;
+}
+
+.pro-panel h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  color: var(--pro-heading);
+}
+
+.pro-panel p {
+  margin: 0;
+  color: var(--pro-muted);
+  font-size: 0.9rem;
+}
+
+.pro-progress {
+  margin-top: 0.85rem;
+}
+
+.pro-progress-row {
+  margin-bottom: 0.7rem;
+}
+
+.pro-progress-row header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+  color: var(--pro-muted);
+}
+
+.pro-progress-bar {
+  height: 0.55rem;
+  background: #eaecf4;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.pro-progress-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.bar-blue { background: var(--pro-blue); }
+.bar-orange { background: var(--pro-orange); }
+.bar-green { background: var(--pro-green); }
+.bar-cyan { background: var(--pro-cyan); }
+.bar-red { background: var(--pro-red); }
+
+.pro-activity {
+  list-style: none;
+  margin: 0.85rem 0 0;
+  padding: 0;
+}
+
+.pro-activity li {
+  display: grid;
+  grid-template-columns: 0.7rem 1fr auto;
+  gap: 0.7rem;
+  align-items: start;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--pro-line);
+}
+
+.pro-activity li:last-child {
+  border-bottom: 0;
+}
+
+.pro-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  margin-top: 0.35rem;
+  background: var(--pro-blue);
+}
+
+.pro-login {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(78, 115, 223, 0.2), transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(102, 16, 242, 0.14), transparent 42%),
+    #f2f6fc;
+}
+
+.pro-login-card {
+  width: min(100%, 420px);
+  background: var(--pro-card);
+  border-radius: 0.65rem;
+  box-shadow: var(--pro-shadow);
+  padding: 1.75rem;
+  color: var(--pro-ink);
+}
+
+.pro-login-brand {
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.pro-login-title {
+  margin: 0.75rem 0 0.2rem;
+  font-size: 1.6rem;
+  color: var(--pro-heading);
+}
+
+.pro-login-school {
+  margin: 0;
+  color: var(--pro-muted);
+}
+
+.pro-login-heading {
+  margin-bottom: 0.85rem;
+  color: var(--pro-heading);
+}
+
+.pro-login .btn-primary {
+  width: 100%;
+  background: var(--pro-blue-strong);
+  color: var(--pro-on-accent);
+  box-shadow: none;
+  font-family: inherit;
+}
+
+.pro-login .btn-primary:hover {
+  background: var(--pro-link-hover);
+  filter: none;
+}
+
+.pro-login .btn-primary:active {
+  background: var(--pro-link-active);
+}
+
+.pro-login-pilots {
+  margin-top: 1rem;
+}
+
+.pro-login-pilots > summary {
+  cursor: pointer;
+  color: var(--pro-muted);
+}
+
+.pro-login-pilots > summary:hover {
+  color: var(--pro-link);
+}
+
+.pro-login-actions {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.pro-login .today-action-soft {
+  width: 100%;
+  background: #eaecf4;
+  color: var(--pro-link);
+}
+
+.pro-login .today-action-soft:hover {
+  color: var(--pro-link-hover);
+  background: #e2e6f3;
+}
+
+.pro-menu-btn:hover,
+.pro-menu-btn:focus-visible {
+  color: var(--pro-link);
+  border-color: var(--pro-blue);
+}
+
+.app-body .icon-btn:hover,
+.app-body .icon-btn[aria-expanded="true"],
+.pro-body .icon-btn:hover,
+.pro-body .icon-btn[aria-expanded="true"] {
+  color: var(--pro-link);
+}
+
+.pro-activity strong {
+  color: var(--pro-heading);
+}
+
+.app-body .hub-tab.active,
+.pro-body .hub-tab.active {
+  background: var(--pro-blue-strong);
+  color: var(--pro-on-accent);
+  box-shadow: none;
+}
+
+.app-body .chip-link.active,
+.pro-body .chip-link.active {
+  background: var(--pro-blue-strong);
+  color: var(--pro-on-accent);
+}
+
+.stack-sm { margin-top: 0.85rem; }
+.stack-md { margin-top: 1rem; }
+.stack-lg { margin-top: 1.25rem; }
+
+.pro-content .subjects-showcase {
+  margin-top: 1.1rem;
+}
+
+.pro-panel .today-list {
+  margin-top: 0.85rem;
+}
+
+.field input::placeholder,
+.login-form input::placeholder {
+  color: var(--pro-placeholder);
+}
+
+.pro-body.pro-sidebar-collapsed .pro-sidebar {
+  transform: translateX(-100%);
+}
+
+.pro-body.pro-sidebar-collapsed .pro-wrap {
+  margin-left: 0;
+}
+
+.btn-primary,
+.today-action,
+.notify-all,
+.chip-link,
+.hub-back,
+.staff-nav-link,
+.outline-links a,
+.password-toggle,
+.announce-mark-all,
+.pro-stat-link,
+.pro-nav-link,
+.text-link {
+  transition: color 160ms var(--ease), background-color 160ms var(--ease), border-color 160ms var(--ease), filter 160ms var(--ease), box-shadow 160ms var(--ease), transform 160ms var(--ease);
+}
+
+@media (max-width: 1100px) {
+  .pro-stat-grid,
+  .pro-panel-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  body.app-body {
+    grid-template-columns: 1fr;
+  }
+
+  body.app-body > .pro-sidebar {
+    position: fixed;
+    transform: translateX(-100%);
+    z-index: 1050;
+  }
+
+  body.app-body > .pro-topbar,
+  body.app-body > .app-main,
+  body.app-body > main.app-main {
+    grid-column: 1;
+  }
+
+  body.app-body:not(.pro-sidebar-collapsed) > .pro-sidebar {
+    transform: translateX(0);
+    box-shadow: 0 0 0 100vmax rgba(15, 23, 42, 0.35);
+  }
+
+  .pro-sidebar {
+    transform: translateX(-100%);
+  }
+
+  .pro-wrap {
+    margin-left: 0;
+  }
+
+  .pro-body.pro-sidebar-collapsed .pro-sidebar,
+  .pro-body:not(.pro-sidebar-collapsed) .pro-sidebar {
+    transform: translateX(0);
+  }
+
+  .pro-body:not(.pro-sidebar-collapsed) .pro-sidebar {
+    box-shadow: 0 0 0 100vmax rgba(15, 23, 42, 0.35);
+  }
+
+  .pro-stat-grid,
+  .pro-panel-grid,
+  .pro-body .today-list,
+  .pro-body .hub-list {
+    grid-template-columns: 1fr;
+  }
+
+  .pro-hero {
+    margin-left: 0.85rem;
+    margin-right: 0.85rem;
+  }
+
+  .pro-content {
+    margin-left: 0.85rem;
+    margin-right: 0.85rem;
+  }
+}

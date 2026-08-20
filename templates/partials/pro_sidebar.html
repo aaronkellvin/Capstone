@@ -1,0 +1,72 @@
+<aside class="pro-sidebar" id="pro-sidebar" aria-label="Main navigation">
+  <div class="pro-brand">
+    <img src="{{ url_for('static', filename='images/letran-calamba-logo.png') }}" alt="" width="32" height="32" />
+    <div>
+      <strong>Bloom</strong>
+      <span>Study assistant</span>
+    </div>
+  </div>
+
+  {% set endpoint = request.endpoint or '' %}
+  {% if active_tab is defined and active_tab %}
+    {% set tab = active_tab %}
+  {% elif 'practice' in endpoint %}
+    {% set tab = 'practice' %}
+  {% elif endpoint == 'results' %}
+    {% set tab = 'results' %}
+  {% elif 'announce' in endpoint %}
+    {% set tab = 'announcements' %}
+  {% elif endpoint == 'profile' %}
+    {% set tab = 'profile' %}
+  {% elif 'messages' in endpoint %}
+    {% set tab = 'messages' %}
+  {% else %}
+    {% set tab = 'home' %}
+  {% endif %}
+
+  <nav class="pro-nav">
+    {% if user and user.role == 'student' %}
+      <p class="pro-nav-heading">Core</p>
+      <a class="pro-nav-link {% if tab == 'home' %}is-active{% endif %}" href="{{ url_for('home') }}">
+        <span class="pro-nav-ico">⌂</span> Dashboards
+      </a>
+      <a class="pro-nav-link {% if tab == 'practice' %}is-active{% endif %}" href="{{ url_for('practice') }}">
+        <span class="pro-nav-ico">✎</span> Practice
+      </a>
+      <a class="pro-nav-link {% if tab == 'results' %}is-active{% endif %}" href="{{ url_for('results') }}">
+        <span class="pro-nav-ico">▣</span> Results
+      </a>
+
+      <p class="pro-nav-heading">App</p>
+      <a class="pro-nav-link {% if tab == 'announcements' %}is-active{% endif %}" href="{{ url_for('announcements') }}">
+        <span class="pro-nav-ico">⚑</span> Announcements
+      </a>
+      <a class="pro-nav-link {% if tab == 'messages' %}is-active{% endif %}" href="{{ url_for('messages_inbox') }}">
+        <span class="pro-nav-ico">✉</span> Messages
+      </a>
+      <a class="pro-nav-link {% if tab == 'profile' %}is-active{% endif %}" href="{{ url_for('profile') }}">
+        <span class="pro-nav-ico">☺</span> Profile
+      </a>
+    {% elif role_nav %}
+      <p class="pro-nav-heading">{{ user.role|capitalize if user else 'Staff' }}</p>
+      {% for item in role_nav %}
+        <a class="pro-nav-link {% if active_nav == item.key %}is-active{% endif %}" href="{{ url_for(item.endpoint) }}">
+          <span class="pro-nav-ico">›</span> {{ item.label }}
+        </a>
+      {% endfor %}
+    {% endif %}
+  </nav>
+
+  <div class="pro-sidebar-foot">
+    <div class="pro-user-chip">
+      <span class="pro-avatar" aria-hidden="true">
+        {% set parts = (user.name or 'B').split(' ') %}
+        {{ (parts[0][:1] ~ (parts[-1][:1] if parts|length > 1 else ''))|upper }}
+      </span>
+      <div>
+        <strong>{{ user.name if user else 'Bloom' }}</strong>
+        <span>{{ user.role|capitalize if user else '' }}</span>
+      </div>
+    </div>
+  </div>
+</aside>

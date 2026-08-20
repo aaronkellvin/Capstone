@@ -43,7 +43,7 @@
     </section>
 
     {% if panels %}
-      <div class="hub-list" style="margin-top: 1rem;">
+      <div class="hub-list stack-md">
         {% for panel in panels %}
           <article class="hub-card hub-card-stack">
             <div>
@@ -96,7 +96,7 @@
         {% endfor %}
       </div>
     {% else %}
-      <article class="empty-state-card" style="margin-top: 1rem;">
+      <article class="empty-state-card stack-md">
         <p class="empty-kicker">Monitor</p>
         <h3 class="empty-title">No assessments to monitor yet</h3>
         <p class="empty-copy">Publish a HOTS set first, then track submissions here.</p>

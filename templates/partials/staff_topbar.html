@@ -1,28 +1,18 @@
-{# Shared staff top nav. Expects: role_nav, active_nav, topbar_sub, user #}
+{# Shared staff chrome for Pro dashboard look. Expects: role_nav, active_nav, topbar_sub, user #}
 {% include "partials/prefs_boot.html" %}
-<header class="app-topbar staff-topbar">
-  <a class="topbar-brand" href="{{ url_for('home') }}">
-    <img
-      class="topbar-logo"
-      src="{{ url_for('static', filename='images/letran-calamba-logo.png') }}"
-      alt=""
-      width="40"
-      height="40"
-    />
-    <div class="topbar-text">
-      <p class="topbar-title">Bloom</p>
-      <p class="topbar-kicker">{{ topbar_sub }}</p>
-    </div>
-  </a>
-  <nav class="staff-nav" aria-label="Main">
-    {% for item in role_nav %}
-      <a class="staff-nav-link {% if active_nav == item.key %}active{% endif %}" href="{{ url_for(item.endpoint) }}">{{ item.label }}</a>
-    {% endfor %}
-  </nav>
-  <div class="topbar-actions">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/bloom-pro.css') }}" />
+{% include "partials/pro_sidebar.html" %}
+<header class="pro-topbar">
+  <button type="button" class="pro-menu-btn" id="sidebar-toggle" aria-label="Toggle sidebar">☰</button>
+  <p class="pro-context">{{ topbar_sub or "Staff workspace" }}</p>
+  <div class="pro-top-actions">
     {% if user and user.role == "teacher" %}
       {% include "partials/header_messages.html" %}
     {% endif %}
     {% include "partials/header_account.html" %}
   </div>
 </header>
+<script src="{{ url_for('static', filename='js/pro-shell.js') }}"></script>

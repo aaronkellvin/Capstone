@@ -31,7 +31,7 @@
         <a class="chip-link {% if filter == 'practice' %}active{% endif %}" href="{{ url_for('results', filter='practice') }}">Practice</a>
       </div>
 
-      <div class="hub-list" style="margin-top: 1rem;">
+      <div class="hub-list stack-md">
         {% for item in result_items %}
           <article class="hub-card">
             <div>

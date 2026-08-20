@@ -7,7 +7,7 @@
 }
 
 :root {
-  /* Brand */
+  /* Brand fills */
   --letran-blue: #0b3d91;
   --letran-blue-mid: #1a56b0;
   --letran-blue-soft: #3d7ad6;
@@ -21,11 +21,21 @@
   --sky-2: #eaf0fb;
   --panel: #ffffff;
   --panel-soft: #f8faff;
-  --ink: #15233f;
-  --muted: #5c6b86;
-  --quiet: #7d8aa3;
   --line: #d5e0f2;
   --line-strong: #b7c7e4;
+
+  /* Text — WCAG AA on white / --sky */
+  --ink: #1b2e4b;
+  --heading: #16233d;
+  --muted: #4e5d73;
+  --quiet: #5a6b82;
+  --text-link: #2e59d9;
+  --text-link-hover: #1a3fb8;
+  --text-link-active: #1635a0;
+  --text-on-dark: #ffffff;
+  --text-on-dark-muted: #e8eef8;
+  --placeholder: #5a6b82;
+  --warning-text: #9a5808;
 
   /* Feedback */
   --focus: rgba(11, 61, 145, 0.18);
@@ -259,7 +269,7 @@ body {
 }
 
 .field input::placeholder {
-  color: #9aa8bf;
+  color: var(--placeholder);
   font-weight: 600;
 }
 
@@ -280,7 +290,7 @@ body {
   font-family: "Fredoka", "Nunito", sans-serif;
   font-size: 1.15rem;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-on-dark);
   cursor: pointer;
   background: linear-gradient(120deg, var(--letran-blue-mid) 0%, var(--letran-blue) 70%, #9f1830 160%);
   box-shadow: 0 12px 24px rgba(11, 61, 145, 0.26);
@@ -440,7 +450,7 @@ body {
   font-family: "Fredoka", "Nunito", sans-serif;
   font-size: 1.35rem;
   font-weight: 700;
-  color: var(--letran-blue);
+  color: var(--heading);
   line-height: 1;
 }
 
@@ -505,7 +515,16 @@ body {
 
 .text-link {
   font-weight: 800;
-  color: var(--letran-blue);
+  color: var(--text-link);
+}
+
+.text-link:hover,
+.text-link:focus-visible {
+  color: var(--text-link-hover);
+}
+
+.text-link:active {
+  color: var(--text-link-active);
 }
 
 .app-main {
@@ -526,7 +545,7 @@ body {
   font-family: "Fredoka", "Nunito", sans-serif;
   font-size: clamp(1.8rem, 5vw, 2.2rem);
   font-weight: 700;
-  color: var(--letran-blue);
+  color: var(--heading);
   line-height: 1.1;
 }
 
@@ -608,7 +627,7 @@ body {
   font-family: "Fredoka", "Nunito", sans-serif;
   font-size: 1rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--text-on-dark);
   background: linear-gradient(120deg, var(--letran-blue-mid), var(--letran-blue));
   box-shadow: 0 8px 16px rgba(11, 61, 145, 0.2);
   cursor: pointer;
@@ -641,7 +660,7 @@ body {
   font-family: "Fredoka", "Nunito", sans-serif;
   font-size: 1.45rem;
   font-weight: 700;
-  color: var(--letran-blue);
+  color: var(--heading);
 }
 
 .subject-stats {
@@ -664,7 +683,7 @@ body {
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--letran-blue-soft);
+  color: var(--text-link);
 }
 
 .app-tabbar {
@@ -695,7 +714,7 @@ body {
 }
 
 .tab.active {
-  color: var(--letran-blue);
+  color: var(--heading);
   background: rgba(11, 61, 145, 0.08);
 }
 
@@ -862,7 +881,7 @@ body {
 
 .today-action-soft {
   background: rgba(11, 61, 145, 0.08);
-  color: var(--letran-blue);
+  color: var(--text-link);
   box-shadow: none;
   border: 1px solid rgba(11, 61, 145, 0.12);
 }
@@ -876,7 +895,7 @@ body {
 .subject-next {
   font-size: 0.88rem;
   font-weight: 800;
-  color: var(--letran-blue);
+  color: var(--text-link);
 }
 
 .tabbar-3 {
@@ -950,7 +969,7 @@ body {
   appearance: none;
   border: 1px solid rgba(11, 61, 145, 0.12);
   background: rgba(11, 61, 145, 0.08);
-  color: var(--letran-blue);
+  color: var(--ink);
   cursor: pointer;
 }
 
@@ -989,10 +1008,10 @@ body {
 }
 
 .notify-title {
-  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-family: "Fredoka", "Nunito", sans-serif;
   font-size: 1.05rem;
   font-weight: 650;
-  color: var(--letran-blue);
+  color: var(--heading);
 }
 
 .notify-count {
@@ -1052,8 +1071,17 @@ body {
   text-decoration: none;
   font-size: 0.88rem;
   font-weight: 800;
-  color: var(--letran-blue);
+  color: var(--text-link);
   background: rgba(11, 61, 145, 0.04);
+}
+
+.notify-all:hover,
+.notify-all:focus-visible {
+  color: var(--text-link-hover);
+}
+
+.notify-all:active {
+  color: var(--text-link-active);
 }
 
 /* ========== Subject Hub ========== */
@@ -1072,7 +1100,16 @@ body {
   font-size: 0.84rem;
   font-weight: 800;
   text-decoration: none;
-  color: var(--letran-blue-soft);
+  color: var(--text-link);
+}
+
+.hub-back:hover,
+.hub-back:focus-visible {
+  color: var(--text-link-hover);
+}
+
+.hub-back:active {
+  color: var(--text-link-active);
 }
 
 .hub-meter {
@@ -1083,7 +1120,7 @@ body {
   margin-top: 0.65rem;
   font-size: 0.92rem;
   font-weight: 800;
-  color: var(--letran-blue);
+  color: var(--text-link);
 }
 
 .hub-tabs {
@@ -1111,7 +1148,7 @@ body {
 }
 
 .hub-tab.active {
-  color: #fff;
+  color: var(--text-on-dark);
   background: linear-gradient(120deg, var(--letran-blue-mid), var(--letran-blue));
   box-shadow: 0 8px 16px rgba(11, 61, 145, 0.2);
 }
@@ -1259,7 +1296,7 @@ a.hub-card {
   place-items: center;
   font-size: 0.75rem;
   font-weight: 800;
-  color: var(--letran-blue);
+  color: var(--heading);
   background: rgba(11, 61, 145, 0.08);
 }
 
@@ -1282,10 +1319,10 @@ a.hub-card {
 
 .empty-title {
   margin-top: 0.3rem;
-  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-family: "Fredoka", "Nunito", sans-serif;
   font-size: 1.25rem;
   font-weight: 650;
-  color: var(--letran-blue);
+  color: var(--heading);
 }
 
 .empty-copy {
@@ -1370,9 +1407,14 @@ a.hub-card {
   text-decoration: none;
   font-size: 0.84rem;
   font-weight: 800;
-  color: var(--letran-blue);
+  color: var(--text-link);
   background: rgba(11, 61, 145, 0.08);
   border: 1px solid rgba(11, 61, 145, 0.1);
+}
+
+.outline-links a:hover,
+.outline-links a:focus-visible {
+  color: var(--text-link-hover);
 }
 
 .summary-sections {
@@ -1390,10 +1432,10 @@ a.hub-card {
 }
 
 .summary-heading {
-  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-family: "Fredoka", "Nunito", sans-serif;
   font-size: 1.2rem;
   font-weight: 650;
-  color: var(--letran-blue);
+  color: var(--heading);
 }
 
 .summary-body {
@@ -1504,7 +1546,7 @@ a.hub-card {
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--letran-blue);
+  color: var(--heading);
   visibility: hidden;
 }
 
@@ -1592,10 +1634,10 @@ a.hub-card {
 
 .take-title {
   margin-top: 0.25rem;
-  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-family: "Fredoka", "Nunito", sans-serif;
   font-size: clamp(1.35rem, 4vw, 1.7rem);
   font-weight: 650;
-  color: var(--letran-blue);
+  color: var(--heading);
 }
 
 .take-progress-label {
@@ -1765,15 +1807,25 @@ a.hub-card {
   text-decoration: none;
   font-size: 0.82rem;
   font-weight: 800;
-  color: var(--letran-blue);
+  color: var(--text-link);
   background: rgba(11, 61, 145, 0.08);
   border: 1px solid rgba(11, 61, 145, 0.1);
 }
 
 .chip-link.active {
-  color: #fff;
+  color: var(--text-on-dark);
   background: linear-gradient(120deg, var(--letran-blue-mid), var(--letran-blue));
   border-color: transparent;
+}
+
+.chip-link:hover,
+.chip-link:focus-visible {
+  color: var(--text-link-hover);
+}
+
+.chip-link.active:hover,
+.chip-link.active:focus-visible {
+  color: var(--text-on-dark);
 }
 
 .profile-facts {
@@ -1832,12 +1884,12 @@ a.hub-card {
   text-decoration: none;
   font-size: 0.82rem;
   font-weight: 800;
-  color: var(--letran-blue);
+  color: var(--text-link);
   background: rgba(11, 61, 145, 0.06);
 }
 
 .staff-nav-link.active {
-  color: #fff;
+  color: var(--text-on-dark);
   background: linear-gradient(120deg, var(--letran-blue-mid), var(--letran-blue));
 }
 
@@ -1865,10 +1917,10 @@ a.hub-card {
 
 .stat-value {
   margin-top: 0.25rem;
-  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-family: "Fredoka", "Nunito", sans-serif;
   font-size: 1.8rem;
   font-weight: 700;
-  color: var(--letran-blue);
+  color: var(--heading);
 }
 
 .stat-meta {
@@ -2037,7 +2089,7 @@ button:disabled,
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 800;
-  color: var(--letran-blue);
+  color: var(--heading);
   background: rgba(11, 61, 145, 0.08);
   border: 1px solid rgba(11, 61, 145, 0.1);
   white-space: nowrap;
@@ -2251,7 +2303,7 @@ button:disabled,
   display: grid;
   place-items: center;
   font-size: 0.95rem;
-  color: var(--letran-blue);
+  color: var(--text-link);
   background: rgba(11, 61, 145, 0.08);
   transition: transform var(--ease), background-color var(--ease);
 }
@@ -2284,10 +2336,10 @@ button:disabled,
 }
 
 .home-boost-title {
-  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-family: "Fredoka", "Nunito", sans-serif;
   font-size: 1.05rem;
   font-weight: 650;
-  color: var(--letran-blue);
+  color: var(--heading);
 }
 
 .home-boost-copy {
@@ -2329,7 +2381,7 @@ button:disabled,
   font-family: "Fredoka", "Nunito", sans-serif;
   font-size: 1.05rem;
   font-weight: 650;
-  color: var(--letran-blue);
+  color: var(--heading);
 }
 
 .home-chat-meta {
@@ -2342,8 +2394,12 @@ button:disabled,
 .home-chat-go {
   font-size: 0.82rem;
   font-weight: 800;
-  color: var(--letran-blue);
+  color: var(--text-link);
   white-space: nowrap;
+}
+
+.home-chat:hover .home-chat-go {
+  color: var(--text-link-hover);
 }
 
 /* Cards / hubs / empty */
@@ -2383,6 +2439,16 @@ button:disabled,
 .chip-link:hover,
 .staff-nav-link:hover {
   transform: translateY(-1px);
+}
+
+.hub-tab:hover,
+.staff-nav-link:hover {
+  color: var(--text-link-hover);
+}
+
+.hub-tab.active:hover,
+.staff-nav-link.active:hover {
+  color: var(--text-on-dark);
 }
 
 /* Forms */
@@ -2499,8 +2565,13 @@ a.notify-item {
   font: inherit;
   font-size: 0.82rem;
   font-weight: 800;
-  color: var(--letran-blue);
+  color: var(--text-link);
   cursor: pointer;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+  color: var(--text-link-hover);
 }
 
 .file-chosen {
@@ -2622,10 +2693,10 @@ a.notify-item {
   place-items: center;
   border: 1px solid rgba(11, 61, 145, 0.12);
   background: rgba(11, 61, 145, 0.07);
-  color: var(--letran-blue);
+  color: var(--ink);
   text-decoration: none;
   cursor: pointer;
-  transition: background-color 160ms var(--ease), transform 160ms var(--ease), box-shadow 160ms var(--ease);
+  transition: background-color 160ms var(--ease), transform 160ms var(--ease), box-shadow 160ms var(--ease), color 160ms var(--ease);
 }
 
 .icon-btn:hover,
@@ -2723,7 +2794,7 @@ a.notify-item {
   font-family: "Fredoka", "Nunito", sans-serif;
   font-size: 1.05rem;
   font-weight: 650;
-  color: var(--letran-blue);
+  color: var(--heading);
 }
 
 .menu-sub {
@@ -2827,6 +2898,8 @@ a.notify-item {
 #account {
   scroll-margin-top: 5.5rem;
 }
+
+.profile-hero {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -3062,7 +3135,7 @@ a.message-row:hover {
   font-family: "Fredoka", "Nunito", sans-serif;
   font-size: 1.15rem;
   font-weight: 650;
-  color: var(--letran-blue);
+  color: var(--heading);
 }
 
 .chat-meta {
@@ -3239,7 +3312,11 @@ a.message-row:hover {
 
 .announce-mark-all:hover,
 .announce-mark-all:focus-visible {
-  color: var(--letran-blue);
+  color: var(--text-link-hover);
+}
+
+.announce-mark-all:active {
+  color: var(--text-link-active);
 }
 
 .announce-page .filter-chips {
@@ -3366,7 +3443,7 @@ a.message-row:hover {
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #c96a12;
+  color: var(--warning-text);
   vertical-align: 0.08em;
   white-space: nowrap;
 }
@@ -3501,7 +3578,7 @@ a.message-row:hover {
   font-family: "Fredoka", "Nunito", sans-serif;
   font-size: clamp(1.35rem, 4vw, 1.7rem);
   font-weight: 650;
-  color: var(--letran-blue);
+  color: var(--heading);
   line-height: 1.2;
 }
 
