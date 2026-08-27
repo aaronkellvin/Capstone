@@ -220,11 +220,106 @@ body {
 }
 
 .flash {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
   padding: 0.75rem 0.85rem;
   border-radius: 14px;
   font-size: 0.92rem;
   font-weight: 700;
+  text-align: left;
+}
+
+.flash-text {
+  flex: 1;
   text-align: center;
+}
+
+.flash-dismiss {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+  padding: 0 0.15rem;
+}
+
+.flash-dismiss:hover,
+.flash-dismiss:focus-visible {
+  opacity: 1;
+}
+
+.flash.is-fading {
+  opacity: 0;
+  transition: opacity 280ms var(--ease);
+}
+
+.field-hint {
+  margin-top: 0.28rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--quiet);
+}
+
+.field-error {
+  margin-top: 0.28rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--danger-text);
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.remember-me input {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--letran-blue);
+}
+
+.offline-bar,
+.session-expiry-banner {
+  position: sticky;
+  top: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.65rem 1rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.offline-bar {
+  background: #fff7ed;
+  color: #9a3412;
+  border-bottom: 1px solid #fed7aa;
+}
+
+.session-expiry-banner {
+  background: #eff6ff;
+  color: var(--letran-blue);
+  border-bottom: 1px solid var(--line);
+}
+
+.session-expiry-banner a {
+  color: inherit;
+  font-weight: 800;
 }
 
 .flash-danger {
@@ -657,10 +752,13 @@ body {
 }
 
 .subject-name {
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Fredoka", "Nunito", "Inter", "Segoe UI", sans-serif;
   font-size: 1.45rem;
   font-weight: 700;
+  line-height: 1.25;
   color: var(--heading);
+  opacity: 1;
+  visibility: visible;
 }
 
 .subject-stats {
@@ -779,7 +877,7 @@ body {
 
 .hero-title {
   margin-top: 0.4rem;
-  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-family: "Fredoka", "Nunito", sans-serif;
   font-size: clamp(1.55rem, 5vw, 1.9rem);
   font-weight: 650;
   line-height: 1.2;
@@ -828,8 +926,10 @@ body {
 
 .goal-bar.is-empty,
 .subject-meter.is-empty {
-  background-color: #dfe8f5;
-  border-color: rgba(11, 61, 145, 0.28);
+  background-color: #edf2fa;
+  background-image: none;
+  border: 1.5px dashed rgba(11, 61, 145, 0.4);
+  box-shadow: none;
 }
 
 .goal-bar span,
@@ -890,6 +990,12 @@ body {
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--muted);
+  opacity: 1;
+  visibility: visible;
+}
+
+.subject-progress.is-empty {
+  color: var(--quiet);
 }
 
 .subject-next {
@@ -1116,6 +1222,13 @@ body {
   margin-top: 0.75rem;
 }
 
+.hub-progress-empty {
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--quiet);
+}
+
 .hub-next {
   margin-top: 0.65rem;
   font-size: 0.92rem;
@@ -1137,8 +1250,8 @@ body {
 .hub-tab {
   display: grid;
   place-items: center;
-  min-height: 2.55rem;
-  padding: 0.4rem 0.35rem;
+  min-height: 2.75rem;
+  padding: 0.45rem 0.4rem;
   border-radius: 12px;
   text-decoration: none;
   text-align: center;
@@ -1154,7 +1267,7 @@ body {
 }
 
 .hub-panel-title {
-  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-family: "Fredoka", "Nunito", sans-serif;
   font-size: 1.35rem;
   font-weight: 650;
   color: var(--ink);
@@ -1203,7 +1316,7 @@ a.hub-card {
 
 .hub-card-title {
   margin-top: 0.2rem;
-  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-family: "Fredoka", "Nunito", sans-serif;
   font-size: 1.1rem;
   font-weight: 650;
   color: var(--ink);
@@ -1675,7 +1788,7 @@ a.hub-card {
 
 .take-question {
   margin-top: 0.35rem;
-  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-family: "Fredoka", "Nunito", sans-serif;
   font-size: 1.2rem;
   font-weight: 650;
   line-height: 1.35;
@@ -1754,7 +1867,7 @@ a.hub-card {
 }
 
 .result-score {
-  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-family: "Fredoka", "Nunito", sans-serif;
   font-size: 1.35rem;
   font-weight: 650;
 }
@@ -2224,7 +2337,7 @@ button:disabled,
 }
 
 .subject-card::before {
-  content: \"\";
+  content: "";
   position: absolute;
   left: 0;
   top: 0;
@@ -2255,7 +2368,7 @@ button:disabled,
   border-radius: 12px;
   display: grid;
   place-items: center;
-  font-family: \"Fredoka\", \"Nunito\", sans-serif;
+  font-family: "Fredoka", "Nunito", sans-serif;
   font-size: 1.05rem;
   font-weight: 700;
   color: #fff;
@@ -2286,6 +2399,7 @@ button:disabled,
 .subject-name {
   margin-top: 0.85rem;
   letter-spacing: -0.02em;
+  color: var(--heading);
 }
 
 .subject-meter {
@@ -2611,6 +2725,10 @@ a.notify-item {
   background: rgba(15, 28, 63, 0.42);
 }
 
+.qol-overlay[hidden] {
+  display: none !important;
+}
+
 .qol-overlay-card {
   display: grid;
   justify-items: center;
@@ -2686,8 +2804,8 @@ a.notify-item {
 .icon-btn {
   appearance: none;
   position: relative;
-  width: 2.55rem;
-  height: 2.55rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: 999px;
   display: grid;
   place-items: center;
@@ -2831,13 +2949,23 @@ a.notify-item {
 
 .menu-link {
   display: block;
+  width: 100%;
   padding: 0.78rem 1rem;
+  border: 0;
+  background: transparent;
+  text-align: left;
   text-decoration: none;
+  font: inherit;
   font-size: 0.95rem;
   font-weight: 800;
   color: var(--ink);
   border-top: 1px solid rgba(201, 215, 239, 0.45);
+  cursor: pointer;
   transition: background-color 140ms var(--ease);
+}
+
+.menu-logout-form {
+  margin: 0;
 }
 
 .menu-link:hover,

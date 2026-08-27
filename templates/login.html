@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sign In — Bloom</title>
+  {% include "partials/csrf_meta.html" %}
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -31,9 +32,14 @@
           <label for="password">Password</label>
           <input type="password" id="password" name="password" autocomplete="current-password" required placeholder="Enter your password" />
         </div>
+        <label class="remember-me">
+          <input type="checkbox" name="remember" value="1" />
+          <span>Keep me signed in on this device (14 days)</span>
+        </label>
         <button type="submit" class="btn-primary">Sign In</button>
       </form>
 
+      {% if show_pilot_accounts %}
       <details class="pro-login-pilots">
         <summary>Pilot accounts</summary>
         <div class="pro-login-actions">
@@ -42,8 +48,9 @@
           <button type="button" class="today-action today-action-soft" data-fill-login="admin@letran-calamba.edu.ph|admin123">Admin</button>
         </div>
       </details>
+      {% endif %}
     </div>
   </div>
-  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/topbar.js') }}" defer></script>
 </body>
 </html>

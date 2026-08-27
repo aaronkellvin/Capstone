@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign out — Bloom</title>
+  {% include "partials/csrf_meta.html" %}
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bloom-pro.css') }}" />
+</head>
+<body>
+  <div class="pro-login">
+    <div class="pro-login-card">
+      <h1 class="pro-login-title">Sign out</h1>
+      <p class="section-note">End your Bloom session on this device?</p>
+      <form method="POST" action="{{ url_for('logout') }}" class="stack-md">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" class="btn-primary">Sign out</button>
+        <a class="today-action today-action-soft" href="{{ url_for('home') if user else url_for('login') }}">Cancel</a>
+      </form>
+    </div>
+  </div>
+  <script src="{{ url_for('static', filename='js/topbar.js') }}" defer></script>
+</body>
+</html>

@@ -70,6 +70,22 @@
     if (markAllForm) setHidden(markAllForm, safe === 0);
   };
 
+  const markItemReadOnServer = async (id) => {
+    if (!id) return null;
+    try {
+      const response = await fetch(`/announcements/${id}/read`, {
+        method: "POST",
+        headers: { "X-Requested-With": "fetch", Accept: "application/json" },
+        body: new FormData(),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) return null;
+      return data;
+    } catch (_error) {
+      return null;
+    }
+  };
+
   const markNotifyRead = (id, all = false) => {
     document.querySelectorAll(".notify-item").forEach((row) => {
       if (!all && String(row.dataset.id) !== String(id)) return;
@@ -226,7 +242,8 @@
       showSkeleton(false);
       setHidden(detail, false);
       renderDetail(data.selected);
-      applyReadFromServer(data.selected.id, data.unread_announcements);
+      const marked = await markItemReadOnServer(data.selected.id);
+      applyReadFromServer(data.selected.id, marked?.unread_announcements ?? data.unread_announcements);
       if (data.list_href) {
         page.setAttribute("data-list-href", data.list_href);
         if (back) back.setAttribute("href", data.list_href);
@@ -270,7 +287,17 @@
   }
 
   const selected = selectedItem();
-  if (selected) selected.scrollIntoView({ block: "nearest", behavior: "auto" });
+  if (selected) {
+    selected.scrollIntoView({ block: "nearest", behavior: "auto" });
+    if (selected.classList.contains("is-unread")) {
+      markItemReadOnServer(selected.dataset.id).then((marked) => {
+        if (!marked) return;
+        markItemRead(selected);
+        markNotifyRead(selected.dataset.id);
+        setUnreadCount(marked.unread_announcements ?? 0);
+      });
+    }
+  }
 
   const restoreId = page.getAttribute("data-restore-id");
   if (restoreId && isDesktop() && !selected) {

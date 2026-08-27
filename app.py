@@ -1,6 +1,7 @@
 import csv
 import io
 import json
+import logging
 import os
 import re
 from datetime import datetime, timedelta
@@ -14,6 +15,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 from ai import generate_hots_questions, last_ai_error, summarize_material
+from csrf import init_csrf
 from extract import ExtractError, extract_text
 from models import (
     Announcement,
@@ -47,15 +49,69 @@ def load_env():
 
 load_env()
 
+logger = logging.getLogger("bloom")
+
+BLOOM_ENV = os.environ.get("BLOOM_ENV", "development").strip().lower()
+IS_PRODUCTION = BLOOM_ENV == "production"
+DEV_SECRET_FALLBACK = "capstone-dev-secret-change-in-production"
+SECRET_KEY = os.environ.get("SECRET_KEY", "").strip()
+if IS_PRODUCTION:
+    if not SECRET_KEY or SECRET_KEY == DEV_SECRET_FALLBACK:
+        raise RuntimeError("Set a strong SECRET_KEY when BLOOM_ENV=production.")
+else:
+    SECRET_KEY = SECRET_KEY or DEV_SECRET_FALLBACK
+
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "capstone-dev-secret-change-in-production")
+app.secret_key = SECRET_KEY
 os.makedirs(app.instance_path, exist_ok=True)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(app.instance_path, "bloom.db")
+_db_path = os.environ.get("BLOOM_TEST_DB") or os.path.join(app.instance_path, "bloom.db")
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + _db_path
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
 app.config["UPLOAD_FOLDER"] = os.path.join(app.instance_path, "uploads")
+# Used when "Keep me signed in" is checked. Without it, the session lasts until the browser closes.
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=14)
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = IS_PRODUCTION or os.environ.get("SESSION_COOKIE_SECURE", "").lower() in {
+    "1",
+    "true",
+    "yes",
+}
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 db.init_app(app)
+init_csrf(app)
+
+
+def show_pilot_accounts() -> bool:
+    flag = os.environ.get("BLOOM_SHOW_PILOTS", "").strip().lower()
+    if flag in {"1", "true", "yes"}:
+        return True
+    if flag in {"0", "false", "no"}:
+        return False
+    return not IS_PRODUCTION and app.secret_key == DEV_SECRET_FALLBACK
+
+
+def can_view_attempt(user: dict, attempt: Attempt) -> bool:
+    if not user or not attempt:
+        return False
+    if attempt.user_id == user["id"]:
+        return True
+    if user["role"] == "admin":
+        return True
+    if user["role"] == "teacher":
+        slug = teacher_subject_slug(user)
+        return bool(slug and attempt.subject_slug == slug)
+    return False
+
+
+
+@app.context_processor
+def inject_session_meta():
+    expires_at = None
+    if session.get("user_id") and session.permanent:
+        expires_at = int((datetime.utcnow() + app.permanent_session_lifetime).timestamp())
+    return {"session_expires_at": expires_at}
 
 
 @app.context_processor
@@ -830,6 +886,14 @@ def attach_summary(material: Material):
 
 
 def seed():
+    if IS_PRODUCTION and os.environ.get("BLOOM_SEED_DEMO", "").lower() not in {"1", "true", "yes"}:
+        # Production should not invent demo passwords unless explicitly requested.
+        if not db.session.get(Setting, "english_only"):
+            db.session.add(Setting(key="english_only", value="yes"))
+        if not db.session.get(Setting, "max_upload_mb"):
+            db.session.add(Setting(key="max_upload_mb", value="20"))
+        db.session.commit()
+        return
     users = [
         ("student@letran-calamba.edu.ph", "Demo Student", "student", None, "student123"),
         ("teacher@letran-calamba.edu.ph", "Demo Science Teacher", "teacher", "Science", "teacher123"),
@@ -899,7 +963,8 @@ def seed_demo_content():
 with app.app_context():
     db.create_all()
     ensure_schema()
-    seed()
+    if not os.environ.get("BLOOM_TEST_DB"):
+        seed()
 
 
 @app.route("/")
@@ -916,15 +981,21 @@ def login():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
+        remember = request.form.get("remember") == "1"
         user = User.query.filter_by(email=email).first()
         if user and password and check_password_hash(user.password_hash, password):
             session.clear()
             session["user_id"] = user.id
+            session.permanent = remember
+            # Session clear drops CSRF; mint a fresh token for the next form.
+            from csrf import get_csrf_token
+
+            get_csrf_token()
             flash("Welcome to Bloom. For security, change your temporary password in Profile later.", "success")
             return redirect(url_for("home"))
-        flash("School email or password is incorrect.", "danger")
+        flash("School email or password is incorrect. Check your Letran email and try again.", "danger")
         return redirect(url_for("login"))
-    return render_template("login.html")
+    return render_template("login.html", show_pilot_accounts=show_pilot_accounts())
 
 
 @app.route("/home")
@@ -1018,9 +1089,7 @@ def subject_hub(slug):
     if request.method == "POST" and user["role"] == "student":
         return student_backup_upload(user, slug)
 
-    tab = request.args.get("tab", "assessments")
-    if tab not in {"assessments", "study", "practice", "results"}:
-        tab = "assessments"
+    requested_tab = request.args.get("tab")
 
     teacher = User.query.filter_by(role="teacher", subject=meta["name"]).first()
     percent, insight, has_progress = bloom_progress(user["id"], slug)
@@ -1086,6 +1155,17 @@ def subject_hub(slug):
                 "locked": False,
             }
         )
+
+    if requested_tab in {"assessments", "study", "practice", "results"}:
+        tab = requested_tab
+    elif due or open_items:
+        tab = "assessments"
+    elif materials:
+        tab = "study"
+    elif practice_items:
+        tab = "practice"
+    else:
+        tab = "assessments"
     pending_uploads = [
         f"{item.title}"
         for item in Material.query.filter_by(subject_slug=slug, source="student", status="pending", owner_id=user["id"])
@@ -1214,7 +1294,7 @@ def practice_setup(subject_slug, material_slug):
     return render_template("practice_setup.html", **context)
 
 
-@app.route("/subjects/<subject_slug>/practice/<material_slug>/take")
+@app.route("/subjects/<subject_slug>/practice/<material_slug>/take", methods=["GET", "POST"])
 def practice_take(subject_slug, material_slug):
     user = require_user()
     if not user:
@@ -1225,56 +1305,77 @@ def practice_take(subject_slug, material_slug):
         flash("That practice check is not available.", "danger")
         return redirect(url_for("home"))
 
-    focus = request.args.get("focus", "mixed")
-    types = request.args.getlist("types") or ["mcq", "essay", "problem"]
-    try:
-        count = max(1, min(int(request.args.get("count", 3)), 5))
-    except ValueError:
-        count = 3
-    difficulty = normalize_difficulty(request.args.get("difficulty") or session.get("practice_difficulty"))
-    session["practice_difficulty"] = difficulty
-    questions = generate_hots_questions(
-        material.title, material.extracted_text, meta["name"], focus, count, types, difficulty
-    )
+    if request.method == "POST":
+        focus = request.form.get("focus", "mixed")
+        types = request.form.getlist("types") or ["mcq", "essay", "problem"]
+        try:
+            count = max(1, min(int(request.form.get("count", 3)), 5))
+        except ValueError:
+            count = 3
+        difficulty = normalize_difficulty(request.form.get("difficulty") or session.get("practice_difficulty"))
+        session["practice_difficulty"] = difficulty
+        questions = generate_hots_questions(
+            material.title, material.extracted_text, meta["name"], focus, count, types, difficulty
+        )
+        if not questions:
+            flash(
+                "We couldn't generate your practice right now. "
+                f"Your selected difficulty: {difficulty_label(difficulty)}.",
+                "danger",
+            )
+            return redirect(
+                practice_setup_url(subject_slug, material_slug, difficulty, focus, count, types)
+            )
+        if last_ai_error():
+            logger.warning("Practice AI fallback used: %s", last_ai_error())
+            flash(
+                "Bloom could not reach the AI helper, so it used basic practice questions instead. "
+                "You can still submit and review your answers.",
+                "danger",
+            )
+        bloom_label = {"mixed": "Mixed HOTS", "c4": "Analyze", "c5": "Evaluate", "c6": "Create"}.get(
+            focus, "Mixed HOTS"
+        )
+        QuizDraft.query.filter_by(user_id=user["id"], kind="practice").delete()
+        draft = QuizDraft(
+            user_id=user["id"],
+            kind="practice",
+            subject_slug=subject_slug,
+            material_slug=material_slug,
+            title=material.title,
+            bloom_label=bloom_label,
+            difficulty=difficulty,
+            questions_json=json.dumps(questions),
+        )
+        db.session.add(draft)
+        db.session.commit()
+        session["practice_draft_id"] = draft.id
+        return redirect(url_for("practice_take", subject_slug=subject_slug, material_slug=material_slug))
+
+    draft = db.session.get(QuizDraft, session.get("practice_draft_id"))
+    if (
+        not draft
+        or draft.user_id != user["id"]
+        or draft.kind != "practice"
+        or draft.material_slug != material_slug
+        or draft.subject_slug != subject_slug
+    ):
+        flash("Generate a Practice Check from the setup screen first.", "danger")
+        return redirect(url_for("practice_setup", subject_slug=subject_slug, material_slug=material_slug))
+    questions = draft.questions()
     if not questions:
-        flash(
-            "We couldn't generate your practice right now. "
-            f"Your selected difficulty: {difficulty_label(difficulty)}.",
-            "danger",
-        )
-        return redirect(
-            practice_setup_url(subject_slug, material_slug, difficulty, focus, count, types)
-        )
-    if last_ai_error():
-        flash(
-            "AI generation failed, so Bloom used basic fallback questions. "
-            f"Check the terminal for details. ({last_ai_error()[:180]})",
-            "danger",
-        )
-    bloom_label = {"mixed": "Mixed HOTS", "c4": "Analyze", "c5": "Evaluate", "c6": "Create"}.get(focus, "Mixed HOTS")
-    QuizDraft.query.filter_by(user_id=user["id"], kind="practice").delete()
-    draft = QuizDraft(
-        user_id=user["id"],
-        kind="practice",
-        subject_slug=subject_slug,
-        material_slug=material_slug,
-        title=material.title,
-        bloom_label=bloom_label,
-        difficulty=difficulty,
-        questions_json=json.dumps(questions),
-    )
-    db.session.add(draft)
-    db.session.commit()
-    session["practice_draft_id"] = draft.id
+        flash("That practice draft is empty. Please generate again.", "danger")
+        return redirect(url_for("practice_setup", subject_slug=subject_slug, material_slug=material_slug))
     context = {
         "user": user,
         "subject": {"slug": subject_slug, "name": meta["name"]},
         "material_slug": material_slug,
         "material_title": material.title,
         "questions": questions,
-        "bloom_label": bloom_label,
-        "difficulty_key": difficulty,
-        "difficulty_name": difficulty_label(difficulty),
+        "bloom_label": draft.bloom_label or "Mixed HOTS",
+        "difficulty_key": draft.difficulty or "medium",
+        "difficulty_name": difficulty_label(draft.difficulty),
+        "draft_id": draft.id,
     }
     context.update(announcements_context(user))
     return render_template("practice_take.html", **context)
@@ -1306,6 +1407,7 @@ def practice_submit(subject_slug, material_slug):
     db.session.delete(draft)
     db.session.commit()
     session.pop("practice_draft_id", None)
+    flash("Practice submitted. Review your answers below.", "success")
     return redirect(url_for("attempt_review", attempt_id=attempt.id))
 
 
@@ -1317,10 +1419,10 @@ def attempt_review(attempt_id):
     attempt = db.session.get(Attempt, attempt_id)
     if not attempt:
         flash("That result is not available.", "danger")
-        return redirect(url_for("results"))
-    if attempt.user_id != user["id"] and user["role"] == "student":
-        flash("You can only view your own results.", "danger")
-        return redirect(url_for("results"))
+        return redirect(url_for("results" if user["role"] == "student" else "home"))
+    if not can_view_attempt(user, attempt):
+        flash("You do not have access to that result.", "danger")
+        return redirect(url_for("results" if user["role"] == "student" else "home"))
     meta = SUBJECTS.get(attempt.subject_slug, {"name": "Subject", "slug": attempt.subject_slug})
     review_items = attempt.review_items()
     score_label = (
@@ -1409,6 +1511,7 @@ def assessment_take(slug):
         flash("This assessment has no questions yet.", "danger")
         return redirect(url_for("assessment_lobby", slug=slug))
     session["assessment_started"] = slug
+    attempt_label = "1 attempt" if allowed == 1 else f"Up to {allowed} attempts"
     context = {
         "user": user,
         "assessment": {
@@ -1416,6 +1519,8 @@ def assessment_take(slug):
             "subject": SUBJECTS[assessment.subject_slug]["name"],
             "title": assessment.title,
             "difficulty_name": difficulty_label(assessment.difficulty) if assessment.difficulty else None,
+            "attempt_label": attempt_label,
+            "allowed_attempts": allowed,
         },
         "questions": questions,
     }
@@ -1478,7 +1583,7 @@ def practice():
             {
                 "subject": SUBJECTS[material.subject_slug]["name"],
                 "title": f"{material.title} Practice Check",
-                "meta": "Approved material · Mixed HOTS",
+                "meta": "Approved material · Thinking practice",
                 "href": url_for("practice_setup", subject_slug=material.subject_slug, material_slug=material.slug),
             }
         )
@@ -1567,10 +1672,21 @@ def profile():
                     "note": "Update your temporary password.",
                     "action": url_for("profile"),
                     "submit": "Update Password",
+                    "loading": "Updating password…",
                     "fields": [
                         {"id": "current_password", "name": "current_password", "label": "Current password", "type": "password", "placeholder": "", "required": True},
-                        {"id": "new_password", "name": "new_password", "label": "New password", "type": "password", "placeholder": "", "required": True},
-                        {"id": "confirm_password", "name": "confirm_password", "label": "Confirm new password", "type": "password", "placeholder": "", "required": True},
+                        {"id": "new_password", "name": "new_password", "label": "New password", "type": "password", "placeholder": "", "required": True, "minlength": 8},
+                        {
+                            "id": "confirm_password",
+                            "name": "confirm_password",
+                            "label": "Confirm new password",
+                            "type": "password",
+                            "placeholder": "",
+                            "required": True,
+                            "minlength": 8,
+                            "match": "#new_password",
+                            "match_message": "New passwords must match.",
+                        },
                     ],
                 }
             ],
@@ -1601,11 +1717,8 @@ def announcements(announcement_id=None):
                 return jsonify({"ok": False, "error": "That announcement is not available."}), 404
             flash("That announcement is not available.", "danger")
             return redirect(announcements_url(filter_name=filter_name, q=q))
-        if not mark_announcement_read(user["id"], announcement_id):
-            if wants_json_response():
-                return jsonify({"ok": False, "error": "Unable to update notification status. Please try again."}), 400
-            flash("Unable to update notification status. Please try again.", "danger")
-            return redirect(announcements_url(filter_name=filter_name, q=q))
+        # Opening an announcement no longer marks it read on GET (prefetch-safe).
+        # Marking happens via POST /announcements/<id>/read from the page/JS.
         session["announce_selected_id"] = announcement_id
         arrive = request.args.get("arrive") == "1"
     read_ids = announcement_read_ids(user["id"])
@@ -2093,6 +2206,7 @@ def teacher_announce(user):
                 "note": "Keep it short and student-friendly.",
                 "action": url_for("teacher_announce"),
                 "submit": "Post announcement",
+                "loading": "Posting announcement…",
                 "fields": [
                     {"id": "title", "name": "title", "label": "Title", "type": "text", "placeholder": "Assessment reminder", "required": True},
                     {"id": "body", "name": "body", "label": "Message", "type": "textarea", "placeholder": "Write your announcement...", "required": True},
@@ -2199,6 +2313,8 @@ def admin_users(user):
                 "note": "CSV rows: email, full name, role, temporary password, subject (teachers)",
                 "action": url_for("admin_users"),
                 "submit": "Import users",
+                "loading": "Importing users…",
+                "confirm": "Import these accounts? Temporary passwords will be set from the CSV.",
                 "sample_target": "csv",
                 "sample_value": "student2@letran-calamba.edu.ph, Ana Cruz, student, Temp1234",
                 "fields": [
@@ -2281,7 +2397,8 @@ def admin_reports(user):
 @require_role("admin")
 def admin_settings(user):
     if request.method == "POST":
-        flash("Pilot defaults saved for this session. Upload limits remain 20 MB / 100 pages.", "success")
+        # No editable controls are exposed — avoid a fake "saved" success.
+        flash("These are read-only pilot notes. Change upload/AI behavior via environment settings.", "danger")
         return redirect(url_for("admin_settings"))
     return render_template(
         "staff_page.html",
@@ -2290,12 +2407,12 @@ def admin_settings(user):
         role_nav=admin_nav(),
         active_nav="settings",
         title="System settings",
-        subtitle="Pilot defaults for uploads, English-only content, and privacy reminders.",
+        subtitle="Read-only pilot defaults. Upload limits and AI keys are configured on the server.",
         panels=[
             {
                 "kicker": "Uploads",
                 "title": "20 MB · 100 pages · reject weak scans",
-                "meta": "No OCR in research scope",
+                "meta": "Configured in app settings · No OCR in research scope",
                 "action": None,
                 "action_href": None,
                 "soft": True,
@@ -2468,7 +2585,7 @@ def messages_updates(user_id):
         return jsonify({"ok": True, "messages": [], "read_ids": [], "unread_messages": unread_message_count(user["id"])})
     if not can_access_conversation(user, conversation):
         return jsonify({"ok": False}), 403
-    mark_conversation_read(conversation, user["id"])
+    # GET is read-only (prefetch-safe). Marking happens on thread open or POST /read.
     after = request.args.get("after", type=int) or 0
     fresh = [item for item in conversation.messages if item.id > after]
     read_ids = [item.id for item in conversation.messages if item.sender_id == user["id"] and item.read_at]
@@ -2482,9 +2599,34 @@ def messages_updates(user_id):
     )
 
 
+@app.route("/messages/with/<int:user_id>/read", methods=["POST"])
+def messages_mark_read(user_id):
+    user = require_user()
+    if not user:
+        return jsonify({"ok": False}), 401
+    other = db.session.get(User, user_id)
+    if not other or not allowed_chat_partner(user, other):
+        return jsonify({"ok": False}), 403
+    conversation = find_conversation(user, other)
+    if conversation and can_access_conversation(user, conversation):
+        mark_conversation_read(conversation, user["id"])
+    return jsonify({"ok": True, "unread_messages": unread_message_count(user["id"])})
+
+
 @app.route("/favicon.ico")
 def favicon():
     return redirect(url_for("static", filename="images/letran-calamba-logo.png"))
+
+
+@app.errorhandler(403)
+def forbidden(_error):
+    return render_template(
+        "error.html",
+        user=current_user(),
+        code=403,
+        title="You don’t have access",
+        message="That page is for a different role in Bloom. Go home and open a page you can use.",
+    ), 403
 
 
 @app.errorhandler(404)
@@ -2504,12 +2646,28 @@ def too_large(_error):
     return redirect(request.referrer or url_for("home"))
 
 
-@app.route("/logout")
+@app.errorhandler(500)
+def server_error(_error):
+    return render_template(
+        "error.html",
+        user=current_user(),
+        code=500,
+        title="Something went wrong",
+        message="Bloom hit an unexpected error. Try again in a moment, or go home and continue from there.",
+    ), 500
+
+
+@app.route("/logout", methods=["GET", "POST"])
 def logout():
+    if request.method == "GET":
+        # Prefetch-safe: show a confirm form instead of clearing the session on GET.
+        user = current_user()
+        return render_template("logout.html", user=user)
     session.clear()
     flash("You signed out of Bloom.", "success")
     return redirect(url_for("login"))
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="127.0.0.1", port=5001)
+    debug = os.environ.get("FLASK_DEBUG", "0" if IS_PRODUCTION else "1").lower() in {"1", "true", "yes"}
+    app.run(debug=debug, host="127.0.0.1", port=int(os.environ.get("PORT", "5001")))

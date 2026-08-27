@@ -71,21 +71,21 @@
                 </form>
               {% endif %}
               {% if not panel.release_scores %}
-                <form method="POST" action="{{ url_for('teacher_monitor') }}">
+                <form method="POST" action="{{ url_for('teacher_monitor') }}" data-confirm="Release scores to students? They will see automatic scores right away." data-loading="Releasing scores…">
                   <input type="hidden" name="assessment_id" value="{{ panel.assessment_id }}" />
                   <input type="hidden" name="action" value="release_scores" />
                   <button class="today-action today-action-soft" type="submit">Release scores</button>
                 </form>
               {% endif %}
               {% if not panel.release_answers %}
-                <form method="POST" action="{{ url_for('teacher_monitor') }}">
+                <form method="POST" action="{{ url_for('teacher_monitor') }}" data-confirm="Release correct answers to students?" data-loading="Releasing answers…">
                   <input type="hidden" name="assessment_id" value="{{ panel.assessment_id }}" />
                   <input type="hidden" name="action" value="release_answers" />
                   <button class="today-action today-action-soft" type="submit">Release answers</button>
                 </form>
               {% endif %}
               {% if not panel.release_feedback %}
-                <form method="POST" action="{{ url_for('teacher_monitor') }}">
+                <form method="POST" action="{{ url_for('teacher_monitor') }}" data-confirm="Release feedback explanations to students?" data-loading="Releasing feedback…">
                   <input type="hidden" name="assessment_id" value="{{ panel.assessment_id }}" />
                   <input type="hidden" name="action" value="release_feedback" />
                   <button class="today-action today-action-soft" type="submit">Release feedback</button>

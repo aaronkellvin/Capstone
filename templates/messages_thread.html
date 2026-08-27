@@ -24,7 +24,7 @@
 
   <main class="app-main chat-main">
     {% include "partials/flash.html" %}
-    <section class="chat-shell" data-poll-url="{{ poll_url }}" data-send-url="{{ send_url }}">
+    <section class="chat-shell" data-poll-url="{{ poll_url }}" data-send-url="{{ send_url }}" data-read-url="{{ url_for('messages_mark_read', user_id=other.id) }}">
       <header class="chat-head">
         <a class="hub-back" href="{{ url_for('messages_inbox') }}">Messages</a>
         <div class="chat-person">
@@ -62,11 +62,7 @@
     </section>
   </main>
 
-  {% if user.role != "teacher" %}
-    {% set active_tab = "home" %}
-    {% include "partials/student_tabbar.html" %}
-  {% endif %}
-  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/messages.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/topbar.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/messages.js') }}" defer></script>
 </body>
 </html>

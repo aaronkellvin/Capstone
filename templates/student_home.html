@@ -12,9 +12,9 @@
       </div>
       <a class="pro-stat-link" href="{{ url_for('practice') }}">View practice →</a>
     </article>
-    <article class="pro-stat pro-stat-orange">
+    <article class="pro-stat {% if today_items %}pro-stat-orange{% else %}pro-stat-muted{% endif %}">
       <div>
-        <p class="pro-stat-label">Today items</p>
+        <p class="pro-stat-label">Today</p>
         <p class="pro-stat-value">{{ today_items|length }}</p>
       </div>
       <a class="pro-stat-link" href="#today-title">Jump to today →</a>
@@ -26,9 +26,9 @@
       </div>
       <a class="pro-stat-link" href="#subjects-title">Open subjects →</a>
     </article>
-    <article class="pro-stat pro-stat-red">
+    <article class="pro-stat {% if unread_announcements %}pro-stat-red{% else %}pro-stat-muted{% endif %}">
       <div>
-        <p class="pro-stat-label">Unread</p>
+        <p class="pro-stat-label">Unread news</p>
         <p class="pro-stat-value">{{ unread_announcements or 0 }}</p>
       </div>
       <a class="pro-stat-link" href="{{ url_for('announcements') }}">Announcements →</a>
@@ -65,52 +65,58 @@
       </div>
     </section>
 
-    <section class="pro-panel">
-      <h2>Recent activity</h2>
-      <p>Quick pulse of what’s happening in Bloom.</p>
+    <section class="pro-panel" aria-labelledby="subject-pulse-title">
+      <h2 id="subject-pulse-title">Subject pulse</h2>
+      <p>Real progress from your English, Math, and Science work.</p>
       <ul class="pro-activity">
-        {% for item in today_items[:4] %}
+        {% for subject in subjects %}
           <li>
             <span class="pro-dot" aria-hidden="true"></span>
             <div>
-              <strong>{{ item.title }}</strong>
-              <div class="today-meta">{{ item.meta }}</div>
+              <strong>{{ subject.name }}</strong>
+              <div class="today-meta">
+                {% if subject.progress_percent <= 0 %}
+                  Not started yet
+                {% elif subject.progress_percent >= 100 %}
+                  Completed · {{ subject.progress_insight }}
+                {% else %}
+                  {{ subject.progress_percent }}% · {{ subject.progress_insight }}
+                {% endif %}
+              </div>
             </div>
-            <span class="today-meta">{{ item.kicker }}</span>
-          </li>
-        {% else %}
-          <li>
-            <span class="pro-dot" aria-hidden="true"></span>
-            <div>
-              <strong>No recent activity yet</strong>
-              <div class="today-meta">Start a summary or practice check to begin.</div>
-            </div>
-            <span class="today-meta">Now</span>
+            <a class="today-meta pro-pulse-link" href="{{ url_for('subject_hub', slug=subject.slug) }}">Open</a>
           </li>
         {% endfor %}
       </ul>
     </section>
 
-    <section class="pro-panel">
-      <h2>Progress tracker</h2>
-      <p>Your pilot progress across Bloom.</p>
+    <section class="pro-panel" aria-labelledby="progress-tracker-title">
+      <h2 id="progress-tracker-title">Progress tracker</h2>
+      <p>Based only on work you have already done.</p>
       <div class="pro-progress">
         <div class="pro-progress-row">
-          <header><span>Course progress</span><span>{{ weekly_goal.percent if weekly_goal else 0 }}%</span></header>
-          <div class="pro-progress-bar"><span class="bar-blue" style="width: {{ weekly_goal.percent if weekly_goal else 0 }}%;"></span></div>
+          <header>
+            <span>Overall</span>
+            <span>{{ weekly_goal.percent if weekly_goal else 0 }}%{% if not weekly_goal or weekly_goal.percent <= 0 %} · Not started{% endif %}</span>
+          </header>
+          <div class="pro-progress-bar {% if not weekly_goal or weekly_goal.percent <= 0 %}is-empty{% endif %}">
+            <span class="bar-blue" style="width: {{ weekly_goal.percent if weekly_goal else 0 }}%;"></span>
+          </div>
         </div>
-        <div class="pro-progress-row">
-          <header><span>Practice readiness</span><span>{% if today_items %}On track{% else %}Idle{% endif %}</span></header>
-          <div class="pro-progress-bar"><span class="bar-green" style="width: {% if today_items %}70{% else %}20{% endif %}%;"></span></div>
-        </div>
-        <div class="pro-progress-row">
-          <header><span>Subjects unlocked</span><span>{{ subjects|length }}/3</span></header>
-          <div class="pro-progress-bar"><span class="bar-cyan" style="width: {{ (subjects|length / 3 * 100)|int }}%;"></span></div>
-        </div>
-        <div class="pro-progress-row">
-          <header><span>Announcements</span><span>{% if unread_announcements %}New{% else %}Clear{% endif %}</span></header>
-          <div class="pro-progress-bar"><span class="bar-orange" style="width: {% if unread_announcements %}55{% else %}100{% endif %}%;"></span></div>
-        </div>
+        {% for subject in subjects %}
+          <div class="pro-progress-row">
+            <header>
+              <span>{{ subject.name }}</span>
+              <span>
+                {% if subject.progress_percent <= 0 %}0% · Not started
+                {% else %}{{ subject.progress_percent }}%{% endif %}
+              </span>
+            </header>
+            <div class="pro-progress-bar {% if subject.progress_percent <= 0 %}is-empty{% endif %}">
+              <span class="{% if loop.index == 1 %}bar-blue{% elif loop.index == 2 %}bar-cyan{% else %}bar-green{% endif %}" style="width: {{ subject.progress_percent }}%;"></span>
+            </div>
+          </div>
+        {% endfor %}
       </div>
     </section>
   </div>
@@ -131,10 +137,10 @@
             <span class="subject-badge" aria-hidden="true">{{ subject.name[:1] }}</span>
             <span class="subject-open">Open</span>
           </div>
-          <p class="subject-name">{{ subject.name }}</p>
-          <p class="subject-progress">
+          <p class="subject-name">{{ subject.name or subject.slug|title }}</p>
+          <p class="subject-progress {% if subject.progress_percent <= 0 %}is-empty{% endif %}">
             {% if subject.progress_percent <= 0 %}
-              Not started
+              0% · Not started
             {% elif subject.progress_percent >= 100 %}
               Completed · {{ subject.progress_insight }}
             {% else %}

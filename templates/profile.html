@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
 </head>
-<body class="app-body">
+<body class="app-body" {% if session_expires_at %}data-session-expires="{{ session_expires_at }}"{% endif %} data-login-url="{{ url_for('login') }}">
   <div class="app-bg" aria-hidden="true">
     <span class="ribbon ribbon-blue"></span>
     <span class="ribbon ribbon-red"></span>
@@ -55,7 +55,7 @@
     <section class="lobby-card stack-md" id="account">
       <h2 class="hub-panel-title">Change password</h2>
       <p class="section-note">Use this after signing in with a temporary password.</p>
-      <form class="login-form" method="POST" action="{{ url_for('profile') }}">
+      <form class="login-form" method="POST" action="{{ url_for('profile') }}" data-loading="Updating password…">
         <div class="field">
           <label for="current_password">Current password</label>
           <input type="password" id="current_password" name="current_password" required />
@@ -63,22 +63,25 @@
         <div class="field">
           <label for="new_password">New password</label>
           <input type="password" id="new_password" name="new_password" minlength="8" required />
+          <p class="field-hint">At least 8 characters.</p>
         </div>
         <div class="field">
           <label for="confirm_password">Confirm new password</label>
-          <input type="password" id="confirm_password" name="confirm_password" minlength="8" required />
+          <input type="password" id="confirm_password" name="confirm_password" minlength="8" required data-match="#new_password" data-match-message="New passwords must match." />
+          <p class="field-error" id="confirm_password-error" hidden></p>
         </div>
         <button type="submit" class="btn-primary">Update Password</button>
       </form>
     </section>
 
     <div class="summary-footer">
-      <a class="today-action today-action-soft" href="{{ url_for('logout') }}">Sign out</a>
+      <form method="POST" action="{{ url_for('logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" class="today-action today-action-soft">Sign out</button>
+      </form>
     </div>
   </main>
 
-  {% set active_tab = "" %}
-  {% include "partials/student_tabbar.html" %}
-  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/topbar.js') }}" defer></script>
 </body>
 </html>

@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
 </head>
-<body class="app-body">
+<body class="app-body" {% if session_expires_at %}data-session-expires="{{ session_expires_at }}"{% endif %} data-login-url="{{ url_for('login') }}">
   <div class="app-bg" aria-hidden="true">
     <span class="ribbon ribbon-blue"></span>
     <span class="ribbon ribbon-red"></span>
@@ -24,18 +24,21 @@
     <section class="take-shell" aria-labelledby="take-title">
       <div class="take-top">
         <div>
+          <a class="hub-back" href="{{ url_for('practice_setup', subject_slug=subject.slug, material_slug=material_slug) }}">Back to setup</a>
           <p class="hero-kicker summary-kicker">{{ subject.name }} · {{ bloom_label }}</p>
           <h1 id="take-title" class="take-title">{{ material_title }} Practice</h1>
           <p class="section-note">Difficulty: <strong>{{ difficulty_name }}</strong> · {{ questions|length }} questions</p>
         </div>
-        <p class="take-progress-label"><span id="progress-text">1</span> / {{ questions|length }}</p>
+        <p class="take-progress-label" aria-live="polite">
+          <span id="progress-text">1</span> / {{ questions|length }}
+        </p>
       </div>
 
-      <div class="take-progress" aria-hidden="true">
+      <div class="take-progress" role="progressbar" aria-valuemin="1" aria-valuemax="{{ questions|length }}" aria-valuenow="1" aria-labelledby="take-title">
         <span id="progress-bar" style="width: {{ (1 / questions|length * 100)|round }}%;"></span>
       </div>
 
-      <form id="practice-take-form" method="POST" action="{{ url_for('practice_submit', subject_slug=subject.slug, material_slug=material_slug) }}">
+      <form id="practice-take-form" method="POST" action="{{ url_for('practice_submit', subject_slug=subject.slug, material_slug=material_slug) }}" data-draft-key="bloom-practice:{{ draft_id }}" data-loading="Submitting your practice…">
         {% for q in questions %}
           <article
             class="take-card {% if loop.first %}is-active{% endif %}"
@@ -79,7 +82,7 @@
     </section>
   </main>
 
-  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/practice_take.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/topbar.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/practice_take.js') }}" defer></script>
 </body>
 </html>

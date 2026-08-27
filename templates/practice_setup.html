@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
 </head>
-<body class="app-body">
+<body class="app-body" {% if session_expires_at %}data-session-expires="{{ session_expires_at }}"{% endif %} data-login-url="{{ url_for('login') }}">
   <div class="app-bg" aria-hidden="true">
     <span class="ribbon ribbon-blue"></span>
     <span class="ribbon ribbon-red"></span>
@@ -27,7 +27,7 @@
       <h1 id="practice-setup-title" class="section-title">Practice this lesson</h1>
       <p class="section-note">{{ material_title }} · From approved material only. Not an official grade.</p>
 
-      <form class="practice-form" method="GET" action="{{ url_for('practice_take', subject_slug=subject.slug, material_slug=material_slug) }}" data-loading="Generating your Practice Check…">
+      <form class="practice-form" method="POST" action="{{ url_for('practice_take', subject_slug=subject.slug, material_slug=material_slug) }}" data-loading="Generating your Practice Check…">
         <fieldset class="practice-fieldset">
           <legend>Choose difficulty</legend>
           <p class="section-note">How challenging do you want your practice?</p>
@@ -52,10 +52,11 @@
 
         <fieldset class="practice-fieldset">
           <legend>Choose focus</legend>
-          <label class="choice"><input type="radio" name="focus" value="mixed" {% if selected_focus == 'mixed' %}checked{% endif %} /> Mixed HOTS</label>
-          <label class="choice"><input type="radio" name="focus" value="c4" {% if selected_focus == 'c4' %}checked{% endif %} /> Analyze</label>
-          <label class="choice"><input type="radio" name="focus" value="c5" {% if selected_focus == 'c5' %}checked{% endif %} /> Evaluate</label>
-          <label class="choice"><input type="radio" name="focus" value="c6" {% if selected_focus == 'c6' %}checked{% endif %} /> Create</label>
+          <p class="section-note">These are thinking skills (Bloom’s HOTS) — not Easy / Medium / Hard.</p>
+          <label class="choice"><input type="radio" name="focus" value="mixed" {% if selected_focus == 'mixed' %}checked{% endif %} /> Mixed thinking skills</label>
+          <label class="choice"><input type="radio" name="focus" value="c4" {% if selected_focus == 'c4' %}checked{% endif %} /> Analyze — break ideas apart</label>
+          <label class="choice"><input type="radio" name="focus" value="c5" {% if selected_focus == 'c5' %}checked{% endif %} /> Evaluate — judge and decide</label>
+          <label class="choice"><input type="radio" name="focus" value="c6" {% if selected_focus == 'c6' %}checked{% endif %} /> Create — build something new</label>
         </fieldset>
 
         <div class="field">
@@ -78,8 +79,6 @@
     </section>
   </main>
 
-  {% set active_tab = "practice" %}
-  {% include "partials/student_tabbar.html" %}
-  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/topbar.js') }}" defer></script>
 </body>
 </html>

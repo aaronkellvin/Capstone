@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
 </head>
-<body class="app-body announce-body">
+<body class="app-body announce-body" {% if session_expires_at %}data-session-expires="{{ session_expires_at }}"{% endif %} data-login-url="{{ url_for('login') }}">
   <div class="app-bg" aria-hidden="true">
     <span class="ribbon ribbon-blue"></span>
     <span class="ribbon ribbon-red"></span>
@@ -200,9 +200,7 @@
     </section>
   </main>
 
-  {% set active_tab = "home" %}
-  {% include "partials/student_tabbar.html" %}
-  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/announcements.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/topbar.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/announcements.js') }}" defer></script>
 </body>
 </html>

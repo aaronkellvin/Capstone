@@ -28,7 +28,7 @@
     {% if user and user.role == 'student' %}
       <p class="pro-nav-heading">Core</p>
       <a class="pro-nav-link {% if tab == 'home' %}is-active{% endif %}" href="{{ url_for('home') }}">
-        <span class="pro-nav-ico">⌂</span> Dashboards
+        <span class="pro-nav-ico">⌂</span> Home
       </a>
       <a class="pro-nav-link {% if tab == 'practice' %}is-active{% endif %}" href="{{ url_for('practice') }}">
         <span class="pro-nav-ico">✎</span> Practice
@@ -59,10 +59,7 @@
 
   <div class="pro-sidebar-foot">
     <div class="pro-user-chip">
-      <span class="pro-avatar" aria-hidden="true">
-        {% set parts = (user.name or 'B').split(' ') %}
-        {{ (parts[0][:1] ~ (parts[-1][:1] if parts|length > 1 else ''))|upper }}
-      </span>
+      <span class="pro-avatar" aria-hidden="true">{% set parts = (user.name or 'B').split(' ') %}{{ (parts[0][:1] ~ (parts[-1][:1] if parts|length > 1 else ''))|upper }}</span>
       <div>
         <strong>{{ user.name if user else 'Bloom' }}</strong>
         <span>{{ user.role|capitalize if user else '' }}</span>

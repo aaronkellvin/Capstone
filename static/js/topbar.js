@@ -1,4 +1,53 @@
 (() => {
+  const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+
+  const withCsrf = (init = {}) => {
+    const headers = new Headers(init.headers || {});
+    const token = csrfToken();
+    if (token && !headers.has("X-CSRF-Token")) headers.set("X-CSRF-Token", token);
+    return { ...init, headers };
+  };
+
+  const ensureFormCsrf = (form) => {
+    if (!form || (form.method || "get").toLowerCase() !== "post") return;
+    let input = form.querySelector('input[name="csrf_token"]');
+    if (!input) {
+      input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "csrf_token";
+      form.appendChild(input);
+    }
+    input.value = csrfToken();
+  };
+
+  document.addEventListener(
+    "submit",
+    (event) => {
+      const form = event.target;
+      if (!(form instanceof HTMLFormElement)) return;
+      ensureFormCsrf(form);
+    },
+    true
+  );
+
+  const overlay = (message) => {
+    let node = document.getElementById("qol-overlay");
+    if (!node) {
+      node = document.createElement("div");
+      node.id = "qol-overlay";
+      node.className = "qol-overlay";
+      node.innerHTML = `<div class="qol-overlay-card" role="status" aria-live="assertive"><span class="qol-spinner" aria-hidden="true"></span><p></p></div>`;
+      document.body.appendChild(node);
+    }
+    node.querySelector("p").textContent = message;
+    node.hidden = false;
+  };
+
+  const hideOverlay = () => {
+    const node = document.getElementById("qol-overlay");
+    if (node) node.hidden = true;
+  };
+
   const popovers = [
     ["notify-toggle", "notify-panel"],
     ["profile-toggle", "profile-panel"],
@@ -64,19 +113,6 @@
     });
   });
 
-  const overlay = (message) => {
-    let node = document.getElementById("qol-overlay");
-    if (!node) {
-      node = document.createElement("div");
-      node.id = "qol-overlay";
-      node.className = "qol-overlay";
-      node.innerHTML = `<div class="qol-overlay-card"><span class="qol-spinner" aria-hidden="true"></span><p></p></div>`;
-      document.body.appendChild(node);
-    }
-    node.querySelector("p").textContent = message;
-    node.hidden = false;
-  };
-
   document.querySelectorAll('input[type="password"]').forEach((input) => {
     if (input.closest(".password-wrap")) return;
     const wrap = document.createElement("div");
@@ -135,6 +171,90 @@
     });
   }
 
+  const setFieldError = (input, message) => {
+    if (!input) return;
+    const id = `${input.id || input.name}-error`;
+    let err = document.getElementById(id);
+    if (!err) {
+      err = document.createElement("p");
+      err.className = "field-error";
+      err.id = id;
+      input.insertAdjacentElement("afterend", err);
+    }
+    if (message) {
+      err.hidden = false;
+      err.textContent = message;
+      input.setAttribute("aria-invalid", "true");
+      input.setAttribute("aria-describedby", id);
+    } else {
+      err.hidden = true;
+      err.textContent = "";
+      input.removeAttribute("aria-invalid");
+    }
+  };
+
+  document.querySelectorAll("[data-match]").forEach((input) => {
+    const sync = () => {
+      const other = document.querySelector(input.getAttribute("data-match"));
+      if (!other) return;
+      const mismatch = input.value && other.value && input.value !== other.value;
+      setFieldError(input, mismatch ? input.getAttribute("data-match-message") || "Values must match." : "");
+    };
+    input.addEventListener("input", sync);
+    const other = document.querySelector(input.getAttribute("data-match"));
+    other?.addEventListener("input", sync);
+  });
+
+  document.querySelectorAll(".flash-dismiss").forEach((button) => {
+    button.addEventListener("click", () => {
+      button.closest(".flash")?.remove();
+    });
+  });
+
+  document.querySelectorAll(".flash-success").forEach((flash) => {
+    window.setTimeout(() => {
+      flash.classList.add("is-fading");
+      window.setTimeout(() => flash.remove(), 320);
+    }, 5200);
+  });
+
+  let offlineBar = null;
+  const setOnlineState = () => {
+    if (navigator.onLine) {
+      offlineBar?.remove();
+      offlineBar = null;
+      return;
+    }
+    if (offlineBar) return;
+    offlineBar = document.createElement("div");
+    offlineBar.className = "offline-bar";
+    offlineBar.setAttribute("role", "alert");
+    offlineBar.textContent = "You’re offline. Changes may not save until you’re back online.";
+    document.body.prepend(offlineBar);
+  };
+  window.addEventListener("online", setOnlineState);
+  window.addEventListener("offline", setOnlineState);
+  setOnlineState();
+
+  const expiresAt = Number(document.body.getAttribute("data-session-expires") || 0);
+  if (expiresAt > 0) {
+    const warnAt = expiresAt * 1000 - 5 * 60 * 1000;
+    const delay = warnAt - Date.now();
+    if (delay > 0) {
+      window.setTimeout(() => {
+        if (document.getElementById("session-expiry-banner")) return;
+        const banner = document.createElement("div");
+        banner.id = "session-expiry-banner";
+        banner.className = "session-expiry-banner";
+        banner.setAttribute("role", "status");
+        banner.innerHTML =
+          '<span>Your signed-in session ends in about 5 minutes. Save your work, or sign in again soon.</span>' +
+          `<a href="${document.body.getAttribute("data-login-url") || "/login"}">Sign in again</a>`;
+        document.body.prepend(banner);
+      }, delay);
+    }
+  }
+
   document.querySelectorAll("form").forEach((form) => {
     if (form.id === "practice-take-form" || form.id === "chat-form" || form.id === "announce-mark-all") return;
     form.addEventListener("submit", (event) => {
@@ -148,9 +268,45 @@
         window.alert("Choose at least one question type.");
         return;
       }
+      const matchInput = form.querySelector("[data-match]");
+      if (matchInput) {
+        const other = document.querySelector(matchInput.getAttribute("data-match"));
+        if (other && matchInput.value !== other.value) {
+          event.preventDefault();
+          setFieldError(matchInput, matchInput.getAttribute("data-match-message") || "Values must match.");
+          matchInput.focus();
+          return;
+        }
+      }
       const submit = form.querySelector('button[type="submit"]:not([hidden])');
       if (submit) submit.disabled = true;
-      if (form.dataset.loading) overlay(form.dataset.loading);
+      const loading = form.dataset.loading;
+      if (loading) overlay(loading);
     });
   });
+
+  window.addEventListener("pageshow", (event) => {
+    if (!event.persisted) return;
+    hideOverlay();
+    document.querySelectorAll('button[type="submit"]').forEach((button) => {
+      button.disabled = false;
+    });
+  });
+
+  // Soften silent kick: if a fetch gets 401 on authenticated pages, send users to login with context.
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = async (input, init) => {
+    const nextInit = withCsrf(init || {});
+    // Also stamp FormData bodies that omit csrf_token.
+    if (nextInit.body instanceof FormData && csrfToken() && !nextInit.body.has("csrf_token")) {
+      nextInit.body.set("csrf_token", csrfToken());
+    }
+    const response = await originalFetch(input, nextInit);
+    if (response.status === 401 && document.body?.dataset.loginUrl) {
+      window.location.assign(document.body.getAttribute("data-login-url") || "/login");
+    }
+    return response;
+  };
+
+  window.BloomCsrf = { token: csrfToken, withCsrf, ensureFormCsrf };
 })();

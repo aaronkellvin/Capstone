@@ -44,7 +44,7 @@
               </div>
               {% if panel.form_action and panel.action %}
                 <div class="hub-card-actions">
-                  <form method="POST" action="{{ panel.form_action }}">
+                  <form method="POST" action="{{ panel.form_action }}" data-confirm="Approve this upload? Students will be able to practice from it after summarization." data-loading="Approving and summarizing…">
                     {% for key, value in (panel.hidden or {}).items() %}
                       <input type="hidden" name="{{ key }}" value="{{ value }}" />
                     {% endfor %}
@@ -71,20 +71,29 @@
           <section class="lobby-card stack-md" {% if block.id %}id="{{ block.id }}"{% endif %}>
             <h2 class="hub-panel-title">{{ block.title }}</h2>
             <p class="section-note">{{ block.note }}</p>
-            <form class="login-form" method="POST" action="{{ block.action }}" {% if block.enctype %}enctype="{{ block.enctype }}"{% endif %} {% if block.loading %}data-loading="{{ block.loading }}"{% endif %}>
+            <form class="login-form" method="POST" action="{{ block.action }}" {% if block.enctype %}enctype="{{ block.enctype }}"{% endif %} {% if block.loading %}data-loading="{{ block.loading }}"{% endif %} {% if block.confirm %}data-confirm="{{ block.confirm }}"{% endif %}>
               {% for field in block.fields %}
                 <div class="field">
                   <label for="{{ field.id }}">{{ field.label }}</label>
                   {% if field.type == 'textarea' %}
-                    <textarea id="{{ field.id }}" name="{{ field.name }}" rows="4" placeholder="{{ field.placeholder }}">{{ field.value or '' }}</textarea>
+                    <textarea id="{{ field.id }}" name="{{ field.name }}" rows="4" placeholder="{{ field.placeholder }}" {% if field.required %}required{% endif %}>{{ field.value or '' }}</textarea>
                   {% elif field.type == 'select' %}
-                    <select id="{{ field.id }}" name="{{ field.name }}">
+                    <select id="{{ field.id }}" name="{{ field.name }}" {% if field.required %}required{% endif %}>
                       {% for opt in field.options %}
                         <option value="{{ opt }}">{{ opt }}</option>
                       {% endfor %}
                     </select>
                   {% else %}
-                    <input id="{{ field.id }}" name="{{ field.name }}" type="{{ field.type }}" placeholder="{{ field.placeholder }}" {% if field.accept %}accept="{{ field.accept }}"{% endif %} {% if field.required %}required{% endif %} />
+                    <input
+                      id="{{ field.id }}"
+                      name="{{ field.name }}"
+                      type="{{ field.type }}"
+                      placeholder="{{ field.placeholder }}"
+                      {% if field.accept %}accept="{{ field.accept }}"{% endif %}
+                      {% if field.required %}required{% endif %}
+                      {% if field.minlength %}minlength="{{ field.minlength }}"{% endif %}
+                      {% if field.match %}data-match="{{ field.match }}" data-match-message="{{ field.match_message or 'Values must match.' }}"{% endif %}
+                    />
                   {% endif %}
                 </div>
               {% endfor %}
@@ -98,6 +107,6 @@
       {% endif %}
     </section>
   </main>
-  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/topbar.js') }}" defer></script>
 </body>
 </html>

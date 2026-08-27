@@ -65,10 +65,6 @@
     </section>
   </main>
 
-  {% if not is_teacher %}
-    {% set active_tab = "home" %}
-    {% include "partials/student_tabbar.html" %}
-  {% endif %}
   <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
 </body>
 </html>

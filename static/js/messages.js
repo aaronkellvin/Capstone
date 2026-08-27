@@ -8,8 +8,22 @@
 
   const pollUrl = shell.getAttribute("data-poll-url");
   const sendUrl = shell.getAttribute("data-send-url");
+  const readUrl = shell.getAttribute("data-read-url");
   const empty = document.getElementById("chat-empty");
   let pending = false;
+
+  const markThreadRead = async () => {
+    if (!readUrl) return;
+    try {
+      await fetch(readUrl, {
+        method: "POST",
+        headers: { "X-Requested-With": "fetch", Accept: "application/json" },
+        body: new FormData(),
+      });
+    } catch (_error) {
+      /* ignore — poll continues */
+    }
+  };
 
   const lastId = () => {
     const bubbles = thread.querySelectorAll(".chat-bubble[data-id]");
@@ -81,8 +95,10 @@
       const response = await fetch(`${pollUrl}?after=${lastId()}`, { headers: { Accept: "application/json" } });
       if (!response.ok) return;
       const data = await response.json();
+      const incoming = (data.messages || []).filter((item) => !item.mine);
       (data.messages || []).forEach(addBubble);
       markRead(data.read_ids || []);
+      if (incoming.length) markThreadRead();
       if (typeof data.unread_messages === "number") setUnreadBadge(data.unread_messages);
       if (status && status.classList.contains("is-error")) setStatus("");
     } catch (error) {
@@ -143,5 +159,6 @@
   });
 
   scrollToEnd();
+  markThreadRead();
   window.setInterval(poll, 4000);
 })();

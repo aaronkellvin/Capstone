@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Bloom{% endblock %}</title>
+  {% include "partials/csrf_meta.html" %}
   {% include "partials/prefs_boot.html" %}
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -12,7 +13,9 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/bloom-pro.css') }}" />
   {% block head %}{% endblock %}
 </head>
-<body class="pro-body {% block body_class %}{% endblock %}">
+<body class="pro-body {% block body_class %}{% endblock %}"
+  {% if session_expires_at %}data-session-expires="{{ session_expires_at }}"{% endif %}
+  data-login-url="{{ url_for('login') }}">
   {% include "partials/pro_sidebar.html" %}
 
   <div class="pro-wrap">
@@ -39,8 +42,8 @@
     </main>
   </div>
 
-  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/pro-shell.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/topbar.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/pro-shell.js') }}" defer></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
