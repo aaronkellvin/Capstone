@@ -2,6 +2,7 @@
 {% set active_tab = "messages" if not is_teacher else "" %}
 {% set topbar_sub = "Messages" %}
 {% block title %}Messages — Bloom{% endblock %}
+{% block page_kicker %}Private chats{% endblock %}
 {% block page_title %}Messages{% endblock %}
 {% block page_subtitle %}
   {% if is_teacher %}

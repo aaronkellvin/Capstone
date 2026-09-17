@@ -166,12 +166,24 @@ def difficulty_label(value: str | None) -> str:
     return DIFFICULTIES[normalize_difficulty(value)]["label"]
 
 
+PRACTICE_COUNT_MIN = 1
+PRACTICE_COUNT_MAX = 15
+
+
+def clamp_practice_count(value, default: int = 3) -> int:
+    """Store practice item count as a plain int in [1, 15]."""
+    try:
+        return max(PRACTICE_COUNT_MIN, min(int(value), PRACTICE_COUNT_MAX))
+    except (TypeError, ValueError):
+        return default
+
+
 def practice_setup_url(subject_slug, material_slug, difficulty="medium", focus="mixed", count=3, types=None):
     base = url_for("practice_setup", subject_slug=subject_slug, material_slug=material_slug)
     pairs = [
         ("difficulty", normalize_difficulty(difficulty)),
         ("focus", focus or "mixed"),
-        ("count", str(count or 3)),
+        ("count", str(clamp_practice_count(count))),
     ]
     for item in types or []:
         pairs.append(("types", item))
@@ -730,7 +742,9 @@ def build_today(user_id: int) -> list[dict]:
             {
                 "type": "assessment",
                 "priority": "primary",
-                "kicker": f"{due} · {SUBJECTS[assessment.subject_slug]['name']}",
+                "subject": SUBJECTS[assessment.subject_slug]["name"],
+                "subject_slug": assessment.subject_slug,
+                "kicker": due,
                 "title": assessment.title,
                 "meta": f"{attempt_label} · Assistive check · Posted by your teacher",
                 "action": "Start now",
@@ -747,7 +761,9 @@ def build_today(user_id: int) -> list[dict]:
             {
                 "type": "result",
                 "priority": "secondary",
-                "kicker": f"Result · {SUBJECTS.get(latest.subject_slug, {}).get('name', '')}",
+                "subject": SUBJECTS.get(latest.subject_slug, {}).get("name", ""),
+                "subject_slug": latest.subject_slug or "general",
+                "kicker": "Result ready",
                 "title": latest.title,
                 "meta": "Review answers and explanations when you feel ready",
                 "action": "Review",
@@ -760,7 +776,9 @@ def build_today(user_id: int) -> list[dict]:
             {
                 "type": "practice",
                 "priority": "secondary",
-                "kicker": f"Practice reminder · {SUBJECTS[approved.subject_slug]['name']}",
+                "subject": SUBJECTS[approved.subject_slug]["name"],
+                "subject_slug": approved.subject_slug,
+                "kicker": "Practice reminder",
                 "title": f"Try the {approved.title} Practice Check",
                 "meta": "Short practice from your approved lesson",
                 "action": "Practice",
@@ -773,7 +791,9 @@ def build_today(user_id: int) -> list[dict]:
             {
                 "type": "upload",
                 "priority": "secondary",
-                "kicker": f"Backup upload · {SUBJECTS[pending.subject_slug]['name']}",
+                "subject": SUBJECTS[pending.subject_slug]["name"],
+                "subject_slug": pending.subject_slug,
+                "kicker": "Backup upload",
                 "title": f"{pending.title} is waiting for approval",
                 "meta": "Your teacher will review before practice unlocks",
                 "action": "View",
@@ -1275,10 +1295,7 @@ def practice_setup(subject_slug, material_slug):
     selected_focus = request.args.get("focus", "mixed")
     if selected_focus not in {"mixed", "c4", "c5", "c6"}:
         selected_focus = "mixed"
-    try:
-        selected_count = max(1, min(int(request.args.get("count", 3)), 5))
-    except ValueError:
-        selected_count = 3
+    selected_count = clamp_practice_count(request.args.get("count", 3))
     selected_types = request.args.getlist("types") or ["mcq", "essay", "problem"]
     selected_difficulty = normalize_difficulty(
         request.args.get("difficulty") or session.get("practice_difficulty")
@@ -1316,10 +1333,7 @@ def practice_take(subject_slug, material_slug):
     if request.method == "POST":
         focus = request.form.get("focus", "mixed")
         types = request.form.getlist("types") or ["mcq", "essay", "problem"]
-        try:
-            count = max(1, min(int(request.form.get("count", 3)), 5))
-        except ValueError:
-            count = 3
+        count = clamp_practice_count(request.form.get("count", 3))
         difficulty = normalize_difficulty(request.form.get("difficulty") or session.get("practice_difficulty"))
         session["practice_difficulty"] = difficulty
         questions = generate_hots_questions(

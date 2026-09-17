@@ -5,15 +5,16 @@
 {% block page_header %}{% endblock %}
 {% block content_class %}pro-content-plain{% endblock %}
 {% block content %}
-    <section class="lobby-card practice-setup-card subject-accent-{{ subject.slug }}" aria-labelledby="practice-setup-title">
+    <section class="lobby-card practice-setup-card subject-{{ subject.slug }} subject-accent-{{ subject.slug }}" aria-labelledby="practice-setup-title">
+      <div class="practice-setup-accent" aria-hidden="true"></div>
       <a class="hub-back" href="{{ back_href }}">Back</a>
+      <div class="status-row practice-setup-badges">
+        <span class="status-pill status-subject subject-{{ subject.slug }}">{{ subject.name }}</span>
+        <span class="status-pill status-practice">Practice check</span>
+      </div>
       <div class="practice-setup-heading">
         <span class="practice-card-icon" aria-hidden="true">{{ subject.name[:1] }}</span>
         <div>
-          <div class="status-row">
-            <span class="status-pill status-subject">{{ subject.name }}</span>
-            <span class="status-pill status-practice">Practice check</span>
-          </div>
           <h1 id="practice-setup-title" class="section-title">Practice {{ material_title }}</h1>
           <p class="section-note">Choose the challenge and thinking skills that fit your goal.</p>
         </div>
@@ -21,7 +22,7 @@
 
       <form class="practice-form" method="POST" action="{{ url_for('practice_take', subject_slug=subject.slug, material_slug=material_slug) }}" data-loading="Generating your Practice Check…">
         <fieldset class="practice-fieldset practice-fieldset-card">
-          <legend>Choose difficulty</legend>
+          <legend><span class="fieldset-ico" aria-hidden="true">1</span> Choose difficulty</legend>
           <p class="section-note">How challenging do you want your practice?</p>
           <div class="difficulty-grid">
             {% for option in difficulties %}
@@ -43,7 +44,7 @@
         </fieldset>
 
         <fieldset class="practice-fieldset practice-fieldset-card">
-          <legend>Choose focus</legend>
+          <legend><span class="fieldset-ico" aria-hidden="true">2</span> Choose focus</legend>
           <p class="section-note">These are thinking skills (Bloom’s HOTS) — not Easy / Medium / Hard.</p>
           <div class="choice-card-grid focus-choice-grid">
             <label class="choice choice-card"><input type="radio" name="focus" value="mixed" {% if selected_focus == 'mixed' %}checked{% endif %} /><span><strong>Mixed skills</strong><small>A balanced thinking workout</small></span></label>
@@ -54,14 +55,29 @@
         </fieldset>
 
         <fieldset class="practice-fieldset practice-fieldset-card" id="question-types-fieldset">
-          <legend>Build your check</legend>
+          <legend><span class="fieldset-ico" aria-hidden="true">3</span> Build your check</legend>
           <div class="practice-build-grid">
-            <div class="field practice-count-field">
-              <label for="count">Number of questions</label>
-              <select id="count" name="count">
-                <option value="3" {% if selected_count == 3 %}selected{% endif %}>3 questions</option>
-                <option value="5" {% if selected_count == 5 %}selected{% endif %}>5 questions</option>
-              </select>
+            <div class="practice-count-group">
+              <p class="field-label" id="count-label">Number of questions</p>
+              <div class="count-stepper" data-count-stepper data-min="1" data-max="15">
+                <button type="button" class="count-stepper-btn" data-count-step="-1" aria-label="Fewer questions">−</button>
+                <input
+                  class="count-stepper-input"
+                  type="number"
+                  id="count"
+                  name="count"
+                  inputmode="numeric"
+                  min="1"
+                  max="15"
+                  step="1"
+                  value="{{ selected_count }}"
+                  aria-labelledby="count-label"
+                  aria-describedby="count-hint"
+                />
+                <button type="button" class="count-stepper-btn" data-count-step="1" aria-label="More questions">+</button>
+                <span class="count-stepper-suffix">questions</span>
+              </div>
+              <p class="count-stepper-hint" id="count-hint">Choose 1–15. More questions means a longer check.</p>
             </div>
             <div class="type-choice-group">
               <p class="field-label">Question types</p>
@@ -75,10 +91,13 @@
           <p class="field-error" id="question-types-error" role="alert" hidden></p>
         </fieldset>
 
-        <div class="practice-submit-row">
-          <p><strong>Ready when you are.</strong> You can review every answer afterward.</p>
-          <button type="submit" class="btn-primary">Generate practice check <span aria-hidden="true">→</span></button>
+        <div class="practice-submit-panel">
+          <p class="practice-submit-copy"><strong>Ready when you are.</strong> You can review every answer afterward.</p>
+          <button type="submit" class="btn-primary practice-submit-btn">Generate practice check <span aria-hidden="true">→</span></button>
         </div>
       </form>
     </section>
+{% endblock %}
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/practice_setup.js') }}" defer></script>
 {% endblock %}

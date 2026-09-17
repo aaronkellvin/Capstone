@@ -1,66 +1,44 @@
 {% extends "layouts/pro.html" %}
 {% set active_tab = "home" %}
 {% block title %}Home — Bloom{% endblock %}
+{% block page_kicker %}Your day{% endblock %}
 {% block page_title %}{{ greeting }}{% endblock %}
 {% block page_subtitle %}{{ guide_note }}{% endblock %}
 {% block content %}
-  <div class="pro-stat-grid">
-    <article class="pro-stat {% if weekly_goal.has_progress %}pro-stat-blue{% else %}pro-stat-muted{% endif %}">
+  <section class="home-today" aria-labelledby="today-title">
+    <div class="section-heading-row">
       <div>
-        <p class="pro-stat-label">Progress</p>
-        <p class="pro-stat-value">
-          {% if weekly_goal.has_progress %}{{ weekly_goal.percent }}%{% else %}Start{% endif %}
-        </p>
-        {% if not weekly_goal.has_progress %}
-          <p class="pro-stat-meta">Complete your first activity</p>
-        {% endif %}
+        <p class="section-eyebrow">Next steps</p>
+        <h2 class="section-title section-title-sm" id="today-title">Today</h2>
       </div>
-      <a class="pro-stat-link" href="{{ url_for('practice') }}">View practice →</a>
-    </article>
-    <article class="pro-stat {% if today_items %}pro-stat-orange{% else %}pro-stat-muted{% endif %}">
-      <div>
-        <p class="pro-stat-label">Today</p>
-        <p class="pro-stat-value">{{ today_items|length }}</p>
-      </div>
-      <a class="pro-stat-link" href="#today-title">Jump to today →</a>
-    </article>
-    <article class="pro-stat pro-stat-green">
-      <div>
-        <p class="pro-stat-label">Subjects</p>
-        <p class="pro-stat-value">{{ subjects|length }}</p>
-      </div>
-      <a class="pro-stat-link" href="#subjects-title">Open subjects →</a>
-    </article>
-    <article class="pro-stat {% if unread_announcements %}pro-stat-red{% else %}pro-stat-muted{% endif %}">
-      <div>
-        <p class="pro-stat-label">Unread news</p>
-        <p class="pro-stat-value">{{ unread_announcements or 0 }}</p>
-      </div>
-      <a class="pro-stat-link" href="{{ url_for('announcements') }}">Announcements →</a>
-    </article>
-  </div>
-
-  <section class="pro-panel home-today-panel" aria-labelledby="today-title">
-    <h2 id="today-title">Today</h2>
-    <p>Up to 5 helpful next steps.</p>
+      {% if today_items %}
+        <span class="count-badge">{{ today_items|length }} up next</span>
+      {% endif %}
+    </div>
     <div class="today-list">
       {% for item in today_items %}
-        <article class="today-card today-{{ item.priority }} today-{{ item.type }}">
+        <article class="today-card today-{{ item.priority }} today-{{ item.type }} subject-{{ item.subject_slug or 'general' }} {% if loop.first %}today-featured{% endif %}">
           <div class="today-icon" aria-hidden="true" data-type="{{ item.type }}"></div>
           <div class="today-copy">
-            <p class="today-kicker">{{ item.kicker }}</p>
+            <div class="status-row today-status-row">
+              {% if item.subject %}
+                <span class="status-pill status-subject subject-{{ item.subject_slug or 'general' }}">{{ item.subject }}</span>
+              {% endif %}
+              <span class="status-pill status-neutral">{{ item.kicker }}</span>
+            </div>
             <h3 class="today-title">{{ item.title }}</h3>
             <p class="today-meta">{{ item.meta }}</p>
           </div>
-          <a class="today-action {% if item.priority != 'primary' %}today-action-soft{% endif %}" href="{{ item.href }}">
+          <a class="today-action {% if item.priority != 'primary' and not loop.first %}today-action-soft{% endif %}" href="{{ item.href }}">
             {% if item.type == "upload" %}See status
             {% elif item.type == "result" %}Review
-            {% elif item.type == "assessment" or item.type == "practice" %}Start
+            {% elif item.type == "assessment" or item.type == "practice" %}{% if loop.first %}Start now{% else %}Start{% endif %}
             {% else %}{{ item.action }}{% endif %}
+            <span aria-hidden="true">→</span>
           </a>
         </article>
       {% else %}
-        <article class="empty-state-card">
+        <article class="empty-state-card today-empty today-featured">
           <p class="empty-kicker">Your next step</p>
           {% if weekly_goal.has_progress %}
             <h3 class="empty-title">You’re all caught up</h3>
@@ -68,20 +46,83 @@
           {% else %}
             <h3 class="empty-title">Start with a subject</h3>
             <p class="empty-copy">{{ weekly_goal.hint }}</p>
-            <a class="today-action" href="#subjects-title">Explore Subjects</a>
+            <a class="today-action" href="#subjects-title">Explore Subjects <span aria-hidden="true">→</span></a>
           {% endif %}
         </article>
       {% endfor %}
     </div>
   </section>
 
-  <section class="home-section subjects-showcase" aria-labelledby="subjects-title">
-    <div class="section-head section-head-row">
-      <div>
-        <h2 id="subjects-title" class="section-title section-title-sm">My Subjects</h2>
-        <p class="section-note">Progress first, then your next step.</p>
+  <div class="pro-stat-grid home-stat-grid" aria-label="Quick overview">
+    <article class="pro-stat">
+      <div class="pro-stat-head">
+        <div
+          class="stat-ring {% if weekly_goal.has_progress %}is-active{% endif %}"
+          style="--ring: {{ weekly_goal.percent if weekly_goal.has_progress else 0 }}"
+          aria-hidden="true"
+        >
+          <span class="stat-ring-core">{% if weekly_goal.has_progress %}{{ weekly_goal.percent }}%{% else %}0%{% endif %}</span>
+        </div>
+        <div>
+          <p class="pro-stat-label">Progress</p>
+          <p class="pro-stat-meta">
+            {% if weekly_goal.has_progress %}Across your subjects{% else %}Complete your first activity{% endif %}
+          </p>
+        </div>
       </div>
-      <p class="section-pill">Grade 7 · 3 subjects</p>
+      <a class="pro-stat-link" href="{{ url_for('practice') }}">View practice →</a>
+    </article>
+
+    <article class="pro-stat">
+      <div class="pro-stat-head">
+        <div class="stat-chip is-today" aria-hidden="true">
+          <span class="stat-chip-value">{{ today_items|length }}</span>
+          <span class="stat-chip-label">today</span>
+        </div>
+        <div>
+          <p class="pro-stat-label">Today</p>
+          <p class="pro-stat-meta">{% if today_items %}Items waiting for you{% else %}Nothing queued right now{% endif %}</p>
+        </div>
+      </div>
+      <a class="pro-stat-link" href="#today-title">Jump to today →</a>
+    </article>
+
+    <article class="pro-stat">
+      <div class="pro-stat-head">
+        <div class="stat-chip is-subjects" aria-hidden="true">
+          <span class="stat-chip-value">{{ subjects|length }}</span>
+          <span class="stat-chip-label">courses</span>
+        </div>
+        <div>
+          <p class="pro-stat-label">Subjects</p>
+          <p class="pro-stat-meta">Your Grade 7 pilot set</p>
+        </div>
+      </div>
+      <a class="pro-stat-link" href="#subjects-title">Open subjects →</a>
+    </article>
+
+    <article class="pro-stat {% if unread_announcements %}has-alert{% endif %}">
+      <div class="pro-stat-head">
+        <div class="stat-chip {% if unread_announcements %}is-alert{% else %}is-news{% endif %}" aria-hidden="true">
+          <span class="stat-chip-value">{{ unread_announcements or 0 }}</span>
+          <span class="stat-chip-label">new</span>
+        </div>
+        <div>
+          <p class="pro-stat-label">Unread news</p>
+          <p class="pro-stat-meta">{% if unread_announcements %}Teacher updates waiting{% else %}You’re caught up{% endif %}</p>
+        </div>
+      </div>
+      <a class="pro-stat-link" href="{{ url_for('announcements') }}">Announcements →</a>
+    </article>
+  </div>
+
+  <section class="home-section home-subjects" aria-labelledby="subjects-title">
+    <div class="section-heading-row">
+      <div>
+        <p class="section-eyebrow">Your courses</p>
+        <h2 id="subjects-title" class="section-title section-title-sm">My Subjects</h2>
+      </div>
+      <p class="count-badge count-badge-muted">Grade 7 · {{ subjects|length }} subjects</p>
     </div>
 
     <div class="subject-grid">
@@ -89,7 +130,7 @@
         <a class="subject-card subject-{{ subject.slug }}" href="{{ url_for('subject_hub', slug=subject.slug) }}">
           <div class="subject-card-top">
             <span class="subject-badge" aria-hidden="true">{{ subject.name[:1] }}</span>
-            <span class="subject-open">Open</span>
+            <span class="status-pill status-subject subject-{{ subject.slug }}">{{ subject.name }}</span>
           </div>
           <p class="subject-name">{{ subject.name or subject.slug|title }}</p>
           <p class="subject-progress {% if not subject.has_progress %}is-empty{% endif %}">
@@ -115,6 +156,7 @@
           </div>
           <div class="subject-footer">
             <p class="subject-next">{{ subject.next_action }}</p>
+            <span class="subject-open">Open</span>
           </div>
         </a>
       {% endfor %}
