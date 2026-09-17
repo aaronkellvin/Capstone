@@ -502,7 +502,7 @@ body.app-body > .app-main > section.take-shell:first-of-type {
 .pro-hero {
   margin: 0 1.25rem;
   margin-top: 1.25rem;
-  padding: 1.5rem 1.5rem 3.25rem;
+  padding: 1.5rem;
   border-radius: 1rem;
   color: var(--pro-on-accent);
   background: var(--pro-hero);
@@ -531,7 +531,7 @@ body.app-body > .app-main > section.take-shell:first-of-type {
 }
 
 .pro-content {
-  margin: -2rem 1.25rem 0;
+  margin: 1rem 1.25rem 0;
   min-width: 0;
   position: relative;
   z-index: 1;
