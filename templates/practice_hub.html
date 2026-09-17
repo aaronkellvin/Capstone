@@ -1,4 +1,5 @@
 {% extends "layouts/pro.html" %}
+{% from "partials/work_item_card.html" import work_item_card %}
 {% set active_tab = "practice" %}
 {% block title %}Practice — Bloom{% endblock %}
 {% block page_kicker %}Build your skills{% endblock %}
@@ -17,64 +18,35 @@
     </div>
 
     {% if practice_items %}
-      {% if practice_subjects|length > 1 %}
-        <div class="subject-filter-row" role="group" aria-label="Filter by subject" data-practice-filters>
-          <button type="button" class="subject-filter-pill is-active" data-subject-filter="all">
-            All subjects
-          </button>
-          {% for subject in practice_subjects %}
-            <button
-              type="button"
-              class="subject-filter-pill subject-{{ subject.slug }}"
-              data-subject-filter="{{ subject.slug }}"
-            >
-              <span class="subject-filter-dot" aria-hidden="true"></span>
-              {{ subject.name }}
-            </button>
-          {% endfor %}
-        </div>
-      {% endif %}
-
-      <div class="practice-card-grid" data-practice-grid>
-        {% for item in practice_items %}
-          <article
-            class="hub-card practice-card {% if item.locked %}is-locked{% else %}is-ready{% endif %} subject-accent-{{ item.subject_slug }}"
-            data-subject="{{ item.subject_slug }}"
+      <div class="filter-chips subject-filter-row" role="group" aria-label="Filter by subject" data-practice-filters>
+        <button type="button" class="chip-link active" data-subject-filter="all">All subjects</button>
+        {% for subject in practice_subjects %}
+          <button
+            type="button"
+            class="chip-link subject-filter-chip subject-{{ subject.slug }}"
+            data-subject-filter="{{ subject.slug }}"
           >
-            {% if item.locked %}
-              <span class="practice-card-icon practice-card-icon-lock" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <rect x="5" y="11" width="14" height="10" rx="2"></rect>
-                  <path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
-                </svg>
-              </span>
-            {% else %}
-              <span class="practice-card-icon" aria-hidden="true">{{ item.subject[:1] }}</span>
-            {% endif %}
-            <div class="practice-card-main">
-              <div class="status-row">
-                <span class="status-pill status-subject subject-{{ item.subject_slug }}">{{ item.subject }}</span>
-                {% if item.locked %}
-                  <span class="status-pill status-locked">Locked</span>
-                {% else %}
-                  <span class="status-pill status-ready">Ready</span>
-                {% endif %}
-              </div>
-              <h3 class="hub-card-title">{{ item.title }}</h3>
-              <p class="hub-card-meta">{{ item.meta }}</p>
-              <div class="practice-card-footer">
-                {% if item.locked %}
-                  <span class="practice-unlock-note">
-                    {% if item.unlock_date %}{{ item.unlock_date }}{% else %}Pending approval{% endif %}
-                  </span>
-                  <span class="locked-action" aria-disabled="true">Locked</span>
-                {% else %}
-                  <span class="practice-unlock-note practice-unlock-note-spacer" aria-hidden="true"></span>
-                  <a class="today-action practice-start" href="{{ item.href }}">Start practice <span aria-hidden="true">→</span></a>
-                {% endif %}
-              </div>
-            </div>
-          </article>
+            <span class="subject-filter-dot" aria-hidden="true"></span>
+            {{ subject.name }}
+          </button>
+        {% endfor %}
+      </div>
+
+      <div class="work-item-grid" data-practice-grid>
+        {% for item in practice_items %}
+          {{ work_item_card(
+            subject_slug=item.subject_slug,
+            subject_name=item.subject,
+            title=item.title,
+            context_badge=("Locked" if item.locked else "Ready"),
+            context_badge_class=("status-locked" if item.locked else "status-ready"),
+            meta_text=item.meta,
+            action_href=item.href,
+            action_label=("Locked" if item.locked else "Start practice"),
+            action_variant=("disabled" if item.locked else "primary"),
+            locked=item.locked,
+            data_subject=item.subject_slug
+          ) }}
         {% endfor %}
       </div>
     {% else %}
@@ -88,7 +60,7 @@
         </span>
         <h3 class="empty-title">Nothing to practice yet</h3>
         <p class="empty-copy">Your teacher hasn’t approved practice materials yet. When a lesson is ready, it will show up here for you to start.</p>
-        <a class="btn-secondary empty-state-action" href="{{ url_for('announcements') }}">Check announcements</a>
+        <a class="wic-btn wic-btn-secondary empty-state-action" href="{{ url_for('announcements') }}">Check announcements</a>
       </article>
     {% endif %}
   </section>

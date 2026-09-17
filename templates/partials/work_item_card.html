@@ -1,0 +1,99 @@
+{# =============================================================================
+   WorkItemCard — ONE shared component for Practice library + Results.
+   Import: {% from "partials/work_item_card.html" import work_item_card %}
+
+   Geometry is controlled ONLY by --wic-* tokens in bloom-pro.css.
+   Pages pass content props; they must not restyle .work-item-card.
+
+   action_variant:
+     - "primary"   → solid brand-blue (Start practice, Generate…)
+     - "secondary" → text/outline link (Review)
+     - "disabled"  → muted locked control
+#}
+{% macro work_item_card(
+  subject_slug,
+  subject_name,
+  title,
+  context_badge,
+  context_badge_class,
+  meta_text=None,
+  action_href=None,
+  action_label=None,
+  action_variant="secondary",
+  locked=False,
+  avatar_label=None,
+  score_percent=None,
+  score_tone=None,
+  score_label=None,
+  trend=None,
+  kind_slug=None,
+  data_subject=None
+) %}
+<article
+  class="work-item-card subject-accent-{{ subject_slug }}{% if locked %} is-locked{% endif %}{% if kind_slug %} is-kind-{{ kind_slug }}{% endif %}"
+  {% if data_subject %}data-subject="{{ data_subject }}"{% endif %}
+>
+  {% if locked %}
+    <span class="work-item-avatar is-lock" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="5" y="11" width="14" height="10" rx="2"></rect>
+        <path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
+      </svg>
+    </span>
+  {% else %}
+    <span class="work-item-avatar{% if avatar_label %} is-kind{% endif %}" aria-hidden="true">
+      {{ avatar_label if avatar_label else subject_name[:1] }}
+    </span>
+  {% endif %}
+
+  <div class="work-item-body">
+    <div class="work-item-badges">
+      <span class="work-item-badge status-subject subject-{{ subject_slug }}">{{ subject_name }}</span>
+      <span class="work-item-badge {{ context_badge_class }}">{{ context_badge }}</span>
+    </div>
+
+    <p class="work-item-title">{{ title }}</p>
+
+    {% if meta_text or score_label or trend %}
+      <div class="work-item-meta">
+        {% if meta_text %}<span class="work-item-meta-text">{{ meta_text }}</span>{% endif %}
+        {% if score_label %}
+          <span class="score-badge score-{{ score_tone or 'neutral' }}">{{ score_label }}</span>
+        {% endif %}
+        {% if trend %}
+          <span class="result-trend result-trend-{{ trend.direction }}">{{ trend.label }}</span>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {# Optional progress slot — same layout whether present or absent #}
+    {% if score_percent is not none %}
+      <div
+        class="work-item-meter meter-{{ score_tone or 'neutral' }}"
+        style="--meter-value: {{ score_percent }}%;"
+        role="progressbar"
+        aria-label="{{ title }} progress"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="{{ score_percent }}"
+      >
+        <div class="work-item-meter-fill"></div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="work-item-action">
+    {% if action_variant == "disabled" or locked %}
+      <span class="wic-btn wic-btn-disabled" aria-disabled="true">{{ action_label or "Locked" }}</span>
+    {% elif action_href and action_variant == "primary" %}
+      <a class="wic-btn wic-btn-primary" href="{{ action_href }}">
+        {{ action_label }} <span aria-hidden="true">→</span>
+      </a>
+    {% elif action_href %}
+      <a class="wic-btn wic-btn-secondary" href="{{ action_href }}">
+        {{ action_label }} <span aria-hidden="true">→</span>
+      </a>
+    {% endif %}
+  </div>
+</article>
+{% endmacro %}

@@ -8,6 +8,7 @@
 
   const applyFilter = (slug) => {
     pills.forEach((pill) => {
+      pill.classList.toggle("active", pill.getAttribute("data-subject-filter") === slug);
       pill.classList.toggle("is-active", pill.getAttribute("data-subject-filter") === slug);
     });
     cards.forEach((card) => {
