@@ -1934,11 +1934,15 @@ a.hub-card {
 .chip-link:hover,
 .chip-link:focus-visible {
   color: var(--text-link-hover);
+  background: rgba(46, 89, 217, 0.14);
+  border-color: rgba(46, 89, 217, 0.28);
 }
 
 .chip-link.active:hover,
 .chip-link.active:focus-visible {
   color: var(--text-on-dark);
+  background: linear-gradient(120deg, var(--letran-blue-mid), var(--letran-blue));
+  border-color: transparent;
 }
 
 .profile-facts {
