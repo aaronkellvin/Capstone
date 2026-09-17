@@ -322,13 +322,13 @@ body.app-body > .app-main > .home-section:first-of-type > .section-title {
   /* keep structure; hero-like panels get elevation from card rules */
 }
 
-body.app-body > .app-main > .home-section:first-child,
+body.app-body > .app-main > .home-section:first-child:not(.announce-page),
 body.app-body > .app-main > section.home-hero:first-of-type,
 body.app-body > .app-main > section.hub-hero:first-of-type,
 body.app-body > .app-main > section.profile-hero:first-of-type,
 body.app-body > .app-main > section.summary-hero:first-of-type,
 body.app-body > .app-main > section.result-hero:first-of-type,
-body.app-body > .app-main > section.home-section:first-of-type {
+body.app-body > .app-main > section.home-section:first-of-type:not(.announce-page) {
   background: var(--pro-hero);
   color: var(--pro-on-accent);
   border-radius: 0.55rem;
@@ -338,8 +338,8 @@ body.app-body > .app-main > section.home-section:first-of-type {
 }
 
 /* White text only on Pro page headers — never on nested cards */
-body.app-body > .app-main > section.home-section:first-of-type > .section-title,
-body.app-body > .app-main > section.home-section:first-of-type > h1,
+body.app-body > .app-main > section.home-section:first-of-type:not(.announce-page) > .section-title,
+body.app-body > .app-main > section.home-section:first-of-type:not(.announce-page) > h1,
 body.app-body > .app-main > section.home-hero:first-of-type > .hero-title,
 body.app-body > .app-main > section.home-hero:first-of-type > .hero-kicker,
 body.app-body > .app-main > section.result-hero:first-of-type > .hero-title,
@@ -363,21 +363,21 @@ body.app-body > .app-main > section.summary-hero:first-of-type > .section-title,
 body.app-body > .app-main > section.summary-hero:first-of-type > h1,
 body.app-body > .app-main > section.summary-hero:first-of-type > .hub-back,
 body.app-body > .app-main > section.summary-hero:first-of-type > .hero-kicker,
-body.app-body > .app-main > section.home-section:first-of-type > .announce-heading > .section-title,
-body.app-body > .app-main > section.home-section:first-of-type > .announce-mark-all,
-body.app-body > .app-main > section.home-section:first-of-type .announce-heading .section-title,
-body.app-body > .app-main > section.home-section:first-of-type .announce-mark-all {
+body.app-body > .app-main > section.home-section:first-of-type:not(.announce-page) > .announce-heading > .section-title,
+body.app-body > .app-main > section.home-section:first-of-type:not(.announce-page) > .announce-mark-all,
+body.app-body > .app-main > section.home-section:first-of-type:not(.announce-page) .announce-heading .section-title,
+body.app-body > .app-main > section.home-section:first-of-type:not(.announce-page) .announce-mark-all {
   color: var(--pro-on-accent);
 }
 
-body.app-body > .app-main > section.home-section:first-of-type > .section-note,
+body.app-body > .app-main > section.home-section:first-of-type:not(.announce-page) > .section-note,
 body.app-body > .app-main > section.home-hero:first-of-type > .hero-note,
 body.app-body > .app-main > section.result-hero:first-of-type > .hero-note,
 body.app-body > .app-main > section.result-hero:first-of-type .result-message,
 body.app-body > .app-main > section.hub-hero:first-of-type > .section-note,
 body.app-body > .app-main > section.profile-hero:first-of-type > .section-note,
 body.app-body > .app-main > section.summary-hero:first-of-type > .section-note,
-body.app-body > .app-main > section.home-section:first-of-type > .announce-heading + .section-note {
+body.app-body > .app-main > section.home-section:first-of-type:not(.announce-page) > .announce-heading + .section-note {
   color: var(--pro-hero-muted);
   opacity: 1;
 }
@@ -385,12 +385,12 @@ body.app-body > .app-main > section.home-section:first-of-type > .announce-headi
 body.app-body > .app-main > section.hub-hero:first-of-type > .hub-back:hover,
 body.app-body > .app-main > section.hub-hero:first-of-type > .text-link:hover,
 body.app-body > .app-main > section.summary-hero:first-of-type > .hub-back:hover,
-body.app-body > .app-main > section.home-section:first-of-type .announce-mark-all:hover {
+body.app-body > .app-main > section.home-section:first-of-type:not(.announce-page) .announce-mark-all:hover {
   color: var(--pro-hero-muted);
 }
 
-body.app-body > .app-main > section.home-section:first-of-type .hub-group-title,
-body.app-body > .app-main > section.home-section:first-of-type .announce-pane-label {
+body.app-body > .app-main > section.home-section:first-of-type:not(.announce-page) .hub-group-title,
+body.app-body > .app-main > section.home-section:first-of-type:not(.announce-page) .announce-pane-label {
   color: var(--pro-hero-muted);
 }
 
@@ -401,9 +401,7 @@ body.app-body > .app-main > section:first-of-type .empty-state-card,
 body.app-body > .app-main > section:first-of-type .lobby-card,
 body.app-body > .app-main > section:first-of-type .announce-item,
 body.app-body > .app-main > section:first-of-type .announce-detail,
-body.app-body > .app-main > section:first-of-type .login-form,
-body.app-body > .app-main > section:first-of-type .chip-link,
-body.app-body > .app-main > section:first-of-type .filter-chips {
+body.app-body > .app-main > section:first-of-type .login-form {
   color: var(--pro-ink);
 }
 
@@ -423,12 +421,30 @@ body.app-body > .app-main > section:first-of-type .lobby-card .section-note {
   color: var(--pro-muted);
 }
 
-body.app-body > .app-main > section:first-of-type .chip-link {
+body.app-body > .app-main > section.announce-page:first-of-type {
+  background: transparent;
+  color: var(--pro-ink);
+  padding: 0;
+  box-shadow: none;
+  margin-bottom: 0;
+}
+
+body.app-body > .app-main > section.announce-page:first-of-type .section-title {
+  color: var(--pro-heading);
+}
+
+body.app-body > .app-main > section.announce-page:first-of-type .announce-mark-all {
   color: var(--pro-link);
 }
 
-body.app-body > .app-main > section:first-of-type .chip-link.active {
-  color: var(--pro-on-accent);
+body.app-body > .app-main > section.announce-page:first-of-type .section-note,
+body.app-body > .app-main > section.announce-page:first-of-type .announce-pane-label {
+  color: var(--pro-muted);
+}
+
+body.app-body > .app-main > section.announce-page:first-of-type .announce-mark-all:hover,
+body.app-body > .app-main > section.announce-page:first-of-type .announce-mark-all:focus-visible {
+  color: var(--pro-link-hover);
 }
 
 /* Do not restyle standalone content cards as heroes */
@@ -1020,9 +1036,29 @@ body.app-body > .app-main > section.take-shell:first-of-type {
 }
 
 .app-body .chip-link.active,
-.pro-body .chip-link.active {
+.app-body .chip-link.active:hover,
+.app-body .chip-link.active:focus-visible,
+.pro-body .chip-link.active,
+.pro-body .chip-link.active:hover,
+.pro-body .chip-link.active:focus-visible {
   background: var(--pro-blue-strong);
   color: var(--pro-on-accent);
+}
+
+.app-body .chip-link:hover,
+.app-body .chip-link:focus-visible,
+.pro-body .chip-link:hover,
+.pro-body .chip-link:focus-visible {
+  color: var(--pro-link-hover);
+  background: rgba(46, 89, 217, 0.14);
+}
+
+.app-body .chip-link.active:hover,
+.app-body .chip-link.active:focus-visible,
+.pro-body .chip-link.active:hover,
+.pro-body .chip-link.active:focus-visible {
+  color: var(--pro-on-accent);
+  background: var(--pro-link-hover);
 }
 
 .stack-sm { margin-top: 0.85rem; }
