@@ -904,6 +904,33 @@ def attempt_meta(attempt: Attempt) -> str:
     return f"{date_label} · Not auto-scored"
 
 
+def attempt_score_percent(attempt: Attempt) -> int | None:
+    if not attempt.score_total_auto:
+        return None
+    return int(round(100 * attempt.score_auto / attempt.score_total_auto))
+
+
+def assessment_score_tone(percent: int | None) -> str:
+    if percent is None:
+        return "pending"
+    if percent >= 80:
+        return "high"
+    if percent >= 50:
+        return "mid"
+    return "low"
+
+
+def format_trend(current: int | None, previous: int | None) -> dict | None:
+    if current is None or previous is None:
+        return None
+    delta = current - previous
+    if delta == 0:
+        return {"direction": "flat", "label": "Same as last"}
+    if delta > 0:
+        return {"direction": "up", "label": f"↑ +{delta}% vs last"}
+    return {"direction": "down", "label": f"↓ −{abs(delta)}% vs last"}
+
+
 def attach_summary(material: Material):
     payload = summarize_material(material.title, material.extracted_text, SUBJECTS[material.subject_slug]["name"])
     summary = material.summary or Summary(material_id=material.id)
@@ -1607,8 +1634,12 @@ def practice():
                 "subject": SUBJECTS[material.subject_slug]["name"],
                 "subject_slug": material.subject_slug,
                 "title": f"{material.title} Practice Check",
-                "meta": "Approved material · Thinking practice",
+                # Estimate only — question count is chosen later on Practice setup.
+                "meta": "Approved material · ~10 min · Self-paced",
+                "unlock_reason": None,
+                "unlock_date": None,
                 "href": url_for("practice_setup", subject_slug=material.subject_slug, material_slug=material.slug),
+                "locked": False,
             }
         )
     for material in Material.query.filter_by(owner_id=user["id"], source="student", status="pending"):
@@ -1617,10 +1648,28 @@ def practice():
                 "subject": SUBJECTS[material.subject_slug]["name"],
                 "subject_slug": material.subject_slug,
                 "title": f"{material.title} practice",
-                "meta": "Backup upload pending teacher approval",
+                "meta": "Unlocks after teacher approval",
+                "unlock_reason": "Unlocks after teacher approval",
+                # No unlock_date in the Material model yet.
+                "unlock_date": None,
+                "href": None,
+                "locked": True,
             }
         )
-    context = {"user": user, "practice_ready": ready, "practice_locked": locked}
+    practice_items = ready + locked
+    subject_filters = [
+        {"slug": meta["slug"], "name": meta["name"]}
+        for meta in SUBJECTS.values()
+        if any(item["subject_slug"] == meta["slug"] for item in practice_items)
+    ]
+    context = {
+        "user": user,
+        "practice_ready": ready,
+        "practice_locked": locked,
+        "practice_items": practice_items,
+        "practice_subjects": subject_filters,
+        "practice_available_count": len(ready),
+    }
     context.update(announcements_context(user))
     return render_template("practice_hub.html", **context)
 
@@ -1647,18 +1696,43 @@ def results():
             and attempt.assessment
             and not attempt.assessment.release_scores
         )
-        if score_pending:
+        score_percent = None if score_pending else attempt_score_percent(attempt)
+        trend = None
+        if attempt.kind == "practice":
+            if score_pending:
+                score_label = "Score pending"
+                score_tone = "pending"
+            elif attempt.score_total_auto:
+                score_label = f"{attempt.score_auto} of {attempt.score_total_auto} reviewed"
+                score_tone = "practice"
+            else:
+                score_label = "Reviewed"
+                score_tone = "practice"
+        elif score_pending:
             score_label = "Score pending"
-            score_percent = None
             score_tone = "pending"
         elif attempt.score_total_auto:
-            score_percent = int(round(100 * attempt.score_auto / attempt.score_total_auto))
             score_label = f"{attempt.score_auto}/{attempt.score_total_auto} correct"
-            score_tone = "complete" if score_percent == 100 else "progress"
+            score_tone = assessment_score_tone(score_percent)
+            if attempt.assessment_id and attempt.submitted_at:
+                prior = (
+                    Attempt.query.filter(
+                        Attempt.user_id == user["id"],
+                        Attempt.kind == "assessment",
+                        Attempt.assessment_id == attempt.assessment_id,
+                        Attempt.id != attempt.id,
+                        Attempt.submitted_at.isnot(None),
+                        Attempt.submitted_at < attempt.submitted_at,
+                    )
+                    .order_by(Attempt.submitted_at.desc())
+                    .first()
+                )
+                if prior and prior.assessment and prior.assessment.release_scores:
+                    trend = format_trend(score_percent, attempt_score_percent(prior))
         else:
             score_label = "Open response"
-            score_percent = None
             score_tone = "neutral"
+            score_percent = None
         items.append(
             {
                 "kind": attempt.kind.title(),
@@ -1671,6 +1745,7 @@ def results():
                 "score_label": score_label,
                 "score_percent": score_percent,
                 "score_tone": score_tone,
+                "trend": trend,
                 "difficulty": difficulty_label(attempt.difficulty) if attempt.difficulty else None,
                 "action": "Review",
                 "href": url_for("attempt_review", attempt_id=attempt.id),
