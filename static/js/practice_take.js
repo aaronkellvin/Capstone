@@ -5,6 +5,7 @@
   const submitBtn = document.getElementById("submit-btn");
   const progressText = document.getElementById("progress-text");
   const progressBar = document.getElementById("progress-bar");
+  const steps = Array.from(document.querySelectorAll(".take-step"));
   const form = document.getElementById("practice-take-form");
   if (!cards.length || !form) return;
 
@@ -13,19 +14,6 @@
   const draftKey =
     form.getAttribute("data-draft-key") ||
     `bloom-take:${form.getAttribute("action") || location.pathname}`;
-
-  const overlay = (message) => {
-    let node = document.getElementById("qol-overlay");
-    if (!node) {
-      node = document.createElement("div");
-      node.id = "qol-overlay";
-      node.className = "qol-overlay";
-      node.innerHTML = `<div class="qol-overlay-card" role="status" aria-live="assertive"><span class="qol-spinner" aria-hidden="true"></span><p></p></div>`;
-      document.body.appendChild(node);
-    }
-    node.querySelector("p").textContent = message;
-    node.hidden = false;
-  };
 
   const answered = (card) => {
     const checked = card.querySelector("input[type=radio]:checked");
@@ -96,6 +84,10 @@
     progressText.textContent = String(index + 1);
     progressBar.style.width = `${((index + 1) / cards.length) * 100}%`;
     if (progressTrack) progressTrack.setAttribute("aria-valuenow", String(index + 1));
+    steps.forEach((step, stepIndex) => {
+      step.classList.toggle("is-current", stepIndex === index);
+      step.classList.toggle("is-done", stepIndex < index);
+    });
 
     prevBtn.disabled = index === 0;
     const last = index === cards.length - 1;
@@ -122,37 +114,44 @@
     if (index > 0) show(index - 1);
   });
 
-  nextBtn.addEventListener("click", () => {
+  nextBtn.addEventListener("click", async () => {
     if (!answered(cards[index])) {
-      const skip = window.confirm("This question is still empty. Skip it for now?");
+      const skip = await window.BloomUi.confirm("This question is still empty. Skip it for now?", {
+        title: "Skip this question?",
+        confirmLabel: "Skip for now",
+      });
       if (!skip) return;
     }
     if (index < cards.length - 1) show(index + 1);
   });
 
-  form.addEventListener("submit", (event) => {
+  let submitting = false;
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (submitting) return;
     const missing = unansweredCount();
     if (missing) {
-      const go = window.confirm(
-        missing === 1
-          ? "1 question is still empty. Submit anyway?"
-          : `${missing} questions are still empty. Submit anyway?`
+      const go = await window.BloomUi.confirm(
+        missing === 1 ? "1 question is still empty. Submit anyway?" : `${missing} questions are still empty. Submit anyway?`,
+        { title: "Submit with empty answers?", confirmLabel: "Submit anyway" }
       );
       if (!go) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
         return;
       }
     }
     const warning = form.getAttribute("data-confirm-submit");
-    if (warning && !window.confirm(warning)) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      return;
+    if (warning) {
+      const confirmed = await window.BloomUi.confirm(warning, {
+        title: "Submit assessment?",
+        confirmLabel: "Submit",
+      });
+      if (!confirmed) return;
     }
+    submitting = true;
     dirty = false;
     clearDraft();
     submitBtn.disabled = true;
-    overlay(form.getAttribute("data-loading") || "Submitting…");
+    window.BloomUi.showLoading(form.getAttribute("data-loading") || "Submitting…");
+    HTMLFormElement.prototype.submit.call(form);
   });
 })();

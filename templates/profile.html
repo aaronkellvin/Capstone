@@ -1,60 +1,63 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Profile — Bloom</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-</head>
-<body class="app-body" {% if session_expires_at %}data-session-expires="{{ session_expires_at }}"{% endif %} data-login-url="{{ url_for('login') }}">
-  <div class="app-bg" aria-hidden="true">
-    <span class="ribbon ribbon-blue"></span>
-    <span class="ribbon ribbon-red"></span>
-    <span class="dot-field"></span>
+{% extends "layouts/pro.html" %}
+{% set active_tab = "profile" %}
+{% set topbar_sub = "Profile" %}
+{% block title %}Profile — Bloom{% endblock %}
+{% block page_header %}
+  {% set name_parts = user.name.split(" ") %}
+  <section class="pro-hero profile-banner">
+    <span class="avatar profile-avatar" aria-hidden="true">{{ (name_parts[0][:1] ~ (name_parts[-1][:1] if name_parts|length > 1 else ""))|upper }}</span>
+    <div class="profile-banner-copy">
+      <p class="profile-banner-eyebrow">Student profile</p>
+      <h1 class="pro-hero-title">{{ user.name }}</h1>
+      <p class="pro-hero-sub">{{ user.email }}</p>
+      <div class="profile-badges">
+        <span class="hero-pill">{{ user.role|capitalize }}</span>
+        <span class="hero-pill">{{ user.section or "Grade 7 · Pilot Section" }}</span>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+{% block content %}
+  <div class="profile-stat-grid" aria-label="Student overview">
+    {% for stat in profile_stats %}
+      <article class="profile-stat profile-stat-{{ stat.tone }}">
+        <span class="profile-stat-icon" aria-hidden="true">
+          {% if stat.tone == "blue" %}▦{% elif stat.tone == "green" %}✓{% else %}✉{% endif %}
+        </span>
+        <div>
+          <p class="profile-stat-value">{{ stat.value }}</p>
+          <p class="profile-stat-label">{{ stat.label }}</p>
+        </div>
+      </article>
+    {% endfor %}
   </div>
 
-  {% set topbar_sub = "Profile" %}
-  {% include "partials/topbar.html" %}
-
-  <main class="app-main">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <ul class="flash-list home-flash">
-          {% for category, message in messages %}
-            <li class="flash flash-{{ category }}">{{ message }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
-
-    <section class="profile-hero">
-      {% set name_parts = user.name.split(" ") %}
-      <span class="avatar avatar-xl" aria-hidden="true">{{ (name_parts[0][:1] ~ (name_parts[-1][:1] if name_parts|length > 1 else ""))|upper }}</span>
-      <div>
-        <p class="hero-kicker">Your account</p>
-        <h1 class="section-title">{{ user.name }}</h1>
-        <p class="section-note">{{ user.email }} · {{ user.role|capitalize }}</p>
+  <div class="profile-content-grid">
+    <section class="lobby-card profile-section" aria-labelledby="profile-details-title">
+      <div class="profile-section-head">
+        <span class="section-icon section-icon-blue" aria-hidden="true">i</span>
+        <div>
+          <h2 class="hub-panel-title" id="profile-details-title">Account details</h2>
+          <p class="section-note">School information used throughout Bloom.</p>
+        </div>
       </div>
-    </section>
 
-    <section class="lobby-card">
-      <h2 class="hub-panel-title">Account details</h2>
-      <p class="section-note">School information used in Bloom</p>
-
-      <dl class="profile-facts">
+      <dl class="profile-facts profile-facts-polished">
         <div><dt>Name</dt><dd>{{ user.name }}</dd></div>
         <div><dt>School email</dt><dd>{{ user.email }}</dd></div>
-        <div><dt>Role</dt><dd>{{ user.role|capitalize }}</dd></div>
+        <div><dt>Role</dt><dd><span class="status-pill status-student">{{ user.role|capitalize }}</span></dd></div>
         <div><dt>Section</dt><dd>{{ user.section or "Grade 7 · Pilot Section" }}</dd></div>
       </dl>
     </section>
 
-    <section class="lobby-card stack-md" id="account">
-      <h2 class="hub-panel-title">Change password</h2>
-      <p class="section-note">Use this after signing in with a temporary password.</p>
+    <section class="lobby-card profile-section profile-security" id="account" aria-labelledby="profile-security-title">
+      <div class="profile-section-head">
+        <span class="section-icon section-icon-violet" aria-hidden="true">◆</span>
+        <div>
+          <h2 class="hub-panel-title" id="profile-security-title">Password & security</h2>
+          <p class="section-note">Keep your school account secure.</p>
+        </div>
+      </div>
       <form class="login-form" method="POST" action="{{ url_for('profile') }}" data-loading="Updating password…">
         <div class="field">
           <label for="current_password">Current password</label>
@@ -70,18 +73,8 @@
           <input type="password" id="confirm_password" name="confirm_password" minlength="8" required data-match="#new_password" data-match-message="New passwords must match." />
           <p class="field-error" id="confirm_password-error" hidden></p>
         </div>
-        <button type="submit" class="btn-primary">Update Password</button>
+        <button type="submit" class="btn-primary">Update password</button>
       </form>
     </section>
-
-    <div class="summary-footer">
-      <form method="POST" action="{{ url_for('logout') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <button type="submit" class="today-action today-action-soft">Sign out</button>
-      </form>
-    </div>
-  </main>
-
-  <script src="{{ url_for('static', filename='js/topbar.js') }}" defer></script>
-</body>
-</html>
+  </div>
+{% endblock %}

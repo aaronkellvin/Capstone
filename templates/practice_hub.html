@@ -2,43 +2,67 @@
 {% set active_tab = "practice" %}
 {% block title %}Practice — Bloom{% endblock %}
 {% block page_title %}Practice{% endblock %}
-{% block page_subtitle %}Personal Practice Checks from approved materials. Not official grades.{% endblock %}
+{% block page_subtitle %}Choose a subject and build your thinking skills at your own pace.{% endblock %}
 {% block content %}
-  <div class="hub-list">
-    {% for item in practice_ready %}
-      <article class="hub-card">
-        <div>
-          <p class="hub-card-kicker">{{ item.subject }} · Ready</p>
-          <h2 class="hub-card-title">{{ item.title }}</h2>
-          <p class="hub-card-meta">{{ item.meta }}</p>
-        </div>
-        <a class="today-action" href="{{ item.href }}">Start</a>
-      </article>
-    {% else %}
-      <article class="empty-state-card">
-        <p class="empty-kicker">Practice</p>
-        <h3 class="empty-title">No practice checks yet</h3>
-        <p class="empty-copy">Approved lessons will appear here so you can generate a Practice Check.</p>
-        <a class="today-action" href="{{ url_for('home') }}#subjects-title">Explore Subjects</a>
-      </article>
-    {% endfor %}
-  </div>
+  <section class="practice-library" aria-labelledby="practice-ready-title">
+    <div class="section-heading-row">
+      <div>
+        <p class="section-eyebrow">Ready for you</p>
+        <h2 class="section-title section-title-sm" id="practice-ready-title">Practice library</h2>
+      </div>
+      {% if practice_ready %}<span class="count-badge">{{ practice_ready|length }} available</span>{% endif %}
+    </div>
+    <div class="hub-list practice-card-list">
+      {% for item in practice_ready %}
+        <article class="hub-card practice-card is-ready subject-accent-{{ item.subject_slug }}">
+          <span class="practice-card-icon" aria-hidden="true">{{ item.subject[:1] }}</span>
+          <div class="practice-card-main">
+            <div class="status-row">
+              <span class="status-pill status-subject">{{ item.subject }}</span>
+              <span class="status-pill status-ready">Ready</span>
+            </div>
+            <h3 class="hub-card-title">{{ item.title }}</h3>
+            <p class="hub-card-meta">{{ item.meta }}</p>
+          </div>
+          <a class="today-action practice-start" href="{{ item.href }}">Start practice <span aria-hidden="true">→</span></a>
+        </article>
+      {% else %}
+        <article class="empty-state-card practice-empty">
+          <span class="empty-state-icon" aria-hidden="true">✦</span>
+          <p class="empty-kicker">Practice</p>
+          <h3 class="empty-title">No practice checks yet</h3>
+          <p class="empty-copy">Approved lessons will appear here so you can generate a Practice Check.</p>
+          <a class="today-action" href="{{ url_for('home') }}#subjects-title">Explore Subjects</a>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
 
   {% if practice_locked %}
-    <div class="hub-group stack-lg">
-      <h2 class="hub-group-title">Waiting for approval</h2>
-      <div class="hub-list">
+    <section class="hub-group practice-locked-group stack-lg" aria-labelledby="practice-locked-title">
+      <div class="section-heading-row">
+        <div>
+          <p class="section-eyebrow">Uploads in review</p>
+          <h2 class="section-title section-title-sm" id="practice-locked-title">Waiting for approval</h2>
+        </div>
+        <span class="count-badge count-badge-muted">{{ practice_locked|length }} pending</span>
+      </div>
+      <div class="hub-list practice-card-list">
         {% for item in practice_locked %}
-          <article class="hub-card">
-            <div>
-              <p class="hub-card-kicker">{{ item.subject }} · Locked</p>
+          <article class="hub-card practice-card is-locked subject-accent-{{ item.subject_slug }}">
+            <span class="practice-card-icon" aria-hidden="true">{{ item.subject[:1] }}</span>
+            <div class="practice-card-main">
+              <div class="status-row">
+                <span class="status-pill status-subject">{{ item.subject }}</span>
+                <span class="status-pill status-locked">Awaiting approval</span>
+              </div>
               <h3 class="hub-card-title">{{ item.title }}</h3>
               <p class="hub-card-meta">{{ item.meta }}</p>
             </div>
-            <span class="today-action today-action-soft" aria-disabled="true" title="Waiting for teacher approval">Locked</span>
+            <span class="locked-action" aria-disabled="true" title="Waiting for teacher approval">Locked</span>
           </article>
         {% endfor %}
       </div>
-    </div>
+    </section>
   {% endif %}
 {% endblock %}

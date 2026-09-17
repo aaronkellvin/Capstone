@@ -14,7 +14,17 @@ _tmp = tempfile.TemporaryDirectory()
 os.environ["BLOOM_TEST_DB"] = os.path.join(_tmp.name, "test.db")
 
 import app as bloom  # noqa: E402
-from models import Attempt, User, db  # noqa: E402
+from models import (  # noqa: E402
+    Announcement,
+    AnnouncementRead,
+    Assessment,
+    Attempt,
+    Material,
+    Question,
+    Summary,
+    User,
+    db,
+)
 from werkzeug.security import generate_password_hash  # noqa: E402
 
 
@@ -48,6 +58,55 @@ class BloomSmokeTest(unittest.TestCase):
             )
             db.session.add_all([student, other, teacher])
             db.session.commit()
+            material = Material(
+                slug="ecosystems",
+                title="Ecosystems",
+                subject_slug="science",
+                owner_id=teacher.id,
+                source="teacher",
+                status="approved",
+                filename="ecosystems.txt",
+                extracted_text="Energy moves through food chains in an ecosystem.",
+            )
+            db.session.add(material)
+            db.session.flush()
+            db.session.add(
+                Summary(
+                    material_id=material.id,
+                    intro="A short guide to ecosystems.",
+                    sections_json='[{"id": 1, "heading": "Food chains", "body": "Energy moves between organisms.", "citation": "ecosystems.txt"}]',
+                )
+            )
+            assessment = Assessment(
+                slug="ecosystems-assessment",
+                title="Ecosystems Assessment",
+                subject_slug="science",
+                material_id=material.id,
+                created_by=teacher.id,
+                status="published",
+                attempt_limit=1,
+            )
+            db.session.add(assessment)
+            db.session.flush()
+            question = Question(
+                assessment_id=assessment.id,
+                bloom="Analyze",
+                qtype="mcq",
+                prompt="Which statement best describes a food chain?",
+                options_json='[{"id": "a", "text": "Energy transfer"}, {"id": "b", "text": "Weather"}]',
+                answer="a",
+                explanation="A food chain shows how energy moves.",
+                citation="ecosystems.txt",
+            )
+            db.session.add(question)
+            announcement = Announcement(
+                subject="Science",
+                title="Science reminder",
+                body="Review ecosystems before Friday.",
+                teacher_id=teacher.id,
+            )
+            db.session.add(announcement)
+            db.session.commit()
             attempt = Attempt(
                 user_id=other.id,
                 kind="practice",
@@ -63,9 +122,19 @@ class BloomSmokeTest(unittest.TestCase):
             cls.other_id = other.id
             cls.teacher_id = teacher.id
             cls.other_attempt_id = attempt.id
+            cls.announcement_id = announcement.id
+            cls.question_id = question.id
 
     def setUp(self):
         self.client = bloom.app.test_client()
+
+    @classmethod
+    def tearDownClass(cls):
+        with bloom.app.app_context():
+            db.session.remove()
+            db.drop_all()
+            db.engine.dispose()
+        _tmp.cleanup()
 
     def _csrf(self):
         # Ensure a CSRF token exists in the session (login clears session keys).
@@ -95,6 +164,99 @@ class BloomSmokeTest(unittest.TestCase):
         response = self._login("student@test.local", "student123")
         self.assertEqual(response.status_code, 302)
         self.assertIn("/home", response.headers["Location"])
+
+    def test_student_pages_render_in_shared_shell(self):
+        self._login("student@test.local", "student123")
+        paths = [
+            "/home",
+            "/subjects/science",
+            "/subjects/science/summaries/ecosystems",
+            "/subjects/science/practice/ecosystems",
+            "/practice",
+            "/results",
+            "/profile",
+            "/announcements",
+            "/messages",
+            f"/messages/with/{self.teacher_id}",
+            "/assessments/ecosystems-assessment",
+            "/assessments/ecosystems-assessment/take",
+        ]
+        for path in paths:
+            with self.subTest(path=path):
+                response = self.client.get(path, follow_redirects=False)
+                self.assertEqual(response.status_code, 200)
+                self.assertIn(b'id="main-content"', response.data)
+                self.assertIn(b'id="pro-sidebar"', response.data)
+                self.assertIn(b'class="skip-link"', response.data)
+
+    def test_home_removes_duplicate_progress_panels(self):
+        self._login("student@test.local", "student123")
+        response = self.client.get("/home")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(b"Subject pulse", response.data)
+        self.assertNotIn(b"Progress tracker", response.data)
+        self.assertIn(b"My Subjects", response.data)
+        self.assertIn(b"Complete your first activity", response.data)
+
+    def test_mobile_drawer_contract_is_rendered(self):
+        self._login("student@test.local", "student123")
+        response = self.client.get("/home")
+        self.assertIn(b'aria-controls="pro-sidebar"', response.data)
+        self.assertIn(b'id="pro-sidebar-backdrop"', response.data)
+
+    def test_announcement_get_is_read_only(self):
+        self._login("student@test.local", "student123")
+        response = self.client.get(f"/announcements/{self.announcement_id}")
+        self.assertEqual(response.status_code, 200)
+        with bloom.app.app_context():
+            read = AnnouncementRead.query.filter_by(
+                user_id=self.student_id,
+                announcement_id=self.announcement_id,
+            ).first()
+            self.assertIsNone(read)
+
+    def test_announcement_post_marks_read(self):
+        self._login("student@test.local", "student123")
+        token = self._csrf()
+        response = self.client.post(
+            f"/announcements/{self.announcement_id}/read",
+            data={"csrf_token": token},
+            headers={"X-Requested-With": "fetch", "Accept": "application/json"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get_json()["ok"])
+        with bloom.app.app_context():
+            read = AnnouncementRead.query.filter_by(
+                user_id=self.student_id,
+                announcement_id=self.announcement_id,
+            ).first()
+            self.assertIsNotNone(read)
+
+    def test_message_send_json_contract(self):
+        self._login("student@test.local", "student123")
+        token = self._csrf()
+        response = self.client.post(
+            f"/messages/with/{self.teacher_id}",
+            data={"body": "Can you explain food chains?", "csrf_token": token},
+            headers={"X-Requested-With": "fetch", "Accept": "application/json"},
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["message"]["body"], "Can you explain food chains?")
+
+    def test_assessment_submit_flow(self):
+        self._login("other@test.local", "student123")
+        start = self.client.get("/assessments/ecosystems-assessment/take")
+        self.assertEqual(start.status_code, 200)
+        token = self._csrf()
+        response = self.client.post(
+            "/assessments/ecosystems-assessment/submit",
+            data={f"q{self.question_id}": "a", "csrf_token": token},
+            follow_redirects=False,
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/results/", response.headers["Location"])
 
     def test_csrf_rejects_bare_post(self):
         self._login("student@test.local", "student123")

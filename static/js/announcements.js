@@ -12,6 +12,9 @@
   const detail = document.getElementById("announce-detail");
   const empty = document.getElementById("announce-detail-empty");
   const skeleton = document.getElementById("announce-skeleton");
+  const loadError = document.getElementById("announce-load-error");
+  const retryButton = document.getElementById("announce-retry");
+  const fallbackLink = document.getElementById("announce-fallback");
   const back = document.getElementById("announce-back");
   const markAllForm = document.getElementById("announce-mark-all");
   const selectedInput = document.getElementById("announce-selected-id");
@@ -31,6 +34,7 @@
 
   let inflight = null;
   let skeletonTimer = 0;
+  let retryState = null;
 
   const itemById = (id) => document.querySelector(`.announce-item[data-id="${id}"]`);
   const selectedItem = () => document.querySelector(".announce-item.is-selected");
@@ -41,6 +45,11 @@
 
   const setUnreadCount = (count) => {
     const safe = Math.max(0, Number(count) || 0);
+    const navCount = document.getElementById("nav-announcements-count");
+    if (navCount) {
+      if (safe > 0) navCount.textContent = String(safe);
+      else navCount.remove();
+    }
     const toggle = document.getElementById("notify-toggle");
     if (toggle) {
       let dot = toggle.querySelector(".bell-dot");
@@ -145,6 +154,16 @@
     }
   };
 
+  const showLoadError = (href, id) => {
+    showSkeleton(false);
+    setHidden(detail, true);
+    setHidden(empty, true);
+    setHidden(loadError, false);
+    retryState = { href, id };
+    if (fallbackLink) fallbackLink.href = href;
+    retryButton?.focus();
+  };
+
   const fillBody = (blocks) => {
     if (!bodyEl) return;
     bodyEl.replaceChildren();
@@ -169,7 +188,7 @@
     detail.dataset.announceId = String(payload.id);
     if (kicker) kicker.textContent = payload.subject || "";
     if (title) title.textContent = payload.title || "";
-    if (byline) byline.textContent = payload.teacher || "";
+    if (byline) byline.textContent = payload.teacher ? `Posted by ${payload.teacher}` : "";
     if (dateEl) {
       dateEl.textContent = payload.posted || "";
       dateEl.title = payload.posted || "";
@@ -187,6 +206,8 @@
     setHidden(empty, open);
     if (!open) {
       showSkeleton(false);
+      setHidden(loadError, true);
+      retryState = null;
       setHidden(detail, true);
       document.title = "Announcements — Bloom";
     }
@@ -211,6 +232,7 @@
     openLayout(true);
     setHidden(empty, true);
     setHidden(back, false);
+    setHidden(loadError, true);
 
     if (detail && !detail.hidden && detail.dataset.announceId === String(announceId)) {
       if (history === "push") window.history.pushState({ announceId }, "", url.pathname + url.search);
@@ -236,10 +258,12 @@
       });
       const data = await response.json();
       if (!response.ok || !data.ok || !data.selected) {
-        window.location.assign(url.pathname + url.search);
+        showLoadError(url.pathname + url.search, announceId);
         return;
       }
       showSkeleton(false);
+      setHidden(loadError, true);
+      retryState = null;
       setHidden(detail, false);
       renderDetail(data.selected);
       const marked = await markItemReadOnServer(data.selected.id);
@@ -253,7 +277,7 @@
       item?.scrollIntoView({ block: "nearest", behavior: "auto" });
     } catch (error) {
       if (error.name === "AbortError") return;
-      window.location.assign(url.pathname + url.search);
+      showLoadError(url.pathname + url.search, announceId);
     }
   };
 
@@ -273,6 +297,11 @@
     else if (history === "replace") window.history.replaceState({ announceId: null }, "", listHref());
     current?.focus();
   };
+
+  retryButton?.addEventListener("click", () => {
+    if (!retryState) return;
+    loadAnnouncement(retryState.href, { history: "none", id: retryState.id });
+  });
 
   const arrive = document.querySelector(".announce-detail.is-arrive");
   if (arrive) {

@@ -1,34 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Practice Setup — Bloom</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-</head>
-<body class="app-body" {% if session_expires_at %}data-session-expires="{{ session_expires_at }}"{% endif %} data-login-url="{{ url_for('login') }}">
-  <div class="app-bg" aria-hidden="true">
-    <span class="ribbon ribbon-blue"></span>
-    <span class="ribbon ribbon-red"></span>
-    <span class="dot-field"></span>
-  </div>
-
-  {% set topbar_sub = "Practice Check" %}
-  {% include "partials/topbar.html" %}
-
-  <main class="app-main">
-  {% include "partials/flash.html" %}
-    <section class="lobby-card" aria-labelledby="practice-setup-title">
+{% extends "layouts/pro.html" %}
+{% set active_tab = "practice" %}
+{% set topbar_sub = "Practice setup" %}
+{% block title %}Practice Setup — Bloom{% endblock %}
+{% block page_header %}{% endblock %}
+{% block content_class %}pro-content-plain{% endblock %}
+{% block content %}
+    <section class="lobby-card practice-setup-card subject-accent-{{ subject.slug }}" aria-labelledby="practice-setup-title">
       <a class="hub-back" href="{{ back_href }}">Back</a>
-      <p class="hero-kicker summary-kicker">{{ subject.name }} · Practice Check</p>
-      <h1 id="practice-setup-title" class="section-title">Practice this lesson</h1>
-      <p class="section-note">{{ material_title }} · From approved material only. Not an official grade.</p>
+      <div class="practice-setup-heading">
+        <span class="practice-card-icon" aria-hidden="true">{{ subject.name[:1] }}</span>
+        <div>
+          <div class="status-row">
+            <span class="status-pill status-subject">{{ subject.name }}</span>
+            <span class="status-pill status-practice">Practice check</span>
+          </div>
+          <h1 id="practice-setup-title" class="section-title">Practice {{ material_title }}</h1>
+          <p class="section-note">Choose the challenge and thinking skills that fit your goal.</p>
+        </div>
+      </div>
 
       <form class="practice-form" method="POST" action="{{ url_for('practice_take', subject_slug=subject.slug, material_slug=material_slug) }}" data-loading="Generating your Practice Check…">
-        <fieldset class="practice-fieldset">
+        <fieldset class="practice-fieldset practice-fieldset-card">
           <legend>Choose difficulty</legend>
           <p class="section-note">How challenging do you want your practice?</p>
           <div class="difficulty-grid">
@@ -50,35 +42,43 @@
           </div>
         </fieldset>
 
-        <fieldset class="practice-fieldset">
+        <fieldset class="practice-fieldset practice-fieldset-card">
           <legend>Choose focus</legend>
           <p class="section-note">These are thinking skills (Bloom’s HOTS) — not Easy / Medium / Hard.</p>
-          <label class="choice"><input type="radio" name="focus" value="mixed" {% if selected_focus == 'mixed' %}checked{% endif %} /> Mixed thinking skills</label>
-          <label class="choice"><input type="radio" name="focus" value="c4" {% if selected_focus == 'c4' %}checked{% endif %} /> Analyze — break ideas apart</label>
-          <label class="choice"><input type="radio" name="focus" value="c5" {% if selected_focus == 'c5' %}checked{% endif %} /> Evaluate — judge and decide</label>
-          <label class="choice"><input type="radio" name="focus" value="c6" {% if selected_focus == 'c6' %}checked{% endif %} /> Create — build something new</label>
+          <div class="choice-card-grid focus-choice-grid">
+            <label class="choice choice-card"><input type="radio" name="focus" value="mixed" {% if selected_focus == 'mixed' %}checked{% endif %} /><span><strong>Mixed skills</strong><small>A balanced thinking workout</small></span></label>
+            <label class="choice choice-card"><input type="radio" name="focus" value="c4" {% if selected_focus == 'c4' %}checked{% endif %} /><span><strong>Analyze</strong><small>Break ideas apart</small></span></label>
+            <label class="choice choice-card"><input type="radio" name="focus" value="c5" {% if selected_focus == 'c5' %}checked{% endif %} /><span><strong>Evaluate</strong><small>Judge and decide</small></span></label>
+            <label class="choice choice-card"><input type="radio" name="focus" value="c6" {% if selected_focus == 'c6' %}checked{% endif %} /><span><strong>Create</strong><small>Build something new</small></span></label>
+          </div>
         </fieldset>
 
-        <div class="field">
-          <label for="count">How many questions?</label>
-          <select id="count" name="count">
-            <option value="3" {% if selected_count == 3 %}selected{% endif %}>3</option>
-            <option value="5" {% if selected_count == 5 %}selected{% endif %}>5</option>
-          </select>
+        <fieldset class="practice-fieldset practice-fieldset-card" id="question-types-fieldset">
+          <legend>Build your check</legend>
+          <div class="practice-build-grid">
+            <div class="field practice-count-field">
+              <label for="count">Number of questions</label>
+              <select id="count" name="count">
+                <option value="3" {% if selected_count == 3 %}selected{% endif %}>3 questions</option>
+                <option value="5" {% if selected_count == 5 %}selected{% endif %}>5 questions</option>
+              </select>
+            </div>
+            <div class="type-choice-group">
+              <p class="field-label">Question types</p>
+              <div class="type-choice-grid">
+                <label class="choice choice-card compact"><input type="checkbox" name="types" value="mcq" {% if 'mcq' in selected_types %}checked{% endif %} /><span>Multiple choice</span></label>
+                <label class="choice choice-card compact"><input type="checkbox" name="types" value="essay" {% if 'essay' in selected_types %}checked{% endif %} /><span>Essay</span></label>
+                <label class="choice choice-card compact"><input type="checkbox" name="types" value="problem" {% if 'problem' in selected_types %}checked{% endif %} /><span>Problem-solving</span></label>
+              </div>
+            </div>
+          </div>
+          <p class="field-error" id="question-types-error" role="alert" hidden></p>
+        </fieldset>
+
+        <div class="practice-submit-row">
+          <p><strong>Ready when you are.</strong> You can review every answer afterward.</p>
+          <button type="submit" class="btn-primary">Generate practice check <span aria-hidden="true">→</span></button>
         </div>
-
-        <fieldset class="practice-fieldset">
-          <legend>Include</legend>
-          <label class="choice"><input type="checkbox" name="types" value="mcq" {% if 'mcq' in selected_types %}checked{% endif %} /> Multiple choice</label>
-          <label class="choice"><input type="checkbox" name="types" value="essay" {% if 'essay' in selected_types %}checked{% endif %} /> Essay</label>
-          <label class="choice"><input type="checkbox" name="types" value="problem" {% if 'problem' in selected_types %}checked{% endif %} /> Problem-solving</label>
-        </fieldset>
-
-        <button type="submit" class="btn-primary">Generate Practice Check</button>
       </form>
     </section>
-  </main>
-
-  <script src="{{ url_for('static', filename='js/topbar.js') }}" defer></script>
-</body>
-</html>
+{% endblock %}

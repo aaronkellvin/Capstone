@@ -6,13 +6,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="{{ url_for('static', filename='css/bloom-pro.css') }}" />
 {% include "partials/pro_sidebar.html" %}
+<div class="pro-sidebar-backdrop" id="pro-sidebar-backdrop" hidden></div>
 <header class="pro-topbar">
-  <button type="button" class="pro-menu-btn" id="sidebar-toggle" aria-label="Toggle sidebar">☰</button>
+  <button type="button" class="pro-menu-btn" id="sidebar-toggle" aria-label="Toggle sidebar" aria-controls="pro-sidebar" aria-expanded="false">☰</button>
   <p class="pro-context">{{ topbar_sub or "Staff workspace" }}</p>
   <div class="pro-top-actions">
-    {% if user and user.role == "teacher" %}
-      {% include "partials/header_messages.html" %}
-    {% endif %}
     {% include "partials/header_account.html" %}
   </div>
 </header>

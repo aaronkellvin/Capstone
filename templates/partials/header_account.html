@@ -24,7 +24,6 @@
           <p class="profile-card-role">{{ user.role|capitalize }}{% if user.section %} · {{ user.section }}{% endif %}</p>
         </div>
       </div>
-      <a class="menu-link" role="menuitem" href="{{ url_for('profile') }}">View Profile</a>
       <form method="POST" action="{{ url_for('logout') }}" class="menu-logout-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <button type="submit" class="menu-link menu-link-danger" role="menuitem">Log out</button>

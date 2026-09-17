@@ -611,15 +611,22 @@ def conversation_preview(conversation: Conversation, user_id: int) -> dict:
     other = conversation.teacher if conversation.student_id == user_id else conversation.student
     last = conversation.messages[-1] if conversation.messages else None
     unread = sum(1 for message in conversation.messages if message.sender_id != user_id and message.read_at is None)
+    subject_name = other.subject if other and other.subject else ""
+    subject_slug = next(
+        (slug for slug, meta in SUBJECTS.items() if meta["name"] == subject_name),
+        "general",
+    )
     return {
         "id": conversation.id,
         "other_id": other.id if other else 0,
         "name": other.name if other else "Unknown",
         "meta": (other.subject or other.role.title()) if other else "",
+        "subject_slug": subject_slug,
         "initials": initials(other.name if other else "B"),
         "preview": (last.body[:90] if last else "No messages yet"),
         "when": relative_time(last.created_at if last else conversation.updated_at),
         "unread": unread,
+        "started": bool(last),
         "href": url_for("messages_thread", user_id=other.id) if other else url_for("messages_inbox"),
     }
 
@@ -754,7 +761,7 @@ def build_today(user_id: int) -> list[dict]:
                 "type": "practice",
                 "priority": "secondary",
                 "kicker": f"Practice reminder · {SUBJECTS[approved.subject_slug]['name']}",
-                "title": f"Try a {approved.title} Practice Check",
+                "title": f"Try the {approved.title} Practice Check",
                 "meta": "Short practice from your approved lesson",
                 "action": "Practice",
                 "href": url_for("practice_setup", subject_slug=approved.subject_slug, material_slug=approved.slug),
@@ -1038,12 +1045,12 @@ def home():
                 "teacher": teacher.name if teacher else "Subject teacher",
                 "progress_label": (
                     "Not started"
-                    if percent <= 0
+                    if not has_progress
                     else "Completed"
                     if percent >= 100
                     else f"{percent}% complete"
                 )
-                + (f" · {insight}" if percent > 0 else ""),
+                + (f" · {insight}" if has_progress else ""),
                 "progress_insight": insight,
                 "progress_percent": percent,
                 "has_progress": has_progress,
@@ -1058,8 +1065,8 @@ def home():
     context = {
         "user": user,
         "greeting": f"Hi, {first_name}",
-        "topbar_sub": f"Hi, {first_name}",
-        "guide_note": "Your next steps are listed in Today. Progress below reflects English, Math, and Science.",
+        "topbar_sub": "Home",
+        "guide_note": "Start with Today, then continue from one of your subjects.",
         "weekly_goal": {
             "percent": overall,
             "has_progress": bool(tracked),
@@ -1099,13 +1106,14 @@ def subject_hub(slug):
         "teacher": teacher.name if teacher else "Subject teacher",
         "progress_label": (
             "Not started"
-            if percent <= 0
+            if not has_progress
             else "Completed"
             if percent >= 100
             else f"{percent}% complete"
         )
-        + (f" · {insight}" if percent > 0 else ""),
+        + (f" · {insight}" if has_progress else ""),
         "progress_percent": percent,
+        "has_progress": has_progress,
         "next_action": insight,
     }
 
@@ -1516,6 +1524,7 @@ def assessment_take(slug):
         "user": user,
         "assessment": {
             "slug": assessment.slug,
+            "subject_slug": assessment.subject_slug,
             "subject": SUBJECTS[assessment.subject_slug]["name"],
             "title": assessment.title,
             "difficulty_name": difficulty_label(assessment.difficulty) if assessment.difficulty else None,
@@ -1582,6 +1591,7 @@ def practice():
         ready.append(
             {
                 "subject": SUBJECTS[material.subject_slug]["name"],
+                "subject_slug": material.subject_slug,
                 "title": f"{material.title} Practice Check",
                 "meta": "Approved material · Thinking practice",
                 "href": url_for("practice_setup", subject_slug=material.subject_slug, material_slug=material.slug),
@@ -1591,6 +1601,7 @@ def practice():
         locked.append(
             {
                 "subject": SUBJECTS[material.subject_slug]["name"],
+                "subject_slug": material.subject_slug,
                 "title": f"{material.title} practice",
                 "meta": "Backup upload pending teacher approval",
             }
@@ -1617,12 +1628,35 @@ def results():
         filter_name = "all"
     items = []
     for attempt in query.all():
+        score_pending = bool(
+            attempt.kind == "assessment"
+            and attempt.assessment
+            and not attempt.assessment.release_scores
+        )
+        if score_pending:
+            score_label = "Score pending"
+            score_percent = None
+            score_tone = "pending"
+        elif attempt.score_total_auto:
+            score_percent = int(round(100 * attempt.score_auto / attempt.score_total_auto))
+            score_label = f"{attempt.score_auto}/{attempt.score_total_auto} correct"
+            score_tone = "complete" if score_percent == 100 else "progress"
+        else:
+            score_label = "Open response"
+            score_percent = None
+            score_tone = "neutral"
         items.append(
             {
                 "kind": attempt.kind.title(),
+                "kind_slug": attempt.kind,
                 "subject": SUBJECTS.get(attempt.subject_slug, {}).get("name", ""),
+                "subject_slug": attempt.subject_slug,
                 "title": attempt.title,
                 "meta": attempt_meta(attempt),
+                "date_label": attempt.submitted_at.strftime("%b %d, %Y") if attempt.submitted_at else "Recent",
+                "score_label": score_label,
+                "score_percent": score_percent,
+                "score_tone": score_tone,
                 "difficulty": difficulty_label(attempt.difficulty) if attempt.difficulty else None,
                 "action": "Review",
                 "href": url_for("attempt_review", attempt_id=attempt.id),
@@ -1691,7 +1725,22 @@ def profile():
                 }
             ],
         )
-    context = {"user": user}
+    context = {
+        "user": user,
+        "profile_stats": [
+            {"label": "Subjects", "value": len(SUBJECTS), "tone": "blue"},
+            {
+                "label": "Activities",
+                "value": Attempt.query.filter_by(user_id=user["id"]).count(),
+                "tone": "green",
+            },
+            {
+                "label": "Unread messages",
+                "value": unread_message_count(user["id"]),
+                "tone": "violet",
+            },
+        ],
+    }
     context.update(announcements_context(user))
     return render_template("profile.html", **context)
 
@@ -1972,12 +2021,18 @@ def teacher_materials(user):
         role_nav=teacher_nav(),
         active_nav="materials",
         title="Materials",
-        subtitle="Upload Canvas files once. Approve student backups before they can practice.",
+        subtitle=(
+            f"Every upload on this page is filed under {SUBJECTS[slug]['name']}. "
+            "Approve student backups before they can practice."
+        ),
         panels=panels,
         form_blocks=[
             {
                 "title": "Upload material",
-                "note": "PDF, DOCX, PPTX, or paste text. Scanned PDFs without extractable text are rejected.",
+                "note": (
+                    f"Subject: {SUBJECTS[slug]['name']}. PDF, DOCX, PPTX, or pasted text. "
+                    "Scanned PDFs without extractable text are rejected."
+                ),
                 "action": url_for("teacher_materials"),
                 "enctype": "multipart/form-data",
                 "loading": "Uploading and summarizing…",

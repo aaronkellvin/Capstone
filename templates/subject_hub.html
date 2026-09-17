@@ -12,8 +12,10 @@
     <div class="subject-meter hub-meter {% if subject.progress_percent <= 0 %}is-empty{% endif %}" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ subject.progress_percent }}" aria-label="{{ subject.name }} progress">
       <span style="width: {{ subject.progress_percent }}%;"></span>
     </div>
-    {% if subject.progress_percent <= 0 %}
-      <p class="hub-progress-empty">0% · Not started</p>
+    {% if not subject.has_progress %}
+      <p class="hub-progress-empty">Not started</p>
+    {% elif subject.progress_percent <= 0 %}
+      <p class="hub-progress-empty">0% complete · Keep practicing</p>
     {% endif %}
     <p class="hub-next">{{ subject.next_action }}</p>
     {% if ask_teacher %}
@@ -119,7 +121,10 @@
 
       <div class="backup-card">
         <p class="hub-card-title">Have a Canvas file not listed yet?</p>
-        <p class="hub-card-meta">Upload as backup. Needs teacher approval before practice unlocks.</p>
+        <p class="hub-card-meta">
+          This file will be submitted under <strong>{{ subject.name }}</strong>.
+          Check the subject before uploading; teacher approval is required before practice unlocks.
+        </p>
         <form class="login-form" method="POST" action="{{ url_for('subject_hub', slug=subject.slug) }}" enctype="multipart/form-data" data-loading="Uploading your backup file…">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
           <div class="field">

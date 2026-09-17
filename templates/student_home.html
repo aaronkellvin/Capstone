@@ -5,10 +5,15 @@
 {% block page_subtitle %}{{ guide_note }}{% endblock %}
 {% block content %}
   <div class="pro-stat-grid">
-    <article class="pro-stat pro-stat-blue">
+    <article class="pro-stat {% if weekly_goal.has_progress %}pro-stat-blue{% else %}pro-stat-muted{% endif %}">
       <div>
         <p class="pro-stat-label">Progress</p>
-        <p class="pro-stat-value">{{ weekly_goal.percent if weekly_goal else 0 }}%</p>
+        <p class="pro-stat-value">
+          {% if weekly_goal.has_progress %}{{ weekly_goal.percent }}%{% else %}Start{% endif %}
+        </p>
+        {% if not weekly_goal.has_progress %}
+          <p class="pro-stat-meta">Complete your first activity</p>
+        {% endif %}
       </div>
       <a class="pro-stat-link" href="{{ url_for('practice') }}">View practice →</a>
     </article>
@@ -35,91 +40,40 @@
     </article>
   </div>
 
-  <div class="pro-panel-grid">
-    <section class="pro-panel" aria-labelledby="today-title">
-      <h2 id="today-title">Today</h2>
-      <p>Up to 5 helpful next steps.</p>
-      <div class="today-list">
-        {% for item in today_items %}
-          <article class="today-card today-{{ item.priority }} today-{{ item.type }}">
-            <div class="today-icon" aria-hidden="true" data-type="{{ item.type }}"></div>
-            <div class="today-copy">
-              <p class="today-kicker">{{ item.kicker }}</p>
-              <h3 class="today-title">{{ item.title }}</h3>
-              <p class="today-meta">{{ item.meta }}</p>
-            </div>
-            <a class="today-action {% if item.priority != 'primary' %}today-action-soft{% endif %}" href="{{ item.href }}">
-              {% if item.type == "upload" %}See status
-              {% elif item.type == "result" %}Review
-              {% elif item.type == "assessment" or item.type == "practice" %}Start
-              {% else %}{{ item.action }}{% endif %}
-            </a>
-          </article>
-        {% else %}
-          <article class="empty-state-card">
-            <p class="empty-kicker">Today</p>
+  <section class="pro-panel home-today-panel" aria-labelledby="today-title">
+    <h2 id="today-title">Today</h2>
+    <p>Up to 5 helpful next steps.</p>
+    <div class="today-list">
+      {% for item in today_items %}
+        <article class="today-card today-{{ item.priority }} today-{{ item.type }}">
+          <div class="today-icon" aria-hidden="true" data-type="{{ item.type }}"></div>
+          <div class="today-copy">
+            <p class="today-kicker">{{ item.kicker }}</p>
+            <h3 class="today-title">{{ item.title }}</h3>
+            <p class="today-meta">{{ item.meta }}</p>
+          </div>
+          <a class="today-action {% if item.priority != 'primary' %}today-action-soft{% endif %}" href="{{ item.href }}">
+            {% if item.type == "upload" %}See status
+            {% elif item.type == "result" %}Review
+            {% elif item.type == "assessment" or item.type == "practice" %}Start
+            {% else %}{{ item.action }}{% endif %}
+          </a>
+        </article>
+      {% else %}
+        <article class="empty-state-card">
+          <p class="empty-kicker">Your next step</p>
+          {% if weekly_goal.has_progress %}
             <h3 class="empty-title">You’re all caught up</h3>
             <p class="empty-copy">When something needs attention, it will show up here.</p>
-          </article>
-        {% endfor %}
-      </div>
-    </section>
-
-    <section class="pro-panel" aria-labelledby="subject-pulse-title">
-      <h2 id="subject-pulse-title">Subject pulse</h2>
-      <p>Real progress from your English, Math, and Science work.</p>
-      <ul class="pro-activity">
-        {% for subject in subjects %}
-          <li>
-            <span class="pro-dot" aria-hidden="true"></span>
-            <div>
-              <strong>{{ subject.name }}</strong>
-              <div class="today-meta">
-                {% if subject.progress_percent <= 0 %}
-                  Not started yet
-                {% elif subject.progress_percent >= 100 %}
-                  Completed · {{ subject.progress_insight }}
-                {% else %}
-                  {{ subject.progress_percent }}% · {{ subject.progress_insight }}
-                {% endif %}
-              </div>
-            </div>
-            <a class="today-meta pro-pulse-link" href="{{ url_for('subject_hub', slug=subject.slug) }}">Open</a>
-          </li>
-        {% endfor %}
-      </ul>
-    </section>
-
-    <section class="pro-panel" aria-labelledby="progress-tracker-title">
-      <h2 id="progress-tracker-title">Progress tracker</h2>
-      <p>Based only on work you have already done.</p>
-      <div class="pro-progress">
-        <div class="pro-progress-row">
-          <header>
-            <span>Overall</span>
-            <span>{{ weekly_goal.percent if weekly_goal else 0 }}%{% if not weekly_goal or weekly_goal.percent <= 0 %} · Not started{% endif %}</span>
-          </header>
-          <div class="pro-progress-bar {% if not weekly_goal or weekly_goal.percent <= 0 %}is-empty{% endif %}">
-            <span class="bar-blue" style="width: {{ weekly_goal.percent if weekly_goal else 0 }}%;"></span>
-          </div>
-        </div>
-        {% for subject in subjects %}
-          <div class="pro-progress-row">
-            <header>
-              <span>{{ subject.name }}</span>
-              <span>
-                {% if subject.progress_percent <= 0 %}0% · Not started
-                {% else %}{{ subject.progress_percent }}%{% endif %}
-              </span>
-            </header>
-            <div class="pro-progress-bar {% if subject.progress_percent <= 0 %}is-empty{% endif %}">
-              <span class="{% if loop.index == 1 %}bar-blue{% elif loop.index == 2 %}bar-cyan{% else %}bar-green{% endif %}" style="width: {{ subject.progress_percent }}%;"></span>
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-    </section>
-  </div>
+          {% else %}
+            <h3 class="empty-title">Start with a subject</h3>
+            <p class="empty-copy">{{ weekly_goal.hint }}</p>
+            <a class="today-action" href="#subjects-title">Explore Subjects</a>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  </section>
 
   <section class="home-section subjects-showcase" aria-labelledby="subjects-title">
     <div class="section-head section-head-row">
@@ -138,9 +92,11 @@
             <span class="subject-open">Open</span>
           </div>
           <p class="subject-name">{{ subject.name or subject.slug|title }}</p>
-          <p class="subject-progress {% if subject.progress_percent <= 0 %}is-empty{% endif %}">
-            {% if subject.progress_percent <= 0 %}
-              0% · Not started
+          <p class="subject-progress {% if not subject.has_progress %}is-empty{% endif %}">
+            {% if not subject.has_progress %}
+              Not started
+            {% elif subject.progress_percent <= 0 %}
+              0% complete · {{ subject.progress_insight }}
             {% elif subject.progress_percent >= 100 %}
               Completed · {{ subject.progress_insight }}
             {% else %}

@@ -1,41 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Practice Check — Bloom</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-</head>
-<body class="app-body" {% if session_expires_at %}data-session-expires="{{ session_expires_at }}"{% endif %} data-login-url="{{ url_for('login') }}">
-  <div class="app-bg" aria-hidden="true">
-    <span class="ribbon ribbon-blue"></span>
-    <span class="ribbon ribbon-red"></span>
-    <span class="dot-field"></span>
-  </div>
-
-  {% set topbar_sub = "Practice Check" %}
-  {% include "partials/topbar.html" %}
-
-  <main class="app-main">
-  {% include "partials/flash.html" %}
-    <section class="take-shell" aria-labelledby="take-title">
+{% extends "layouts/pro.html" %}
+{% set active_tab = "practice" %}
+{% set topbar_sub = "Practice Check" %}
+{% block title %}Practice Check — Bloom{% endblock %}
+{% block body_class %}pro-focus{% endblock %}
+{% block page_header %}{% endblock %}
+{% block content_class %}pro-content-plain{% endblock %}
+{% block content %}
+    <section class="take-shell practice-take-shell subject-accent-{{ subject.slug }}" aria-labelledby="take-title">
       <div class="take-top">
         <div>
           <a class="hub-back" href="{{ url_for('practice_setup', subject_slug=subject.slug, material_slug=material_slug) }}">Back to setup</a>
-          <p class="hero-kicker summary-kicker">{{ subject.name }} · {{ bloom_label }}</p>
+          <div class="status-row take-status-row">
+            <span class="status-pill status-subject">{{ subject.name }}</span>
+            <span class="status-pill status-practice">{{ bloom_label }}</span>
+            <span class="status-pill status-neutral">{{ difficulty_name }}</span>
+          </div>
           <h1 id="take-title" class="take-title">{{ material_title }} Practice</h1>
-          <p class="section-note">Difficulty: <strong>{{ difficulty_name }}</strong> · {{ questions|length }} questions</p>
+          <p class="section-note">{{ questions|length }} questions · Your answers save on this device.</p>
         </div>
         <p class="take-progress-label" aria-live="polite">
-          <span id="progress-text">1</span> / {{ questions|length }}
+          Question <strong id="progress-text">1</strong> of {{ questions|length }}
         </p>
       </div>
 
-      <div class="take-progress" role="progressbar" aria-valuemin="1" aria-valuemax="{{ questions|length }}" aria-valuenow="1" aria-labelledby="take-title">
-        <span id="progress-bar" style="width: {{ (1 / questions|length * 100)|round }}%;"></span>
+      <div class="take-progress-block">
+        <div class="take-progress" role="progressbar" aria-valuemin="1" aria-valuemax="{{ questions|length }}" aria-valuenow="1" aria-labelledby="take-title">
+          <span id="progress-bar" style="width: {{ (1 / questions|length * 100)|round }}%;"></span>
+        </div>
+        <ol class="take-steps" aria-hidden="true">
+          {% for q in questions %}
+            <li class="take-step {% if loop.first %}is-current{% endif %}" data-step="{{ loop.index0 }}"></li>
+          {% endfor %}
+        </ol>
       </div>
 
       <form id="practice-take-form" method="POST" action="{{ url_for('practice_submit', subject_slug=subject.slug, material_slug=material_slug) }}" data-draft-key="bloom-practice:{{ draft_id }}" data-loading="Submitting your practice…">
@@ -45,7 +41,10 @@
             data-question="{{ loop.index0 }}"
             {% if not loop.first %}hidden{% endif %}
           >
-            <p class="hub-card-kicker">{{ q.bloom }} · {{ q.type_label }}</p>
+            <div class="status-row question-status-row">
+              <span class="status-pill status-thinking">{{ q.bloom }}</span>
+              <span class="status-pill status-neutral">{{ q.type_label }}</span>
+            </div>
             <h2 class="take-question">{{ q.prompt }}</h2>
             <p class="summary-cite">Source: {{ q.citation }}</p>
 
@@ -80,9 +79,7 @@
 
       <p class="login-help">This is personal practice. It does not affect school grades.</p>
     </section>
-  </main>
-
-  <script src="{{ url_for('static', filename='js/topbar.js') }}" defer></script>
+{% endblock %}
+{% block scripts %}
   <script src="{{ url_for('static', filename='js/practice_take.js') }}" defer></script>
-</body>
-</html>
+{% endblock %}

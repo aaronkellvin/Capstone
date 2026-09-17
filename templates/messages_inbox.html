@@ -1,70 +1,64 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Messages — Bloom</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-</head>
-<body class="app-body {% if is_teacher %}staff-body{% endif %}">
-  <div class="app-bg" aria-hidden="true">
-    <span class="ribbon ribbon-blue"></span>
-    <span class="ribbon ribbon-red"></span>
-    <span class="dot-field"></span>
-  </div>
-
+{% extends "layouts/pro.html" %}
+{% set active_tab = "messages" if not is_teacher else "" %}
+{% set topbar_sub = "Messages" %}
+{% block title %}Messages — Bloom{% endblock %}
+{% block page_title %}Messages{% endblock %}
+{% block page_subtitle %}
   {% if is_teacher %}
-    {% include "partials/staff_topbar.html" %}
+    Private academic chats with your students.
   {% else %}
-    {% include "partials/topbar.html" %}
+    Ask your teachers about lessons, assessments, and materials.
   {% endif %}
+{% endblock %}
+{% block content %}
+  <section class="message-inbox" aria-labelledby="conversation-title">
+    <div class="section-heading-row">
+      <div>
+        <p class="section-eyebrow">Private conversations</p>
+        <h2 class="section-title section-title-sm" id="conversation-title">
+          {% if is_teacher %}Student conversations{% else %}Your teachers{% endif %}
+        </h2>
+      </div>
+      {% if threads %}<span class="count-badge">{{ threads|length }} conversation{% if threads|length != 1 %}s{% endif %}</span>{% endif %}
+    </div>
 
-  <main class="app-main">
-    {% include "partials/flash.html" %}
-    <section class="home-section">
-      <h1 class="section-title">Messages</h1>
-      <p class="section-note">
-        {% if is_teacher %}
-          Private academic chats with your students.
-        {% else %}
-          Chat with your teachers about lessons, assessments, and materials.
-        {% endif %}
-      </p>
-
-      {% if threads %}
-        <div class="hub-list stack-md">
-          {% for thread in threads %}
-            <a class="hub-card message-row {% if thread.unread %}is-unread-card{% endif %}" href="{{ thread.href }}">
-              <span class="unread-dot {% if thread.unread %}is-on{% endif %}" aria-hidden="true"></span>
-              <span class="avatar avatar-lg" aria-hidden="true">{{ thread.initials }}</span>
-              <div>
-                <p class="hub-card-kicker">{{ thread.meta }}{% if thread.unread %} · {{ thread.unread }} new{% endif %}</p>
-                <h2 class="hub-card-title">{{ thread.name }}</h2>
-                <p class="hub-card-meta">{{ thread.preview }}</p>
+    {% if threads %}
+      <div class="hub-list message-list">
+        {% for thread in threads %}
+          <a class="hub-card message-row subject-accent-{{ thread.subject_slug }} {% if thread.unread %}is-unread-card{% endif %} {% if not thread.started %}is-starter{% endif %}" href="{{ thread.href }}">
+            <span class="avatar avatar-lg message-avatar" aria-hidden="true">{{ thread.initials }}</span>
+            <div class="message-row-main">
+              <div class="status-row">
+                <span class="status-pill status-subject">{{ thread.meta }}</span>
+                {% if thread.unread %}<span class="status-pill status-new">New message</span>{% endif %}
               </div>
-              <p class="message-when">{{ thread.when }}</p>
-            </a>
-          {% endfor %}
-        </div>
-      {% else %}
-        <article class="empty-state-card">
-          <p class="empty-kicker">Messages</p>
-          <h3 class="empty-title">{% if is_teacher %}No student messages yet{% else %}No teachers to message yet{% endif %}</h3>
-          <p class="empty-copy">
-            {% if is_teacher %}
-              When a student asks a question, it will appear here.
-            {% else %}
-              Your subject teachers will show up here when accounts are ready.
-            {% endif %}
-          </p>
-        </article>
-      {% endif %}
-    </section>
-  </main>
-
-  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
-</body>
-</html>
+              <h3 class="message-row-name">{{ thread.name }}</h3>
+              <p class="message-row-snippet">{{ thread.preview }}</p>
+            </div>
+            <div class="message-row-aside">
+              {% if thread.when %}<time class="message-when">{{ thread.when }}</time>{% endif %}
+              {% if thread.unread %}
+                <span class="message-unread-badge" aria-label="{{ thread.unread }} unread message{% if thread.unread != 1 %}s{% endif %}">{{ thread.unread }}</span>
+              {% else %}
+                <span class="message-open-cue" aria-hidden="true">→</span>
+              {% endif %}
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <article class="empty-state-card message-empty">
+        <span class="empty-state-icon" aria-hidden="true">✉</span>
+        <p class="empty-kicker">Messages</p>
+        <h3 class="empty-title">{% if is_teacher %}No student messages yet{% else %}No teachers to message yet{% endif %}</h3>
+        <p class="empty-copy">
+          {% if is_teacher %}
+            When a student asks a question, it will appear here.
+          {% else %}
+            Your subject teachers will show up here when accounts are ready.
+          {% endif %}
+        </p>
+      </article>
+    {% endif %}
+  </section>
+{% endblock %}

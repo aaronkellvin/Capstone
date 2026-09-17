@@ -65,6 +65,23 @@
     status.classList.toggle("is-error", Boolean(isError));
   };
 
+  const addRetry = (bubble, body) => {
+    if (!bubble) return;
+    let retry = bubble.querySelector(".chat-retry");
+    if (!retry) {
+      retry = document.createElement("button");
+      retry.type = "button";
+      retry.className = "chat-retry";
+      retry.textContent = "Retry";
+      retry.addEventListener("click", () => {
+        if (pending) return;
+        bubble.remove();
+        sendMessage(body);
+      });
+      bubble.appendChild(retry);
+    }
+  };
+
   const setUnreadBadge = (count) => {
     const link = document.querySelector('a[aria-label="Messages"]');
     if (!link) return;
@@ -106,9 +123,7 @@
     }
   };
 
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const body = input.value.trim();
+  const sendMessage = async (body) => {
     if (!body || pending) return;
     const submit = form.querySelector("button[type=submit]");
     pending = true;
@@ -132,7 +147,7 @@
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error("send failed");
-      input.value = "";
+      if (input.value.trim() === body) input.value = "";
       if (temp) temp.remove();
       addBubble(data.message);
       setStatus("");
@@ -142,13 +157,19 @@
         temp.classList.remove("is-sending");
         const stamp = temp.querySelector(".chat-stamp");
         if (stamp) stamp.textContent = "Just now · Failed";
+        addRetry(temp, body);
       }
-      setStatus("Could not send. Check your connection and try again.", true);
+      setStatus("Could not send. Use Retry on the message when you’re ready.", true);
     } finally {
       pending = false;
       if (submit) submit.disabled = false;
       input.focus();
     }
+  };
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    sendMessage(input.value.trim());
   });
 
   input.addEventListener("keydown", (event) => {

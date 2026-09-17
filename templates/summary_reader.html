@@ -1,25 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{ summary.title }} — Bloom</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-</head>
-<body class="app-body">
-  <div class="app-bg" aria-hidden="true">
-    <span class="ribbon ribbon-blue"></span>
-    <span class="ribbon ribbon-red"></span>
-    <span class="dot-field"></span>
-  </div>
-
-  {% set topbar_sub = subject.name %}
-  {% include "partials/topbar.html" %}
-
-  <main class="app-main summary-layout">
+{% extends "layouts/pro.html" %}
+{% set active_tab = "home" %}
+{% set topbar_sub = subject.name %}
+{% block title %}{{ summary.title }} — Bloom{% endblock %}
+{% block page_header %}{% endblock %}
+{% block content_class %}pro-content-plain summary-layout{% endblock %}
+{% block content %}
     <section class="summary-hero" aria-labelledby="summary-title">
       <a class="hub-back" href="{{ url_for('subject_hub', slug=subject.slug, tab='study') }}">Back to Study</a>
       <p class="hero-kicker summary-kicker">{{ subject.name }} · AI Summary</p>
@@ -55,8 +40,4 @@
       {% endif %}
       <a class="text-link" href="{{ url_for('subject_hub', slug=subject.slug, tab='study') }}">Back to materials</a>
     </div>
-  </main>
-
-  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
-</body>
-</html>
+{% endblock %}

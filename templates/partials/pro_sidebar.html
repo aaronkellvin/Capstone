@@ -39,10 +39,12 @@
 
       <p class="pro-nav-heading">App</p>
       <a class="pro-nav-link {% if tab == 'announcements' %}is-active{% endif %}" href="{{ url_for('announcements') }}">
-        <span class="pro-nav-ico">⚑</span> Announcements
+        <span class="pro-nav-ico">⚑</span> <span>Announcements</span>
+        {% if unread_announcements %}<span class="nav-count" id="nav-announcements-count">{{ unread_announcements }}</span>{% endif %}
       </a>
       <a class="pro-nav-link {% if tab == 'messages' %}is-active{% endif %}" href="{{ url_for('messages_inbox') }}">
-        <span class="pro-nav-ico">✉</span> Messages
+        <span class="pro-nav-ico">✉</span> <span>Messages</span>
+        {% if unread_messages %}<span class="nav-count">{{ unread_messages }}</span>{% endif %}
       </a>
       <a class="pro-nav-link {% if tab == 'profile' %}is-active{% endif %}" href="{{ url_for('profile') }}">
         <span class="pro-nav-ico">☺</span> Profile

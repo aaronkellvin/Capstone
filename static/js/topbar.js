@@ -48,6 +48,55 @@
     if (node) node.hidden = true;
   };
 
+  const confirmAction = (message, options = {}) =>
+    new Promise((resolve) => {
+      let dialog = document.getElementById("bloom-confirm-dialog");
+      if (!dialog) {
+        dialog = document.createElement("dialog");
+        dialog.id = "bloom-confirm-dialog";
+        dialog.className = "bloom-dialog";
+        dialog.innerHTML =
+          '<div class="bloom-dialog-card" role="document">' +
+          '<h2 class="bloom-dialog-title">Please confirm</h2>' +
+          '<p class="bloom-dialog-message"></p>' +
+          '<div class="bloom-dialog-actions">' +
+          '<button type="button" class="today-action today-action-soft" data-dialog-cancel>Cancel</button>' +
+          '<button type="button" class="btn-primary btn-inline" data-dialog-confirm>Continue</button>' +
+          "</div></div>";
+        document.body.appendChild(dialog);
+      }
+
+      const messageNode = dialog.querySelector(".bloom-dialog-message");
+      const titleNode = dialog.querySelector(".bloom-dialog-title");
+      const cancel = dialog.querySelector("[data-dialog-cancel]");
+      const confirm = dialog.querySelector("[data-dialog-confirm]");
+      const previousFocus = document.activeElement;
+      messageNode.textContent = message;
+      titleNode.textContent = options.title || "Please confirm";
+      confirm.textContent = options.confirmLabel || "Continue";
+
+      let finished = false;
+      const finish = (accepted) => {
+        if (finished) return;
+        finished = true;
+        dialog.close();
+        if (previousFocus instanceof HTMLElement) previousFocus.focus();
+        resolve(accepted);
+      };
+
+      cancel.onclick = () => finish(false);
+      confirm.onclick = () => finish(true);
+      dialog.oncancel = (event) => {
+        event.preventDefault();
+        finish(false);
+      };
+      dialog.onclick = (event) => {
+        if (event.target === dialog) finish(false);
+      };
+      dialog.showModal();
+      cancel.focus();
+    });
+
   const popovers = [
     ["notify-toggle", "notify-panel"],
     ["profile-toggle", "profile-panel"],
@@ -193,6 +242,24 @@
     }
   };
 
+  const setChoiceError = (form, fields, message) => {
+    if (!fields.length) return;
+    const fieldset = fields[0].closest("fieldset");
+    let err = form.querySelector("#question-types-error");
+    if (!err) {
+      err = document.createElement("p");
+      err.className = "field-error";
+      err.id = `choice-error-${Math.random().toString(36).slice(2)}`;
+      err.setAttribute("role", "alert");
+      fieldset?.appendChild(err);
+    }
+    err.hidden = !message;
+    err.textContent = message || "";
+    fieldset?.setAttribute("aria-invalid", message ? "true" : "false");
+    if (message) fieldset?.setAttribute("aria-describedby", err.id);
+    else fieldset?.removeAttribute("aria-describedby");
+  };
+
   document.querySelectorAll("[data-match]").forEach((input) => {
     const sync = () => {
       const other = document.querySelector(input.getAttribute("data-match"));
@@ -257,15 +324,30 @@
 
   document.querySelectorAll("form").forEach((form) => {
     if (form.id === "practice-take-form" || form.id === "chat-form" || form.id === "announce-mark-all") return;
-    form.addEventListener("submit", (event) => {
-      if (form.dataset.confirm && !window.confirm(form.dataset.confirm)) {
+    const typeFields = [...form.querySelectorAll('input[name="types"]')];
+    typeFields.forEach((field) => {
+      field.addEventListener("change", () => {
+        if (typeFields.some((box) => box.checked)) setChoiceError(form, typeFields, "");
+      });
+    });
+
+    form.addEventListener("submit", async (event) => {
+      if (form.dataset.confirm && form.dataset.confirmedOnce !== "1") {
         event.preventDefault();
+        const accepted = await confirmAction(form.dataset.confirm, {
+          confirmLabel: form.dataset.confirmLabel || "Continue",
+        });
+        if (accepted) {
+          form.dataset.confirmedOnce = "1";
+          form.requestSubmit(event.submitter || undefined);
+        }
         return;
       }
-      const types = form.querySelectorAll('input[name="types"]');
-      if (types.length && ![...types].some((box) => box.checked)) {
+      delete form.dataset.confirmedOnce;
+      if (typeFields.length && !typeFields.some((box) => box.checked)) {
         event.preventDefault();
-        window.alert("Choose at least one question type.");
+        setChoiceError(form, typeFields, "Choose at least one question type.");
+        typeFields[0].focus();
         return;
       }
       const matchInput = form.querySelector("[data-match]");
@@ -280,7 +362,7 @@
       }
       const submit = form.querySelector('button[type="submit"]:not([hidden])');
       if (submit) submit.disabled = true;
-      const loading = form.dataset.loading;
+      const loading = form.dataset.loading || (form.dataset.confirm ? "Saving changes…" : "");
       if (loading) overlay(loading);
     });
   });
@@ -309,4 +391,10 @@
   };
 
   window.BloomCsrf = { token: csrfToken, withCsrf, ensureFormCsrf };
+  window.BloomUi = {
+    confirm: confirmAction,
+    hideLoading: hideOverlay,
+    setFieldError,
+    showLoading: overlay,
+  };
 })();

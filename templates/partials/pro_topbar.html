@@ -1,5 +1,12 @@
 <header class="pro-topbar">
-  <button type="button" class="pro-menu-btn" id="sidebar-toggle" aria-label="Toggle sidebar">☰</button>
+  <button
+    type="button"
+    class="pro-menu-btn"
+    id="sidebar-toggle"
+    aria-label="Toggle sidebar"
+    aria-controls="pro-sidebar"
+    aria-expanded="false"
+  >☰</button>
 
   {% if topbar_sub %}
     <p class="pro-context">{{ topbar_sub }}</p>
@@ -39,10 +46,6 @@
           <a class="notify-all" href="{{ url_for('announcements') }}">View announcement history</a>
         </div>
       </div>
-    {% endif %}
-
-    {% if user and user.role in ['student', 'teacher'] %}
-      {% include "partials/header_messages.html" %}
     {% endif %}
 
     {% include "partials/header_account.html" %}

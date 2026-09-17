@@ -2,31 +2,58 @@
 {% set active_tab = "results" %}
 {% block title %}Results — Bloom{% endblock %}
 {% block page_title %}Results{% endblock %}
-{% block page_subtitle %}Review and improve. Assistive feedback only.{% endblock %}
-{% block content %}
-  <div class="filter-chips" role="group" aria-label="Result filters">
+{% block page_subtitle %}See your progress, revisit feedback, and choose what to practice next.{% endblock %}
+{% block page_actions %}
+  <div class="filter-chips on-hero" role="group" aria-label="Result filters">
     <a class="chip-link {% if filter == 'all' %}active{% endif %}" href="{{ url_for('results', filter='all') }}">All</a>
     <a class="chip-link {% if filter == 'assessments' %}active{% endif %}" href="{{ url_for('results', filter='assessments') }}">Assessments</a>
     <a class="chip-link {% if filter == 'practice' %}active{% endif %}" href="{{ url_for('results', filter='practice') }}">Practice</a>
   </div>
+{% endblock %}
+{% block content %}
 
-  <div class="hub-list stack-md">
+  <section class="results-library" aria-labelledby="results-history-title">
+    <div class="section-heading-row">
+      <div>
+        <p class="section-eyebrow">Learning history</p>
+        <h2 class="section-title section-title-sm" id="results-history-title">Your recent work</h2>
+      </div>
+      {% if result_items %}<span class="count-badge">{{ result_items|length }} result{% if result_items|length != 1 %}s{% endif %}</span>{% endif %}
+    </div>
+    <div class="hub-list result-card-list">
     {% for item in result_items %}
-      <article class="hub-card">
-        <div>
-          <p class="hub-card-kicker">{{ item.kind }} · {{ item.subject }}{% if item.difficulty %} · {{ item.difficulty }}{% endif %}</p>
+      <article class="hub-card result-list-card subject-accent-{{ item.subject_slug }}">
+        <span class="result-kind-icon result-kind-{{ item.kind_slug }}" aria-hidden="true">
+          {% if item.kind_slug == "assessment" %}A{% else %}P{% endif %}
+        </span>
+        <div class="result-card-main">
+          <div class="status-row">
+            <span class="status-pill status-{{ item.kind_slug }}">{{ item.kind }}</span>
+            <span class="status-pill status-subject">{{ item.subject }}</span>
+            {% if item.difficulty %}<span class="status-pill status-neutral">{{ item.difficulty }}</span>{% endif %}
+          </div>
           <h2 class="hub-card-title">{{ item.title }}</h2>
-          <p class="hub-card-meta">{{ item.meta }}</p>
+          <div class="result-card-meta">
+            <time>{{ item.date_label }}</time>
+            <span class="score-badge score-{{ item.score_tone }}">{{ item.score_label }}</span>
+          </div>
+          {% if item.score_percent is not none %}
+            <div class="result-meter" role="progressbar" aria-label="{{ item.title }} score" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ item.score_percent }}">
+              <span style="width: {{ item.score_percent }}%"></span>
+            </div>
+          {% endif %}
         </div>
-        <a class="today-action today-action-soft" href="{{ item.href }}">{{ item.action }}</a>
+        <a class="today-action today-action-soft result-review-action" href="{{ item.href }}">{{ item.action }} <span aria-hidden="true">→</span></a>
       </article>
     {% else %}
-      <article class="empty-state-card">
+      <article class="empty-state-card results-empty">
+        <span class="empty-state-icon" aria-hidden="true">✓</span>
         <p class="empty-kicker">Results</p>
         <h3 class="empty-title">No results yet</h3>
         <p class="empty-copy">New results will appear here after your next practice or assessment.</p>
         <a class="today-action today-action-soft" href="{{ url_for('practice') }}">Go to Practice</a>
       </article>
     {% endfor %}
-  </div>
+    </div>
+  </section>
 {% endblock %}

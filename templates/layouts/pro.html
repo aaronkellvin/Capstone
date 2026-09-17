@@ -8,7 +8,7 @@
   {% include "partials/prefs_boot.html" %}
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/bloom-pro.css') }}" />
   {% block head %}{% endblock %}
@@ -16,12 +16,14 @@
 <body class="pro-body {% block body_class %}{% endblock %}"
   {% if session_expires_at %}data-session-expires="{{ session_expires_at }}"{% endif %}
   data-login-url="{{ url_for('login') }}">
+  {% include "partials/skip_link.html" %}
   {% include "partials/pro_sidebar.html" %}
+  <div class="pro-sidebar-backdrop" id="pro-sidebar-backdrop" hidden></div>
 
   <div class="pro-wrap">
     {% include "partials/pro_topbar.html" %}
 
-    <main class="pro-main">
+    <main class="pro-main {% block main_class %}{% endblock %}" id="main-content" tabindex="-1">
       {% include "partials/flash.html" %}
 
       {% block page_header %}
@@ -36,7 +38,7 @@
         </section>
       {% endblock %}
 
-      <div class="pro-content">
+      <div class="pro-content {% block content_class %}{% endblock %}">
         {% block content %}{% endblock %}
       </div>
     </main>
