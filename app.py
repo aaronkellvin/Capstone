@@ -2298,66 +2298,130 @@ def announcement_mark_read(announcement_id):
 @require_role("teacher")
 def teacher_home(user):
     slug = teacher_subject_slug(user)
+    subject_name = SUBJECTS[slug]["name"]
     pending = Material.query.filter_by(subject_slug=slug, status="pending").count()
     approved = Material.query.filter_by(subject_slug=slug, status="approved").count()
     drafts = Assessment.query.filter_by(subject_slug=slug, status="draft").count()
     published = Assessment.query.filter_by(subject_slug=slug, status="published").count()
-    attention = []
     unread = unread_message_count(user["id"])
+
+    attention = []
     if unread:
         attention.append(
             {
-                "kicker": "Messages",
+                "type": "messages",
+                "priority": "primary",
+                "subject": subject_name,
+                "subject_slug": slug,
+                "kicker": "Unread chat",
                 "title": f"{unread} student message{'s' if unread != 1 else ''} waiting",
-                "meta": "Private academic chat with your students",
-                "action": "Open",
+                "meta": "Private academic chat with your section",
+                "action": "Reply",
                 "href": url_for("messages_inbox"),
             }
         )
-    for material in Material.query.filter_by(subject_slug=slug, status="pending"):
+    pending_materials = Material.query.filter_by(subject_slug=slug, status="pending").order_by(Material.created_at.desc()).all()
+    if pending_materials:
         attention.append(
             {
-                "kicker": "Review queue",
-                "title": f"{material.title} awaiting approval",
-                "meta": "Student backup upload" if material.source == "student" else "Needs review",
+                "type": "upload",
+                "priority": "primary" if not attention else "secondary",
+                "subject": subject_name,
+                "subject_slug": slug,
+                "kicker": "Pending uploads",
+                "title": (
+                    f"{pending} backup upload{'s' if pending != 1 else ''} need review"
+                    if pending > 1
+                    else f"{pending_materials[0].title} awaiting approval"
+                ),
+                "meta": "Approve student backups so practice can unlock",
                 "action": "Review",
                 "href": url_for("teacher_materials"),
             }
         )
-    for assessment in Assessment.query.filter_by(subject_slug=slug, status="draft"):
+    draft_sets = Assessment.query.filter_by(subject_slug=slug, status="draft").order_by(Assessment.created_at.desc()).all()
+    if draft_sets:
         attention.append(
             {
+                "type": "assessment",
+                "priority": "primary" if not attention else "secondary",
+                "subject": subject_name,
+                "subject_slug": slug,
                 "kicker": "HOTS draft",
-                "title": assessment.title,
-                "meta": "Edit, regenerate, then publish",
-                "action": "Open",
+                "title": (
+                    f"{drafts} HOTS draft{'s' if drafts != 1 else ''} need review"
+                    if drafts > 1
+                    else f"{draft_sets[0].title} is ready to publish"
+                ),
+                "meta": "Edit, regenerate, then publish to your section",
+                "action": "Publish",
                 "href": url_for("teacher_hots"),
             }
         )
-    if not attention:
-        attention.append(
-            {
-                "kicker": "All clear",
-                "title": "No items need attention",
-                "meta": "Upload a lesson or generate HOTS questions when ready",
-                "action": "Materials",
-                "href": url_for("teacher_materials"),
-            }
-        )
+
+    # Class average from auto-scored assessment attempts in this subject (honest; no fake %).
+    score_attempts = Attempt.query.filter_by(subject_slug=slug, kind="assessment").all()
+    percents = [
+        int(100 * item.score_auto / item.score_total_auto)
+        for item in score_attempts
+        if item.score_total_auto
+    ]
+    class_pulse = {
+        "value": f"{int(round(sum(percents) / len(percents)))}%" if percents else "—",
+        "label": "Class avg score" if percents else "No scores yet",
+        "has_data": bool(percents),
+        "href": url_for("teacher_monitor"),
+    }
+
+    first_name = (user.get("name") or "Teacher").split(" ")[0]
     return render_template(
         "teacher_home.html",
         user=user,
-        topbar_sub=f"Teacher · {SUBJECTS[slug]['name']}",
+        topbar_sub=f"Teacher · {subject_name}",
         role_nav=teacher_nav(),
         active_nav="home",
-        subject_name=SUBJECTS[slug]["name"],
+        subject_name=subject_name,
+        subject_slug=slug,
+        greeting=f"Hi, {first_name}",
+        guide_note=f"Here’s what needs your attention across {subject_name} today.",
+        class_pulse=class_pulse,
         stats=[
-            {"label": "Approved materials", "value": str(approved), "meta": "Ready for class"},
-            {"label": "Draft HOTS sets", "value": str(drafts), "meta": "Needs review"},
-            {"label": "Pending uploads", "value": str(pending), "meta": "Student backup"},
-            {"label": "Published assessments", "value": str(published), "meta": "Visible to section"},
+            {
+                "label": "Approved materials",
+                "value": str(approved),
+                "meta": "Ready for class",
+                "tone": "blue",
+                "href": url_for("teacher_materials"),
+            },
+            {
+                "label": "Draft HOTS sets",
+                "value": str(drafts),
+                "meta": "Needs review",
+                "tone": "amber",
+                "href": url_for("teacher_hots"),
+            },
+            {
+                "label": "Pending uploads",
+                "value": str(pending),
+                "meta": "Student backup",
+                "tone": "gray",
+                "href": url_for("teacher_materials"),
+            },
+            {
+                "label": "Published assessments",
+                "value": str(published),
+                "meta": "Visible to section",
+                "tone": "green",
+                "href": url_for("teacher_monitor"),
+            },
         ],
         attention=attention,
+        empty_cta={
+            "title": "You’re all caught up",
+            "copy": "No drafts, uploads, or unread messages need you right now.",
+            "action": "Upload a new lesson",
+            "href": url_for("teacher_materials"),
+        },
     )
 
 

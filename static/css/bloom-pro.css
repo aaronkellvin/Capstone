@@ -1678,10 +1678,123 @@ body.app-body > .app-main > section.take-shell:first-of-type {
   background: var(--pro-red-soft);
 }
 
-.home-pulse-chip.is-messages {
-  border-color: color-mix(in srgb, var(--bloom-secondary) 28%, white);
-  background: var(--pro-indigo-soft);
+.home-pulse-chip.is-quiet {
+  opacity: 0.92;
 }
+
+.home-pulse-chip.is-quiet .home-pulse-value {
+  color: var(--bloom-text-secondary);
+}
+
+/* Teacher home — same command pattern as student, clickable workspace stats */
+.teacher-stat-section {
+  margin-top: 0.25rem;
+}
+
+.teacher-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.teacher-stat-card {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.95rem 1rem;
+  border-radius: 0.95rem;
+  border: 1px solid var(--pro-line);
+  background: var(--bloom-surface);
+  box-shadow: var(--pro-shadow);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.teacher-stat-card:hover,
+.teacher-stat-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--bloom-primary) 28%, white);
+  box-shadow: var(--pro-shadow-hover);
+  outline: none;
+}
+
+.teacher-stat-icon {
+  display: grid;
+  place-items: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  margin-bottom: 0.35rem;
+  border-radius: 0.7rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.teacher-stat-card.tone-blue .teacher-stat-icon {
+  background: var(--pro-blue-soft);
+  color: var(--bloom-primary);
+}
+
+.teacher-stat-card.tone-amber .teacher-stat-icon {
+  background: var(--pro-orange-soft);
+  color: var(--bloom-warning);
+}
+
+.teacher-stat-card.tone-gray .teacher-stat-icon {
+  background: #e8eef5;
+  color: var(--bloom-text-secondary);
+}
+
+.teacher-stat-card.tone-green .teacher-stat-icon {
+  background: var(--pro-green-soft);
+  color: var(--bloom-success);
+}
+
+.teacher-stat-label {
+  margin: 0;
+  color: var(--bloom-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.teacher-stat-value {
+  margin: 0;
+  color: var(--pro-heading);
+  font-family: "Fredoka", "Inter", sans-serif;
+  font-size: 1.65rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.teacher-stat-meta {
+  margin: 0;
+  color: var(--pro-quiet);
+  font-size: 0.78rem;
+}
+
+.teacher-caught-up .empty-title {
+  color: var(--pro-heading);
+}
+
+.pro-body .today-action,
+.pro-body .teacher-stat-card,
+.pro-body .home-pulse-chip {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+@media (max-width: 1100px) {
+  .teacher-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .teacher-stat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 .home-pulse-value {
   font-family: "Fredoka", "Inter", sans-serif;
