@@ -628,6 +628,11 @@ def conversation_preview(conversation: Conversation, user_id: int) -> dict:
         (slug for slug, meta in SUBJECTS.items() if meta["name"] == subject_name),
         "general",
     )
+    started = bool(last)
+    if started:
+        preview = last.body[:90]
+    else:
+        preview = "No messages yet — start a private question about a lesson or assessment"
     return {
         "id": conversation.id,
         "other_id": other.id if other else 0,
@@ -635,11 +640,12 @@ def conversation_preview(conversation: Conversation, user_id: int) -> dict:
         "meta": (other.subject or other.role.title()) if other else "",
         "subject_slug": subject_slug,
         "initials": initials(other.name if other else "B"),
-        "preview": (last.body[:90] if last else "No messages yet"),
-        "when": relative_time(last.created_at if last else conversation.updated_at),
+        "preview": preview,
+        "when": relative_time(last.created_at if last else conversation.updated_at) if started else "",
         "unread": unread,
-        "started": bool(last),
+        "started": started,
         "href": url_for("messages_thread", user_id=other.id) if other else url_for("messages_inbox"),
+        "search": f"{other.name if other else ''} {subject_name} {preview}".lower(),
     }
 
 
@@ -2601,17 +2607,25 @@ def messages_inbox():
             if conversation and conversation.messages:
                 threads.append(conversation_preview(conversation, user["id"]))
             else:
+                subject_slug = next(
+                    (slug for slug, meta in SUBJECTS.items() if meta["name"] == (teacher.subject or "")),
+                    "general",
+                )
+                preview = "No messages yet — start a private question about a lesson or assessment"
                 threads.append(
                     {
                         "id": 0,
                         "other_id": teacher.id,
                         "name": teacher.name,
                         "meta": teacher.subject or "Teacher",
+                        "subject_slug": subject_slug,
                         "initials": initials(teacher.name),
-                        "preview": "Start a private question about a lesson or assessment",
+                        "preview": preview,
                         "when": "",
                         "unread": 0,
+                        "started": False,
                         "href": url_for("messages_thread", user_id=teacher.id),
+                        "search": f"{teacher.name} {teacher.subject or ''} {preview}".lower(),
                     }
                 )
     else:
@@ -2627,9 +2641,15 @@ def messages_inbox():
         ]
         threads.sort(key=lambda item: (0 if item["unread"] else 1, item["when"] == ""))
 
+    subject_filters = [
+        {"slug": meta["slug"], "name": meta["name"]}
+        for meta in SUBJECTS.values()
+        if any(thread.get("subject_slug") == meta["slug"] for thread in threads)
+    ]
     context = {
         "user": user,
         "threads": threads,
+        "message_subjects": subject_filters,
         "is_teacher": user["role"] == "teacher",
         "topbar_sub": "Messages",
         "role_nav": teacher_nav() if user["role"] == "teacher" else None,
