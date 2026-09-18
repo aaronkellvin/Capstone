@@ -12,13 +12,22 @@
   const empty = document.getElementById("chat-empty");
   let pending = false;
 
+  const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+
   const markThreadRead = async () => {
     if (!readUrl) return;
     try {
+      const payload = new FormData();
+      const token = csrfToken();
+      if (token) payload.set("csrf_token", token);
       await fetch(readUrl, {
         method: "POST",
-        headers: { "X-Requested-With": "fetch", Accept: "application/json" },
-        body: new FormData(),
+        headers: {
+          "X-Requested-With": "fetch",
+          Accept: "application/json",
+          ...(token ? { "X-CSRF-Token": token } : {}),
+        },
+        body: payload,
       });
     } catch (_error) {
       /* ignore — poll continues */
@@ -123,6 +132,14 @@
     }
   };
 
+  const updateCharCount = () => {
+    const count = document.getElementById("chat-char-count");
+    if (!count || !input) return;
+    const length = input.value.length;
+    count.textContent = `${length} / 2000`;
+    count.classList.toggle("is-near-limit", length >= 1800);
+  };
+
   const sendMessage = async (body) => {
     if (!body || pending) return;
     const submit = form.querySelector("button[type=submit]");
@@ -140,14 +157,21 @@
     try {
       const payload = new FormData();
       payload.set("body", body);
+      const token = csrfToken();
+      if (token) payload.set("csrf_token", token);
       const response = await fetch(sendUrl, {
         method: "POST",
-        headers: { "X-Requested-With": "fetch", Accept: "application/json" },
+        headers: {
+          "X-Requested-With": "fetch",
+          Accept: "application/json",
+          ...(token ? { "X-CSRF-Token": token } : {}),
+        },
         body: payload,
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error("send failed");
       if (input.value.trim() === body) input.value = "";
+      updateCharCount();
       if (temp) temp.remove();
       addBubble(data.message);
       setStatus("");
@@ -178,6 +202,9 @@
       form.requestSubmit();
     }
   });
+
+  input.addEventListener("input", updateCharCount);
+  updateCharCount();
 
   scrollToEnd();
   markThreadRead();

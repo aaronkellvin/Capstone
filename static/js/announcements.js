@@ -82,10 +82,17 @@
   const markItemReadOnServer = async (id) => {
     if (!id) return null;
     try {
+      const payload = new FormData();
+      const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+      if (token) payload.set("csrf_token", token);
       const response = await fetch(`/announcements/${id}/read`, {
         method: "POST",
-        headers: { "X-Requested-With": "fetch", Accept: "application/json" },
-        body: new FormData(),
+        headers: {
+          "X-Requested-With": "fetch",
+          Accept: "application/json",
+          ...(token ? { "X-CSRF-Token": token } : {}),
+        },
+        body: payload,
       });
       const data = await response.json();
       if (!response.ok || !data.ok) return null;
@@ -333,6 +340,12 @@
     const restoreItem = itemById(restoreId);
     if (restoreItem && !restoreItem.hidden) {
       loadAnnouncement(restoreItem.href, { history: "replace", id: restoreId });
+    }
+  } else if (isDesktop() && !selected) {
+    const preferred =
+      visibleItems().find((item) => item.classList.contains("is-unread")) || visibleItems()[0];
+    if (preferred) {
+      loadAnnouncement(preferred.href, { history: "replace", id: preferred.dataset.id });
     }
   }
 

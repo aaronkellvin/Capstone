@@ -2,37 +2,76 @@
 {% set active_tab = "profile" %}
 {% set topbar_sub = "Profile" %}
 {% block title %}Profile — Bloom{% endblock %}
+{% block body_class %}profile-page{% endblock %}
 {% block page_header %}
   {% set name_parts = user.name.split(" ") %}
-  <section class="pro-hero profile-banner">
+  <section class="pro-hero profile-banner profile-identity">
     <span class="avatar profile-avatar" aria-hidden="true">{{ (name_parts[0][:1] ~ (name_parts[-1][:1] if name_parts|length > 1 else ""))|upper }}</span>
     <div class="profile-banner-copy">
-      <p class="profile-banner-eyebrow">Student profile</p>
+      <p class="profile-banner-eyebrow">Inside Bloom</p>
       <h1 class="pro-hero-title">{{ user.name }}</h1>
-      <p class="pro-hero-sub">{{ user.email }}</p>
+      <p class="pro-hero-sub">{{ user.section or "Grade 7 · Pilot Section" }}</p>
       <div class="profile-badges">
         <span class="hero-pill">{{ user.role|capitalize }}</span>
-        <span class="hero-pill">{{ user.section or "Grade 7 · Pilot Section" }}</span>
+        {% for subject in profile_subjects %}
+          <span class="hero-pill subject-{{ subject.slug }}">{{ subject.name }}</span>
+        {% endfor %}
       </div>
     </div>
   </section>
 {% endblock %}
 {% block content %}
-  <div class="profile-stat-grid" aria-label="Student overview">
-    {% for stat in profile_stats %}
-      <article class="profile-stat profile-stat-{{ stat.tone }}">
-        <span class="profile-stat-icon" aria-hidden="true">
-          {% if stat.tone == "blue" %}▦{% elif stat.tone == "green" %}✓{% else %}✉{% endif %}
-        </span>
-        <div>
-          <p class="profile-stat-value">{{ stat.value }}</p>
-          <p class="profile-stat-label">{{ stat.label }}</p>
-        </div>
-      </article>
-    {% endfor %}
-  </div>
+  <section class="profile-learning" aria-labelledby="learning-title">
+    <div class="section-heading-row">
+      <div>
+        <p class="section-eyebrow">Learning snapshot</p>
+        <h2 id="learning-title" class="section-title section-title-sm">How you’re doing</h2>
+      </div>
+    </div>
 
-  <div class="profile-content-grid">
+    <div class="profile-stat-grid" aria-label="Learning overview">
+      {% for stat in profile_stats %}
+        <article class="profile-stat profile-stat-{{ stat.tone }}">
+          <span class="profile-stat-icon" aria-hidden="true">
+            {% if stat.tone == "blue" %}▦{% elif stat.tone == "green" %}✓{% else %}✉{% endif %}
+          </span>
+          <div>
+            <p class="profile-stat-value">{{ stat.value }}</p>
+            <p class="profile-stat-label">{{ stat.label }}</p>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+
+    <div class="profile-subjects-row" aria-label="Your subjects">
+      {% for subject in profile_subjects %}
+        <a class="profile-subject-chip subject-{{ subject.slug }}" href="{{ subject.href }}">
+          <span class="profile-subject-name">{{ subject.name }}</span>
+          <span class="profile-subject-meta">{{ subject.progress_label }}</span>
+        </a>
+      {% endfor %}
+    </div>
+
+    {% if recent_activity %}
+      <div class="profile-recent">
+        <p class="today-secondary-label">Recent activity</p>
+        <div class="hub-list">
+          {% for item in recent_activity %}
+            <article class="hub-card subject-{{ item.subject_slug }}">
+              <div>
+                <p class="hub-card-kicker">{{ item.subject }} · {{ item.kind|title }}</p>
+                <h3 class="hub-card-title">{{ item.title }}</h3>
+                <p class="hub-card-meta">{{ item.meta }}</p>
+              </div>
+              <a class="today-action today-action-soft" href="{{ item.href }}">Review</a>
+            </article>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </section>
+
+  <div class="profile-content-grid profile-account-grid">
     <section class="lobby-card profile-section" aria-labelledby="profile-details-title">
       <div class="profile-section-head">
         <span class="section-icon section-icon-blue" aria-hidden="true">i</span>
@@ -55,10 +94,11 @@
         <span class="section-icon section-icon-violet" aria-hidden="true">◆</span>
         <div>
           <h2 class="hub-panel-title" id="profile-security-title">Password & security</h2>
-          <p class="section-note">Keep your school account secure.</p>
+          <p class="section-note">Keep your school account secure. Display preferences are in the gear menu.</p>
         </div>
       </div>
       <form class="login-form" method="POST" action="{{ url_for('profile') }}" data-loading="Updating password…">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="field">
           <label for="current_password">Current password</label>
           <input type="password" id="current_password" name="current_password" required />

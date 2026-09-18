@@ -1,32 +1,60 @@
 {% extends "layouts/pro.html" %}
 {% set active_tab = "home" %}
+{% set topbar_sub = subject.name %}
 {% block title %}{{ subject.name }} — Bloom{% endblock %}
-{% block page_title %}{{ subject.name }}{% endblock %}
-{% block page_subtitle %}{{ subject.teacher }} · {{ subject.progress_label }}{% endblock %}
-{% block page_actions %}
-  <a class="hub-back" href="{{ url_for('home') }}">Back to Home</a>
-{% endblock %}
+{% block body_class %}subject-hub-page subject-accent-{{ subject.slug }}{% endblock %}
+{% block page_header %}{% endblock %}
 {% block content %}
-  <section class="hub-hero pro-hub-hero" aria-labelledby="hub-title">
-    <h2 id="hub-title" class="sr-only">{{ subject.name }} overview</h2>
-    <div class="subject-meter hub-meter {% if subject.progress_percent <= 0 %}is-empty{% endif %}" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ subject.progress_percent }}" aria-label="{{ subject.name }} progress">
-      <span style="width: {{ subject.progress_percent }}%;"></span>
+  <section class="hub-command subject-{{ subject.slug }}" aria-labelledby="hub-title">
+    <div class="hub-command-top">
+      <a class="hub-back" href="{{ url_for('home') }}">Back to Home</a>
+      {% if ask_teacher %}
+        <a class="text-link ask-teacher-link" href="{{ ask_teacher.href }}">Ask {{ ask_teacher.name }}</a>
+      {% endif %}
     </div>
-    {% if not subject.has_progress %}
-      <p class="hub-progress-empty">Not started</p>
-    {% elif subject.progress_percent <= 0 %}
-      <p class="hub-progress-empty">0% complete · Keep practicing</p>
-    {% endif %}
-    <p class="hub-next">{{ subject.next_action }}</p>
-    {% if ask_teacher %}
-      <a class="text-link ask-teacher-link" href="{{ ask_teacher.href }}">Ask {{ ask_teacher.name }}</a>
-    {% endif %}
+
+    <div class="hub-command-main">
+      <span class="subject-badge hub-command-badge" aria-hidden="true">{{ subject.name[:1] }}</span>
+      <div class="hub-command-copy">
+        <p class="hub-command-kicker">Subject hub</p>
+        <h1 id="hub-title" class="hub-command-title">{{ subject.name }}</h1>
+        <p class="hub-command-meta">{{ subject.teacher }} · {{ subject.progress_label }}</p>
+        <p class="hub-command-next">{{ subject.next_action }}</p>
+      </div>
+    </div>
+
+    <ol class="hub-path" aria-label="Learning path">
+      <li class="hub-path-step {% if tab == 'study' %}is-current{% endif %}">
+        <a href="{{ url_for('subject_hub', slug=subject.slug, tab='study') }}">
+          <span class="hub-path-num">1</span>
+          <span class="hub-path-label">Learn</span>
+        </a>
+      </li>
+      <li class="hub-path-step {% if tab == 'practice' %}is-current{% endif %}">
+        <a href="{{ url_for('subject_hub', slug=subject.slug, tab='practice') }}">
+          <span class="hub-path-num">2</span>
+          <span class="hub-path-label">Practice</span>
+        </a>
+      </li>
+      <li class="hub-path-step {% if tab == 'assessments' %}is-current{% endif %}">
+        <a href="{{ url_for('subject_hub', slug=subject.slug, tab='assessments') }}">
+          <span class="hub-path-num">3</span>
+          <span class="hub-path-label">Assess</span>
+        </a>
+      </li>
+      <li class="hub-path-step {% if tab == 'results' %}is-current{% endif %}">
+        <a href="{{ url_for('subject_hub', slug=subject.slug, tab='results') }}">
+          <span class="hub-path-num">4</span>
+          <span class="hub-path-label">Improve</span>
+        </a>
+      </li>
+    </ol>
   </section>
 
   <nav class="hub-tabs" aria-label="{{ subject.name }} sections">
-    <a class="hub-tab {% if tab == 'assessments' %}active{% endif %}" href="{{ url_for('subject_hub', slug=subject.slug, tab='assessments') }}">Assessments</a>
     <a class="hub-tab {% if tab == 'study' %}active{% endif %}" href="{{ url_for('subject_hub', slug=subject.slug, tab='study') }}">Study</a>
     <a class="hub-tab {% if tab == 'practice' %}active{% endif %}" href="{{ url_for('subject_hub', slug=subject.slug, tab='practice') }}">Practice</a>
+    <a class="hub-tab {% if tab == 'assessments' %}active{% endif %}" href="{{ url_for('subject_hub', slug=subject.slug, tab='assessments') }}">Assessments</a>
     <a class="hub-tab {% if tab == 'results' %}active{% endif %}" href="{{ url_for('subject_hub', slug=subject.slug, tab='results') }}">Results</a>
   </nav>
 
@@ -92,7 +120,7 @@
     <section class="hub-panel" aria-labelledby="study-title">
       <div class="hub-panel-head">
         <h2 id="study-title" class="hub-panel-title">Materials & Summaries</h2>
-        <p class="section-note">Read first, then practice when you’re ready.</p>
+        <p class="section-note">Learn first, then practice when you’re ready.</p>
       </div>
 
       {% if materials %}
@@ -105,8 +133,8 @@
                 <p class="hub-card-meta">{{ material.meta }}</p>
               </div>
               <div class="hub-card-actions">
-                <a class="today-action today-action-soft" href="{{ material.summary_href }}">Read Summary</a>
-                <a class="text-link" href="{{ material.practice_href }}">Practice this lesson</a>
+                <a class="today-action" href="{{ material.summary_href }}">Read Summary</a>
+                <a class="today-action today-action-soft" href="{{ material.practice_href }}">Practice this lesson</a>
               </div>
             </article>
           {% endfor %}
@@ -119,32 +147,34 @@
         </article>
       {% endif %}
 
-      <div class="backup-card">
-        <p class="hub-card-title">Have a Canvas file not listed yet?</p>
-        <p class="hub-card-meta">
-          This file will be submitted under <strong>{{ subject.name }}</strong>.
-          Check the subject before uploading; teacher approval is required before practice unlocks.
-        </p>
-        <form class="login-form" method="POST" action="{{ url_for('subject_hub', slug=subject.slug) }}" enctype="multipart/form-data" data-loading="Uploading your backup file…">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-          <div class="field">
-            <label for="backup-title">Title</label>
-            <input id="backup-title" name="title" type="text" placeholder="Lesson title" />
-          </div>
-          <div class="field">
-            <label for="backup-file">File</label>
-            <input id="backup-file" name="file" type="file" accept=".pdf,.docx,.pptx,.txt" required />
-          </div>
-          <button type="submit" class="today-action today-action-soft">Upload backup file</button>
-        </form>
-        {% if pending_uploads %}
-          <ul class="pending-list">
-            {% for upload in pending_uploads %}
-              <li>{{ upload }} · Waiting for teacher approval</li>
-            {% endfor %}
-          </ul>
-        {% endif %}
-      </div>
+      <details class="backup-disclosure">
+        <summary>Don’t see your Canvas file?</summary>
+        <div class="backup-card">
+          <p class="hub-card-meta">
+            Upload a backup under <strong>{{ subject.name }}</strong>.
+            Teacher approval is required before practice unlocks.
+          </p>
+          <form class="login-form" method="POST" action="{{ url_for('subject_hub', slug=subject.slug) }}" enctype="multipart/form-data" data-loading="Uploading your backup file…">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="field">
+              <label for="backup-title">Title</label>
+              <input id="backup-title" name="title" type="text" placeholder="Lesson title" />
+            </div>
+            <div class="field">
+              <label for="backup-file">File</label>
+              <input id="backup-file" name="file" type="file" accept=".pdf,.docx,.pptx,.txt" required />
+            </div>
+            <button type="submit" class="today-action today-action-soft">Upload backup file</button>
+          </form>
+          {% if pending_uploads %}
+            <ul class="pending-list">
+              {% for upload in pending_uploads %}
+                <li>{{ upload }} · Waiting for teacher approval</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      </details>
     </section>
 
   {% elif tab == 'practice' %}
@@ -209,7 +239,7 @@
           <h3 class="empty-title">No results to review yet</h3>
           <p class="empty-copy">When feedback is released, it will show up here so you can improve gently.</p>
           <div class="empty-actions">
-            <a class="today-action today-action-soft" href="{{ url_for('subject_hub', slug=subject.slug, tab='assessments') }}">Back to Assessments</a>
+            <a class="today-action today-action-soft" href="{{ url_for('subject_hub', slug=subject.slug, tab='practice') }}">Try Practice</a>
           </div>
         </article>
       {% endif %}

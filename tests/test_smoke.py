@@ -179,7 +179,6 @@ class BloomSmokeTest(unittest.TestCase):
             "/messages",
             f"/messages/with/{self.teacher_id}",
             "/assessments/ecosystems-assessment",
-            "/assessments/ecosystems-assessment/take",
         ]
         for path in paths:
             with self.subTest(path=path):
@@ -189,6 +188,23 @@ class BloomSmokeTest(unittest.TestCase):
                 self.assertIn(b'id="pro-sidebar"', response.data)
                 self.assertIn(b'class="skip-link"', response.data)
 
+    def test_assessment_take_requires_post_start(self):
+        self._login("student@test.local", "student123")
+        blocked = self.client.get("/assessments/ecosystems-assessment/take", follow_redirects=False)
+        self.assertEqual(blocked.status_code, 302)
+        self.assertIn("/assessments/ecosystems-assessment", blocked.headers["Location"])
+        token = self._csrf()
+        started = self.client.post(
+            "/assessments/ecosystems-assessment/start",
+            data={"csrf_token": token},
+            follow_redirects=False,
+        )
+        self.assertEqual(started.status_code, 302)
+        self.assertIn("/assessments/ecosystems-assessment/take", started.headers["Location"])
+        take = self.client.get("/assessments/ecosystems-assessment/take")
+        self.assertEqual(take.status_code, 200)
+        self.assertIn(b'id="main-content"', take.data)
+
     def test_home_removes_duplicate_progress_panels(self):
         self._login("student@test.local", "student123")
         response = self.client.get("/home")
@@ -196,7 +212,8 @@ class BloomSmokeTest(unittest.TestCase):
         self.assertNotIn(b"Subject pulse", response.data)
         self.assertNotIn(b"Progress tracker", response.data)
         self.assertIn(b"My Subjects", response.data)
-        self.assertIn(b"Complete your first activity", response.data)
+        self.assertIn(b"Do this next", response.data)
+        self.assertIn(b"Practice avg", response.data)
 
     def test_mobile_drawer_contract_is_rendered(self):
         self._login("student@test.local", "student123")
@@ -247,8 +264,15 @@ class BloomSmokeTest(unittest.TestCase):
 
     def test_assessment_submit_flow(self):
         self._login("other@test.local", "student123")
-        start = self.client.get("/assessments/ecosystems-assessment/take")
-        self.assertEqual(start.status_code, 200)
+        token = self._csrf()
+        start = self.client.post(
+            "/assessments/ecosystems-assessment/start",
+            data={"csrf_token": token},
+            follow_redirects=False,
+        )
+        self.assertEqual(start.status_code, 302)
+        take = self.client.get("/assessments/ecosystems-assessment/take")
+        self.assertEqual(take.status_code, 200)
         token = self._csrf()
         response = self.client.post(
             "/assessments/ecosystems-assessment/submit",

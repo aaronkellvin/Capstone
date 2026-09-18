@@ -1243,6 +1243,154 @@ body.app-body > .app-main > section.take-shell:first-of-type {
   box-shadow: var(--pro-shadow);
 }
 
+.hub-command {
+  --subject-color: var(--bloom-primary);
+  --subject-soft: var(--pro-blue-soft);
+  margin-bottom: 1rem;
+  padding: 1.15rem 1.2rem 1.05rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--subject-color) 28%, white);
+  border-left: 5px solid var(--subject-color);
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--subject-soft) 75%, white), transparent 46%),
+    var(--bloom-surface);
+  box-shadow: var(--pro-shadow);
+}
+
+.hub-command.subject-english {
+  --subject-color: var(--subject-english);
+  --subject-soft: var(--subject-english-soft);
+}
+
+.hub-command.subject-mathematics {
+  --subject-color: var(--subject-math);
+  --subject-soft: var(--subject-math-soft);
+}
+
+.hub-command.subject-science {
+  --subject-color: var(--subject-science);
+  --subject-soft: var(--subject-science-soft);
+}
+
+.hub-command-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.hub-command-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+.hub-command-badge {
+  flex: 0 0 auto;
+}
+
+.hub-command-kicker {
+  margin: 0 0 0.25rem;
+  color: var(--subject-color);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hub-command-title {
+  margin: 0;
+  color: var(--pro-heading);
+  font-family: "Fredoka", "Inter", sans-serif;
+  font-size: clamp(1.55rem, 3vw, 1.95rem);
+  line-height: 1.15;
+}
+
+.hub-command-meta,
+.hub-command-next {
+  margin: 0.35rem 0 0;
+  color: var(--bloom-text-secondary);
+  font-size: 0.92rem;
+}
+
+.hub-command-next {
+  color: var(--pro-heading);
+  font-weight: 600;
+}
+
+.hub-path {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hub-path-step a {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--pro-line);
+  background: color-mix(in srgb, white 82%, var(--subject-soft));
+  color: var(--bloom-text-secondary);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.hub-path-step.is-current a {
+  border-color: color-mix(in srgb, var(--subject-color) 45%, white);
+  background: #fff;
+  color: var(--pro-heading);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--subject-color) 16%, transparent);
+}
+
+.hub-path-num {
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: var(--subject-color);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.backup-disclosure {
+  margin-top: 1.1rem;
+  border-radius: 0.85rem;
+  border: 1px dashed var(--pro-line-strong);
+  background: var(--pro-card-soft);
+  padding: 0.15rem 0.85rem 0.85rem;
+}
+
+.backup-disclosure > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.75rem 0.1rem;
+  color: var(--pro-heading);
+  font-weight: 700;
+}
+
+.backup-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.backup-disclosure .backup-card {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .pro-content .hub-tabs {
   margin-bottom: 1rem;
 }
@@ -1460,6 +1608,136 @@ body.app-body > .app-main > section.take-shell:first-of-type {
 .pro-body .home-today .today-empty {
   padding: 1.25rem 1.35rem;
   min-height: 0;
+}
+
+/* Home command center — Today leads; stats become quiet chips */
+.pro-body.home-command .pro-hero {
+  display: none;
+}
+
+.home-command-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-bottom: 1.35rem;
+  padding: 1.15rem 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid var(--pro-line);
+  background:
+    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--pro-blue-soft) 70%, white), transparent 48%),
+    var(--bloom-surface);
+}
+
+.home-command-hero-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.home-command-hero .pro-hero-kicker {
+  margin: 0 0 0.35rem;
+}
+
+.home-command-hero .pro-hero-title {
+  margin: 0;
+}
+
+.home-command-hero .pro-hero-sub {
+  margin: 0.4rem 0 0;
+  max-width: 36rem;
+}
+
+.home-command-pulse {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex: 0 1 auto;
+}
+
+.home-pulse-chip {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 5.5rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--pro-line);
+  background: var(--pro-card-soft);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.home-pulse-chip:hover {
+  border-color: color-mix(in srgb, var(--bloom-primary) 35%, white);
+  background: #fff;
+}
+
+.home-pulse-chip.is-alert {
+  border-color: color-mix(in srgb, var(--bloom-error) 28%, white);
+  background: var(--pro-red-soft);
+}
+
+.home-pulse-chip.is-messages {
+  border-color: color-mix(in srgb, var(--bloom-secondary) 28%, white);
+  background: var(--pro-indigo-soft);
+}
+
+.home-pulse-value {
+  font-family: "Fredoka", "Inter", sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--pro-heading);
+  line-height: 1.1;
+}
+
+.home-pulse-label {
+  color: var(--bloom-text-secondary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.home-today-command {
+  margin-bottom: 1.75rem;
+}
+
+.pro-body .today-command-primary {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem 1.15rem;
+  margin-bottom: 0.85rem;
+}
+
+.today-secondary {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.today-secondary-label {
+  margin: 0;
+  color: var(--bloom-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.today-list-secondary {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.pro-body .home-today .today-list-secondary .today-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--bloom-surface);
+  box-shadow: none;
 }
 
 .home-stat-grid {
@@ -2307,6 +2585,58 @@ body.app-body > .app-main > section.take-shell:first-of-type {
   color: #fff;
 }
 
+.result-story-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.85rem 0 0;
+}
+
+.result-story-chips .status-pill {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.results-story {
+  --subject-color: var(--bloom-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.15rem;
+  padding: 1.05rem 1.15rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--subject-color) 28%, white);
+  border-left: 5px solid var(--subject-color);
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--subject-soft, var(--pro-blue-soft)) 75%, white), transparent 46%),
+    var(--bloom-surface);
+  box-shadow: var(--pro-shadow);
+}
+
+.results-story.subject-english { --subject-color: var(--subject-english); --subject-soft: var(--subject-english-soft); }
+.results-story.subject-mathematics { --subject-color: var(--subject-math); --subject-soft: var(--subject-math-soft); }
+.results-story.subject-science { --subject-color: var(--subject-science); --subject-soft: var(--subject-science-soft); }
+
+.results-story-copy {
+  min-width: 0;
+}
+
+.result-next-steps {
+  margin: 1.35rem 0 1rem;
+}
+
+.status-pill.status-good {
+  background: var(--pro-green-soft);
+  color: var(--bloom-success);
+}
+
+.status-pill.status-improve {
+  background: var(--pro-orange-soft);
+  color: var(--bloom-warning);
+}
+
 .result-hero-status {
   margin-bottom: 0.15rem;
 }
@@ -2605,8 +2935,9 @@ body.app-body > .app-main > section.take-shell:first-of-type {
 }
 
 .message-row.is-unread {
-  border-color: #c7d5f5;
-  background: #eef0fd;
+  border-color: color-mix(in srgb, var(--bloom-primary) 34%, white);
+  background: linear-gradient(90deg, #eef2ff, #f7f9ff);
+  box-shadow: inset 3px 0 0 var(--bloom-primary);
 }
 
 .message-row.is-unread .message-row-name {
@@ -2660,6 +2991,18 @@ body.app-body > .app-main > section.take-shell:first-of-type {
   border-radius: 1rem;
   background: #fff;
   box-shadow: var(--pro-shadow-hover);
+}
+
+.pro-body .chat-shell.subject-accent-english .chat-head {
+  background: linear-gradient(100deg, #fff, var(--subject-english-soft));
+}
+
+.pro-body .chat-shell.subject-accent-mathematics .chat-head {
+  background: linear-gradient(100deg, #fff, var(--subject-math-soft));
+}
+
+.pro-body .chat-shell.subject-accent-science .chat-head {
+  background: linear-gradient(100deg, #fff, var(--subject-science-soft));
 }
 
 .pro-body .chat-head {
@@ -2742,16 +3085,31 @@ body.app-body > .app-main > section.take-shell:first-of-type {
 .chat-empty {
   display: grid;
   justify-items: center;
-  gap: 0.35rem;
+  align-content: center;
+  gap: 0.4rem;
+  min-height: 12rem;
+  margin: auto;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: var(--bloom-text-secondary);
 }
 
 .chat-empty h2 {
+  margin: 0;
   color: var(--pro-heading);
   font-family: "Fredoka", "Inter", sans-serif;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
+}
+
+.chat-empty p {
+  margin: 0;
+  max-width: 22rem;
 }
 
 .pro-body .chat-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
   gap: 0.7rem;
   padding: 0.85rem;
   border-top-color: var(--pro-line);
@@ -2770,11 +3128,71 @@ body.app-body > .app-main > section.take-shell:first-of-type {
   color: var(--pro-ink);
 }
 
+.pro-body .chat-composer textarea:focus {
+  outline: none;
+  border-color: var(--bloom-primary);
+  box-shadow: 0 0 0 3px var(--bloom-focus);
+  background: #fff;
+}
+
+.chat-composer-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
 .chat-composer-hint {
-  margin: 0.35rem 0 0 0.15rem;
+  margin: 0;
   color: var(--pro-quiet);
   font-size: 0.68rem;
   font-weight: 650;
+}
+
+.chat-char-count {
+  margin: 0;
+  color: var(--pro-quiet);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.chat-char-count.is-near-limit {
+  color: var(--bloom-warning);
+}
+
+.chat-send-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 3.15rem;
+  padding: 0.7rem 1rem;
+  border: 0;
+  border-radius: 0.85rem;
+  background: var(--bloom-primary);
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 16px rgba(42, 87, 213, 0.22);
+}
+
+.chat-send-btn:hover {
+  background: var(--bloom-active);
+}
+
+.chat-send-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.chat-send-btn .icon-svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.pro-body .chat-status {
+  grid-column: 1 / -1;
 }
 
 .pro-body .chat-send {
@@ -3011,6 +3429,60 @@ body.app-body > .app-main > section.take-shell:first-of-type {
   flex-wrap: wrap;
   gap: 0.45rem;
   margin-top: 0.75rem;
+}
+
+.profile-identity {
+  border-left: 5px solid var(--bloom-primary);
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--pro-blue-soft) 80%, white), transparent 42%),
+    var(--bloom-surface);
+}
+
+.profile-learning {
+  margin-bottom: 1.35rem;
+}
+
+.profile-subjects-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin: 0.85rem 0 1rem;
+}
+
+.profile-subject-chip {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--pro-line);
+  border-left: 4px solid var(--subject-color, var(--bloom-primary));
+  background: var(--bloom-surface);
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--pro-shadow);
+}
+
+.profile-subject-chip.subject-english { --subject-color: var(--subject-english); }
+.profile-subject-chip.subject-mathematics { --subject-color: var(--subject-math); }
+.profile-subject-chip.subject-science { --subject-color: var(--subject-science); }
+
+.profile-subject-name {
+  color: var(--pro-heading);
+  font-weight: 800;
+}
+
+.profile-subject-meta {
+  color: var(--bloom-text-secondary);
+  font-size: 0.78rem;
+}
+
+.profile-recent {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.profile-account-grid {
+  margin-top: 0.35rem;
 }
 
 .profile-stat-grid {
@@ -3588,6 +4060,11 @@ body.app-body > .app-main > section.take-shell:first-of-type {
     grid-template-columns: 1fr;
   }
 
+  .results-story {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .choice-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -3598,6 +4075,19 @@ body.app-body > .app-main > section.take-shell:first-of-type {
     align-items: start;
   }
 
+  .home-command-hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .home-command-pulse {
+    justify-content: flex-start;
+  }
+
+  .pro-body .today-command-primary {
+    grid-template-columns: 1fr;
+  }
+
   .pro-body .home-today .today-featured {
     grid-template-columns: auto 1fr;
   }
@@ -3606,6 +4096,14 @@ body.app-body > .app-main > section.take-shell:first-of-type {
     grid-column: 1 / -1;
     width: 100%;
     justify-content: center;
+  }
+
+  .hub-command-main {
+    flex-direction: column;
+  }
+
+  .hub-path {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .work-item-grid {
@@ -3623,6 +4121,10 @@ body.app-body > .app-main > section.take-shell:first-of-type {
   }
 
   .profile-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-subjects-row {
     grid-template-columns: 1fr;
   }
 

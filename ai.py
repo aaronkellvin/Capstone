@@ -241,9 +241,10 @@ def _gemini(prompt: str, key: str) -> str:
 
     last_error = None
     for model in models:
+        # Prefer header auth so the key is not written into request URLs/logs.
         url = (
             "https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{model}:generateContent?key={key}"
+            f"{model}:generateContent"
         )
         body = json.dumps(
             {
@@ -252,7 +253,13 @@ def _gemini(prompt: str, key: str) -> str:
             }
         ).encode("utf-8")
         req = urllib.request.Request(
-            url, data=body, headers={"Content-Type": "application/json"}, method="POST"
+            url,
+            data=body,
+            headers={
+                "Content-Type": "application/json",
+                "x-goog-api-key": key,
+            },
+            method="POST",
         )
         try:
             with urllib.request.urlopen(req, timeout=60) as resp:

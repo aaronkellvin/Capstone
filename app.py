@@ -162,6 +162,16 @@ def normalize_difficulty(value: str | None) -> str:
     return key if key in DIFFICULTIES else "medium"
 
 
+def subject_slug_from_name(name: str | None) -> str:
+    if not name:
+        return "general"
+    needle = name.strip().lower()
+    for slug, meta in SUBJECTS.items():
+        if meta["name"].lower() == needle or meta["announce"].lower() == needle:
+            return slug
+    return "general"
+
+
 def difficulty_label(value: str | None) -> str:
     return DIFFICULTIES[normalize_difficulty(value)]["label"]
 
@@ -701,6 +711,10 @@ def session_user_payload(user: User) -> dict:
 
 
 def bloom_progress(user_id: int, subject_slug: str) -> tuple[int, str, bool]:
+    """Return average auto-scored practice/assessment score for a subject.
+
+    This is NOT curriculum completion. Callers must label it as an average score.
+    """
     attempts = Attempt.query.filter_by(user_id=user_id, subject_slug=subject_slug).all()
     if not attempts:
         return 0, "Start with a summary or Practice Check", False
@@ -722,6 +736,17 @@ def bloom_progress(user_id: int, subject_slug: str) -> tuple[int, str, bool]:
     else:
         next_line = f"Getting stronger in {strongest}"
     return percent, next_line, True
+
+
+def progress_display_label(percent: int, has_progress: bool, insight: str = "") -> str:
+    """Honest label for bloom_progress values (average score, not completion)."""
+    if not has_progress:
+        return "Not started"
+    if percent <= 0:
+        base = "No auto-scored items yet"
+    else:
+        base = f"{percent}% avg score"
+    return f"{base} · {insight}" if insight else base
 
 
 def build_today(user_id: int) -> list[dict]:
@@ -845,17 +870,24 @@ def score_answers(questions: list[dict], form) -> tuple[list[dict], int, int, st
                 "status_label": status_label,
             }
         )
+    unanswered = sum(1 for item in review_items if item["your_answer"] == "(No answer)")
     if auto_total:
         score_label = f"{earned}/{auto_total} automatic items"
-        encouragement = (
-            "Great focus on the multiple-choice items. Review the open answers to grow more."
-            if earned == auto_total
-            else "Good effort. Review 1–2 items below to strengthen your HOTS skills."
-        )
+        if unanswered == len(review_items):
+            encouragement = "No answers were submitted. Review the items below, then try another practice when you are ready."
+        elif earned == auto_total and unanswered == 0:
+            encouragement = "Great focus on the multiple-choice items. Review the open answers to grow more."
+        elif earned == 0:
+            encouragement = "Let's review together. Check the explanations below, then try again on the parts that felt hard."
+        else:
+            encouragement = "Good effort. Review 1–2 items below to strengthen your HOTS skills."
     else:
         score_label = "Open response practice"
-        encouragement = "Open answers are for learning. Use the explanations and rubric notes to improve."
-    return review_items, earned, auto_total, encouragement if auto_total else encouragement
+        if unanswered == len(review_items):
+            encouragement = "No answers were submitted. Use the explanations and rubric notes, then try again."
+        else:
+            encouragement = "Open answers are for learning. Use the explanations and rubric notes to improve."
+    return review_items, earned, auto_total, encouragement
 
 
 def save_file(file_storage) -> tuple[str, bytes]:
@@ -982,42 +1014,141 @@ def seed():
 
 
 def seed_demo_content():
-    if Material.query.first():
+    if not Material.query.first():
+        teacher = User.query.filter_by(role="teacher", subject="Science").first()
+        if not teacher:
+            return
+        text = (
+            "Ecosystems are communities of living things interacting with their environment. "
+            "Producers such as plants make food through photosynthesis. Consumers eat plants or other animals. "
+            "Decomposers break down dead matter and return nutrients to the soil. Energy flows from the sun to "
+            "producers and then to consumers. A food chain shows one path of energy, while a food web shows many "
+            "connected chains. If one part of an ecosystem is damaged, other parts can also be affected. Students "
+            "should use evidence from this lesson when they explain how living things depend on one another."
+        )
+        material = Material(
+            slug="ecosystems",
+            title="Ecosystems",
+            subject_slug="science",
+            owner_id=teacher.id,
+            source="teacher",
+            status="approved",
+            filename="ecosystems.txt",
+            extracted_text=text,
+        )
+        db.session.add(material)
+        db.session.flush()
+        attach_summary(material)
+        if not Announcement.query.first():
+            db.session.add(
+                Announcement(
+                    subject="Science",
+                    title="Welcome to Bloom",
+                    body="Read the Ecosystems summary, then try a Practice Check when you are ready.",
+                    teacher_id=teacher.id,
+                )
+            )
+        db.session.commit()
+    ensure_demo_assessment()
+    scrub_demo_chat_messages()
+
+
+def ensure_demo_assessment():
+    """Ensure the pilot DB has one published Science assessment for demos."""
+    if Assessment.query.filter_by(status="published").first():
         return
     teacher = User.query.filter_by(role="teacher", subject="Science").first()
-    if not teacher:
+    material = Material.query.filter_by(subject_slug="science", status="approved").first()
+    if not teacher or not material:
         return
-    text = (
-        "Ecosystems are communities of living things interacting with their environment. "
-        "Producers such as plants make food through photosynthesis. Consumers eat plants or other animals. "
-        "Decomposers break down dead matter and return nutrients to the soil. Energy flows from the sun to "
-        "producers and then to consumers. A food chain shows one path of energy, while a food web shows many "
-        "connected chains. If one part of an ecosystem is damaged, other parts can also be affected. Students "
-        "should use evidence from this lesson when they explain how living things depend on one another."
-    )
-    material = Material(
-        slug="ecosystems",
-        title="Ecosystems",
+    assessment = Assessment(
+        slug=unique_slug("ecosystems-hots-check", Assessment),
+        title="Ecosystems HOTS Check",
         subject_slug="science",
-        owner_id=teacher.id,
-        source="teacher",
-        status="approved",
-        filename="ecosystems.txt",
-        extracted_text=text,
+        material_id=material.id,
+        created_by=teacher.id,
+        status="published",
+        attempt_limit=1,
+        extra_attempt=False,
+        release_scores=True,
+        release_answers=True,
+        release_feedback=True,
+        difficulty="medium",
     )
-    db.session.add(material)
+    db.session.add(assessment)
     db.session.flush()
-    attach_summary(material)
-    if not Announcement.query.first():
+    samples = [
+        {
+            "bloom": "Analyze",
+            "qtype": "mcq",
+            "prompt": "A food web in a pond loses many plants. Which outcome best follows from the lesson?",
+            "options_json": json.dumps(
+                [
+                    {"id": "a", "text": "Only decomposers are affected"},
+                    {"id": "b", "text": "Consumers that rely on those plants may struggle next"},
+                    {"id": "c", "text": "Sunlight stops reaching the water"},
+                    {"id": "d", "text": "Energy no longer comes from the sun"},
+                ]
+            ),
+            "answer": "b",
+            "explanation": "Producers support consumers. If plants decline, animals that depend on them can be affected.",
+            "citation": "p. 1",
+        },
+        {
+            "bloom": "Evaluate",
+            "qtype": "essay",
+            "prompt": "A classmate says decomposers are optional in an ecosystem. Evaluate that claim using evidence from the lesson.",
+            "options_json": "[]",
+            "answer": None,
+            "explanation": "Decomposers return nutrients to the soil, so they support producers over time.",
+            "rubric": "Claim + lesson evidence + clear judgment",
+            "citation": "p. 2",
+        },
+        {
+            "bloom": "Create",
+            "qtype": "problem",
+            "prompt": "Create a short Grade 7 example of a three-step food chain that starts with a producer from this lesson.",
+            "options_json": "[]",
+            "answer": None,
+            "explanation": "A strong example starts with a producer, then a consumer, then another consumer or decomposer link.",
+            "rubric": "Original example + clear producer-to-consumer order",
+            "citation": "p. 3",
+        },
+    ]
+    for sample in samples:
+        db.session.add(Question(assessment_id=assessment.id, **sample))
+    if not Announcement.query.filter_by(title="Ecosystems HOTS Check is open").first():
         db.session.add(
             Announcement(
                 subject="Science",
-                title="Welcome to Bloom",
-                body="Read the Ecosystems summary, then try a Practice Check when you are ready.",
+                title="Ecosystems HOTS Check is open",
+                body=(
+                    "Your Ecosystems HOTS Check is published. Open Science → Assessments, "
+                    "start when you are ready, and review feedback after you submit."
+                ),
                 teacher_id=teacher.id,
             )
         )
     db.session.commit()
+
+
+def scrub_demo_chat_messages():
+    """Replace known inappropriate demo chat fixtures in local/pilot databases."""
+    if IS_PRODUCTION:
+        return
+    replacements = 0
+    for message in ChatMessage.query.all():
+        body = (message.body or "").strip()
+        if not body:
+            continue
+        upper = body.upper()
+        if "TANGINA" in upper:
+            message.body = (
+                "Please revise your explanation so it shows cause and effect from the lesson."
+            )
+            replacements += 1
+    if replacements:
+        db.session.commit()
 
 
 with app.app_context():
@@ -1096,14 +1227,7 @@ def home():
                 "slug": slug,
                 "name": meta["name"],
                 "teacher": teacher.name if teacher else "Subject teacher",
-                "progress_label": (
-                    "Not started"
-                    if not has_progress
-                    else "Completed"
-                    if percent >= 100
-                    else f"{percent}% complete"
-                )
-                + (f" · {insight}" if has_progress else ""),
+                "progress_label": progress_display_label(percent, has_progress, insight if has_progress else ""),
                 "progress_insight": insight,
                 "progress_percent": percent,
                 "has_progress": has_progress,
@@ -1119,14 +1243,14 @@ def home():
         "user": user,
         "greeting": f"Hi, {first_name}",
         "topbar_sub": "Home",
-        "guide_note": "Start with Today, then continue from one of your subjects.",
+        "guide_note": "Here’s what to do today — then continue in a subject when you’re ready.",
         "weekly_goal": {
             "percent": overall,
             "has_progress": bool(tracked),
             "hint": (
-                "Start a summary or Practice Check to begin tracking progress."
+                "Start a summary or Practice Check to begin tracking your practice average."
                 if overall <= 0
-                else "Based on your English, Math, and Science work."
+                else "Average of auto-scored practice and assessment items across subjects."
             ),
         },
         "today_items": today,
@@ -1153,21 +1277,34 @@ def subject_hub(slug):
 
     teacher = User.query.filter_by(role="teacher", subject=meta["name"]).first()
     percent, insight, has_progress = bloom_progress(user["id"], slug)
+    published = Assessment.query.filter_by(subject_slug=slug, status="published").all()
+    open_hots = False
+    for assessment in published:
+        taken = Attempt.query.filter_by(
+            user_id=user["id"], assessment_id=assessment.id, kind="assessment"
+        ).count()
+        limit = assessment.attempt_limit if assessment.attempt_limit is not None else 1
+        allowed = limit + (1 if assessment.extra_attempt else 0)
+        if taken < allowed:
+            open_hots = True
+            break
+    if open_hots:
+        next_action = "Open a HOTS Assessment when you’re ready"
+    elif published:
+        next_action = "Review your latest assessment result"
+    elif Material.query.filter_by(subject_slug=slug, status="approved").first():
+        next_action = "Read a summary, then start practice"
+    else:
+        next_action = "Explore approved lessons when your teacher posts them"
     subject = {
         "slug": slug,
         "name": meta["name"],
         "teacher": teacher.name if teacher else "Subject teacher",
-        "progress_label": (
-            "Not started"
-            if not has_progress
-            else "Completed"
-            if percent >= 100
-            else f"{percent}% complete"
-        )
-        + (f" · {insight}" if has_progress else ""),
+        "progress_label": progress_display_label(percent, has_progress, insight if has_progress else ""),
         "progress_percent": percent,
         "has_progress": has_progress,
-        "next_action": insight,
+        "progress_insight": insight,
+        "next_action": next_action,
     }
 
     now = datetime.utcnow()
@@ -1219,14 +1356,14 @@ def subject_hub(slug):
 
     if requested_tab in {"assessments", "study", "practice", "results"}:
         tab = requested_tab
-    elif due or open_items:
-        tab = "assessments"
     elif materials:
         tab = "study"
     elif practice_items:
         tab = "practice"
-    else:
+    elif due or open_items:
         tab = "assessments"
+    else:
+        tab = "study"
     pending_uploads = [
         f"{item.title}"
         for item in Material.query.filter_by(subject_slug=slug, source="student", status="pending", owner_id=user["id"])
@@ -1486,11 +1623,21 @@ def attempt_review(attempt_id):
         else "Open response practice"
     )
     encouragement = attempt.encouragement
+    unanswered = sum(1 for item in review_items if (item.get("your_answer") or "") == "(No answer)")
+    if unanswered == len(review_items) and review_items:
+        hero_title = "Let’s review together."
+    elif attempt.score_total_auto and attempt.score_auto == 0:
+        hero_title = "Let’s review and improve."
+    elif attempt.score_total_auto and attempt.score_auto == attempt.score_total_auto and unanswered == 0:
+        hero_title = "Nice work. Let’s review and improve."
+    else:
+        hero_title = "Let’s review and improve."
     if attempt.kind == "assessment" and attempt.assessment and user["role"] == "student":
         assessment = attempt.assessment
         if not assessment.release_scores:
             score_label = "Score pending release"
             encouragement = "Submitted. Your teacher controls when scores and feedback appear."
+            hero_title = "Submitted. Waiting for teacher release."
         for item in review_items:
             if not assessment.release_answers:
                 item["correct_answer"] = None
@@ -1500,16 +1647,85 @@ def attempt_review(attempt_id):
             if not assessment.release_scores:
                 item["status_label"] = "Submitted"
                 item["status"] = "review"
+
+    next_steps = []
+    if user["role"] == "student":
+        material = None
+        if attempt.assessment and attempt.assessment.material_id:
+            material = db.session.get(Material, attempt.assessment.material_id)
+        if not material:
+            material = (
+                Material.query.filter_by(subject_slug=attempt.subject_slug, status="approved")
+                .order_by(Material.created_at.desc())
+                .first()
+            )
+        needs_retry = unanswered > 0 or (
+            attempt.score_total_auto and attempt.score_auto < attempt.score_total_auto
+        )
+        if material:
+            next_steps.append(
+                {
+                    "kicker": "Practice again" if needs_retry else "Keep going",
+                    "title": f"{'Try another check on' if needs_retry else 'Practice'} {material.title}",
+                    "meta": (
+                        "Use the feedback above while it’s fresh."
+                        if needs_retry
+                        else "Another short practice builds confidence."
+                    ),
+                    "action": "Practice again" if needs_retry else "Start practice",
+                    "href": url_for(
+                        "practice_setup",
+                        subject_slug=material.subject_slug,
+                        material_slug=material.slug,
+                    ),
+                    "primary": True,
+                }
+            )
+            if material.summary:
+                next_steps.append(
+                    {
+                        "kicker": "Understand first",
+                        "title": f"Re-read the {material.title} summary",
+                        "meta": "Review key ideas, then try another practice.",
+                        "action": "Open summary",
+                        "href": url_for(
+                            "summary_reader",
+                            slug=material.subject_slug,
+                            material_slug=material.slug,
+                        ),
+                        "primary": False,
+                    }
+                )
+        next_steps.append(
+            {
+                "kicker": "Subject hub",
+                "title": f"Continue in {meta['name']}",
+                "meta": "Study, practice, or open assessments from one place.",
+                "action": "Open subject",
+                "href": url_for("subject_hub", slug=attempt.subject_slug, tab="practice"),
+                "primary": False,
+            }
+        )
+
+    improve_count = sum(1 for item in review_items if item.get("status") == "improve")
+    good_count = sum(1 for item in review_items if item.get("status") == "good")
     context = {
         "user": user,
         "subject": {"name": meta["name"], "slug": attempt.subject_slug},
         "material_title": attempt.title,
         "score_label": score_label,
         "encouragement": encouragement,
+        "hero_title": hero_title,
         "review_items": review_items,
         "ask_teacher": ask_teacher_context(user, meta["name"], attempt.title),
         "difficulty_name": difficulty_label(attempt.difficulty) if attempt.difficulty else None,
         "kind": attempt.kind,
+        "next_steps": next_steps,
+        "story_summary": {
+            "good": good_count,
+            "improve": improve_count,
+            "total": len(review_items),
+        },
     }
     context.update(announcements_context(user))
     return render_template("practice_result.html", **context)
@@ -1547,6 +1763,27 @@ def assessment_lobby(slug):
     return render_template("assessment_lobby.html", **context)
 
 
+@app.route("/assessments/<slug>/start", methods=["POST"])
+def assessment_start(slug):
+    user = require_user()
+    if not user:
+        return redirect(url_for("login"))
+    assessment = Assessment.query.filter_by(slug=slug).first()
+    if not assessment or assessment.status != "published":
+        flash("That assessment is not available.", "danger")
+        return redirect(url_for("home"))
+    taken = Attempt.query.filter_by(user_id=user["id"], assessment_id=assessment.id, kind="assessment").count()
+    allowed = assessment.attempt_limit + (1 if assessment.extra_attempt else 0)
+    if taken >= allowed:
+        flash("You have used your available attempts.", "danger")
+        return redirect(url_for("assessment_lobby", slug=slug))
+    if not assessment.questions:
+        flash("This assessment has no questions yet.", "danger")
+        return redirect(url_for("assessment_lobby", slug=slug))
+    session["assessment_started"] = slug
+    return redirect(url_for("assessment_take", slug=slug))
+
+
 @app.route("/assessments/<slug>/take")
 def assessment_take(slug):
     user = require_user()
@@ -1561,11 +1798,13 @@ def assessment_take(slug):
     if taken >= allowed:
         flash("You have used your available attempts.", "danger")
         return redirect(url_for("assessment_lobby", slug=slug))
+    if session.get("assessment_started") != slug:
+        flash("Start the assessment from the lobby first.", "danger")
+        return redirect(url_for("assessment_lobby", slug=slug))
     questions = [q.as_dict() for q in assessment.questions]
     if not questions:
         flash("This assessment has no questions yet.", "danger")
         return redirect(url_for("assessment_lobby", slug=slug))
-    session["assessment_started"] = slug
     attempt_label = "1 attempt" if allowed == 1 else f"Up to {allowed} attempts"
     context = {
         "user": user,
@@ -1757,7 +1996,34 @@ def results():
                 "href": url_for("attempt_review", attempt_id=attempt.id),
             }
         )
-    context = {"user": user, "filter": filter_name, "result_items": items}
+    story = None
+    if items:
+        latest = items[0]
+        if latest.get("score_tone") == "pending":
+            story = {
+                "eyebrow": "Latest result",
+                "title": latest["title"],
+                "copy": "Submitted and waiting for your teacher to release scores and feedback.",
+                "cta_href": latest["href"],
+                "cta_label": "Open submission",
+            }
+        elif latest.get("score_percent") is not None and latest["score_percent"] < 70:
+            story = {
+                "eyebrow": "Focus next",
+                "title": latest["title"],
+                "copy": f"Review the feedback in {latest['subject']}, then try another practice while it’s fresh.",
+                "cta_href": latest["href"],
+                "cta_label": "Review and improve",
+            }
+        else:
+            story = {
+                "eyebrow": "Keep building",
+                "title": latest["title"],
+                "copy": "Revisit explanations, then continue with another practice or assessment.",
+                "cta_href": latest["href"],
+                "cta_label": "Review feedback",
+            }
+    context = {"user": user, "filter": filter_name, "result_items": items, "results_story": story}
     context.update(announcements_context(user))
     return render_template("results.html", **context)
 
@@ -1820,12 +2086,39 @@ def profile():
                 }
             ],
         )
+    profile_subjects = []
+    for slug, meta in SUBJECTS.items():
+        percent, insight, has_progress = bloom_progress(user["id"], slug)
+        profile_subjects.append(
+            {
+                "slug": slug,
+                "name": meta["name"],
+                "progress_label": progress_display_label(percent, has_progress, insight if has_progress else ""),
+                "progress_percent": percent,
+                "has_progress": has_progress,
+                "href": url_for("subject_hub", slug=slug),
+            }
+        )
+    recent_activity = []
+    for attempt in (
+        Attempt.query.filter_by(user_id=user["id"]).order_by(Attempt.submitted_at.desc()).limit(3)
+    ):
+        recent_activity.append(
+            {
+                "title": attempt.title,
+                "meta": attempt_meta(attempt),
+                "kind": attempt.kind,
+                "subject": SUBJECTS.get(attempt.subject_slug, {}).get("name", "Subject"),
+                "subject_slug": attempt.subject_slug,
+                "href": url_for("attempt_review", attempt_id=attempt.id),
+            }
+        )
     context = {
         "user": user,
         "profile_stats": [
             {"label": "Subjects", "value": len(SUBJECTS), "tone": "blue"},
             {
-                "label": "Activities",
+                "label": "Practice & checks",
                 "value": Attempt.query.filter_by(user_id=user["id"]).count(),
                 "tone": "green",
             },
@@ -1835,6 +2128,8 @@ def profile():
                 "tone": "violet",
             },
         ],
+        "profile_subjects": profile_subjects,
+        "recent_activity": recent_activity,
     }
     context.update(announcements_context(user))
     return render_template("profile.html", **context)
@@ -1897,6 +2192,19 @@ def announcements(announcement_id=None):
     restore_id = None
     if not announcement_id and request.args.get("view") != "list":
         restore_id = session.get("announce_selected_id")
+        # Auto-open the first unread (or newest) so the detail pane is never a blank wall.
+        if not selected and notes:
+            pick = next((note for note in notes if note.get("unread")), notes[0])
+            if not restore_id or not any(note["id"] == restore_id for note in notes):
+                for note in notes:
+                    note["selected"] = note["id"] == pick["id"]
+                selected = pick
+                session["announce_selected_id"] = pick["id"]
+                restore_id = pick["id"]
+            else:
+                for note in notes:
+                    note["selected"] = note["id"] == restore_id
+                selected = next((note for note in notes if note["selected"]), None)
     subjects = sorted({note.subject for note in records if note.subject})
     context = {
         "user": user,
@@ -2712,8 +3020,7 @@ def messages_thread(user_id):
             return jsonify({"ok": False, "error": "Could not send that message."}), 400
         return redirect(url_for("messages_thread", user_id=other.id))
 
-    if conversation:
-        mark_conversation_read(conversation, user["id"])
+    # Mark-as-read is POST-only (see messages_mark_read + messages.js) so GET stays prefetch-safe.
     draft = (request.args.get("draft") or "").strip()[:2000]
     messages = [serialize_message(item, user["id"]) for item in (conversation.messages if conversation else [])]
     context = {
@@ -2722,6 +3029,7 @@ def messages_thread(user_id):
             "id": other.id,
             "name": other.name,
             "meta": other.subject or other.role.title(),
+            "subject_slug": subject_slug_from_name(other.subject),
             "initials": initials(other.name),
         },
         "messages": messages,
@@ -2749,7 +3057,7 @@ def messages_updates(user_id):
         return jsonify({"ok": True, "messages": [], "read_ids": [], "unread_messages": unread_message_count(user["id"])})
     if not can_access_conversation(user, conversation):
         return jsonify({"ok": False}), 403
-    # GET is read-only (prefetch-safe). Marking happens on thread open or POST /read.
+    # GET is read-only (prefetch-safe). Marking happens via POST /read (messages.js).
     after = request.args.get("after", type=int) or 0
     fresh = [item for item in conversation.messages if item.id > after]
     read_ids = [item.id for item in conversation.messages if item.sender_id == user["id"] and item.read_at]
