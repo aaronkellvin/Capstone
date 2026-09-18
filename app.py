@@ -2313,8 +2313,8 @@ def teacher_home(user):
                 "priority": "primary",
                 "subject": subject_name,
                 "subject_slug": slug,
-                "kicker": "Unread chat",
-                "title": f"{unread} student message{'s' if unread != 1 else ''} waiting",
+                "kicker": "Messages",
+                "title": f"{unread} unread message{'s' if unread != 1 else ''}",
                 "meta": "Private academic chat with your section",
                 "action": "Reply",
                 "href": url_for("messages_inbox"),
@@ -2328,12 +2328,8 @@ def teacher_home(user):
                 "priority": "primary" if not attention else "secondary",
                 "subject": subject_name,
                 "subject_slug": slug,
-                "kicker": "Pending uploads",
-                "title": (
-                    f"{pending} backup upload{'s' if pending != 1 else ''} need review"
-                    if pending > 1
-                    else f"{pending_materials[0].title} awaiting approval"
-                ),
+                "kicker": "Materials",
+                "title": f"{pending} material{'s' if pending != 1 else ''} pending review",
                 "meta": "Approve student backups so practice can unlock",
                 "action": "Review",
                 "href": url_for("teacher_materials"),
@@ -2347,12 +2343,8 @@ def teacher_home(user):
                 "priority": "primary" if not attention else "secondary",
                 "subject": subject_name,
                 "subject_slug": slug,
-                "kicker": "HOTS draft",
-                "title": (
-                    f"{drafts} HOTS draft{'s' if drafts != 1 else ''} need review"
-                    if drafts > 1
-                    else f"{draft_sets[0].title} is ready to publish"
-                ),
+                "kicker": "HOTS",
+                "title": f"{drafts} draft HOTS set{'s' if drafts != 1 else ''}",
                 "meta": "Edit, regenerate, then publish to your section",
                 "action": "Publish",
                 "href": url_for("teacher_hots"),
@@ -2416,9 +2408,10 @@ def teacher_home(user):
             },
         ],
         attention=attention,
+        # Use "note" not "copy" — Jinja {{ empty_cta.copy }} resolves to dict.copy.
         empty_cta={
-            "title": "You’re all caught up",
-            "copy": "No drafts, uploads, or unread messages need you right now.",
+            "title": "Nothing pending right now.",
+            "note": "No drafts, uploads, or unread messages need you right now.",
             "action": "Upload a new lesson",
             "href": url_for("teacher_materials"),
         },

@@ -97,6 +97,12 @@
   --line-strong: var(--pro-line-strong);
   --shadow-sm: 0 1px 2px rgba(21, 43, 75, 0.05), 0 5px 14px rgba(21, 43, 75, 0.07);
   --shadow: var(--pro-shadow);
+
+  /* Motion / interaction timing (additive — teacher + shared polish) */
+  --pro-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --pro-duration-fast: 150ms;
+  --pro-duration-base: 220ms;
+  --pro-duration-slow: 320ms;
 }
 
 .pro-body,
@@ -4336,3 +4342,168 @@ body.app-body > .app-main > section.take-shell:first-of-type {
     padding: 0.7rem;
   }
 }
+
+/* =============================================================================
+   Motion / interaction utilities (additive)
+   ---------------------------------------------------------------------------
+   Shared subtle motion for teacher (and later student) pages. Apply these
+   classes in templates when ready — nothing here is wired by default.
+
+   Timing tokens (on :root):
+     --pro-ease-standard   Shared easing curve
+     --pro-duration-fast   Presses / micro feedback (150ms)
+     --pro-duration-base   Hovers / lifts (220ms)
+     --pro-duration-slow   Entrances / toasts (320ms)
+
+   Classes:
+     .pro-card-interactive  Clickable cards/rows: hover/focus lift + shadow
+     .pro-stagger-in        Parent: children fade/slide in with nth-child delay
+     .pro-skeleton          Shimmer placeholder for async sections
+     .pro-toast-in          Enter animation for confirmation toasts
+     .pro-toast-out         Exit animation for confirmation toasts
+
+   Buttons:
+     .btn / .pro-btn / .btn-primary / .today-action get active:scale(0.98)
+
+   All entrance / transform motion respects prefers-reduced-motion: reduce.
+   ============================================================================= */
+
+.pro-card-interactive {
+  transition:
+    transform var(--pro-duration-base) var(--pro-ease-standard),
+    box-shadow var(--pro-duration-base) var(--pro-ease-standard),
+    border-color var(--pro-duration-base) var(--pro-ease-standard);
+}
+
+.pro-card-interactive:hover,
+.pro-card-interactive:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: var(--pro-shadow-hover);
+  outline: none;
+}
+
+@keyframes pro-stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pro-stagger-in > * {
+  animation: pro-stagger-in var(--pro-duration-slow) var(--pro-ease-standard) both;
+}
+
+.pro-stagger-in > *:nth-child(1) { animation-delay: 0ms; }
+.pro-stagger-in > *:nth-child(2) { animation-delay: 40ms; }
+.pro-stagger-in > *:nth-child(3) { animation-delay: 80ms; }
+.pro-stagger-in > *:nth-child(4) { animation-delay: 120ms; }
+.pro-stagger-in > *:nth-child(5) { animation-delay: 160ms; }
+.pro-stagger-in > *:nth-child(6) { animation-delay: 200ms; }
+.pro-stagger-in > *:nth-child(7) { animation-delay: 240ms; }
+.pro-stagger-in > *:nth-child(8) { animation-delay: 280ms; }
+.pro-stagger-in > *:nth-child(n + 9) { animation-delay: 280ms; }
+
+.btn:active,
+.pro-btn:active,
+.btn-primary:active,
+.today-action:active {
+  transform: scale(0.98);
+  transition:
+    transform var(--pro-duration-fast) var(--pro-ease-standard),
+    box-shadow var(--pro-duration-fast) var(--pro-ease-standard),
+    background-color var(--pro-duration-fast) var(--pro-ease-standard);
+}
+
+@keyframes pro-skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.pro-skeleton {
+  display: block;
+  border-radius: 0.55rem;
+  background: linear-gradient(
+    90deg,
+    var(--pro-card-soft) 0%,
+    #e4ebf5 45%,
+    var(--pro-card-soft) 90%
+  );
+  background-size: 200% 100%;
+  animation: pro-skeleton-shimmer 1.2s ease-in-out infinite;
+  color: transparent;
+  pointer-events: none;
+  user-select: none;
+}
+
+@keyframes pro-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pro-toast-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.pro-toast-in {
+  animation: pro-toast-in var(--pro-duration-slow) var(--pro-ease-standard) both;
+}
+
+.pro-toast-out {
+  animation: pro-toast-out var(--pro-duration-base) var(--pro-ease-standard) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pro-card-interactive,
+  .pro-card-interactive:hover,
+  .pro-card-interactive:focus-visible {
+    transform: none;
+    transition:
+      box-shadow var(--pro-duration-fast) linear,
+      border-color var(--pro-duration-fast) linear;
+  }
+
+  .pro-stagger-in > * {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .btn:active,
+  .pro-btn:active,
+  .btn-primary:active,
+  .today-action:active {
+    transform: none;
+  }
+
+  .pro-skeleton {
+    animation: none;
+    background: var(--pro-card-soft);
+  }
+
+  .pro-toast-in,
+  .pro-toast-out {
+    animation: none;
+  }
+}
+
