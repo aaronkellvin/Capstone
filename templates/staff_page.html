@@ -23,7 +23,7 @@
       {% if messages %}
         <ul class="flash-list home-flash">
           {% for category, message in messages %}
-            <li class="flash flash-{{ category }}">{{ message }}</li>
+            <li class="flash flash-{{ category }} pro-toast-in">{{ message }}</li>
           {% endfor %}
         </ul>
       {% endif %}
@@ -34,9 +34,9 @@
       <p class="section-note">{{ subtitle }}</p>
 
       {% if panels %}
-        <div class="hub-list stack-md">
+        <div class="hub-list stack-md pro-stagger-in">
           {% for panel in panels %}
-            <article class="hub-card hub-card-stack">
+            <article class="hub-card hub-card-stack pro-card-interactive">
               <div>
                 <p class="hub-card-kicker">{{ panel.kicker }}</p>
                 <h2 class="hub-card-title">{{ panel.title }}</h2>
