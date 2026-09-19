@@ -1506,7 +1506,8 @@ body.app-body > .app-main > section.take-shell:first-of-type {
     margin-right: 0.85rem;
   }
 
-  .pro-content {
+  .pro-content,
+  .home-first-region {
     margin-left: 0.85rem;
     margin-right: 0.85rem;
   }
@@ -1615,12 +1616,16 @@ body.app-body > .app-main > section.take-shell:first-of-type {
   display: none;
 }
 
+.home-first-region {
+  margin: 1.25rem 1.25rem 0.15rem;
+}
+
 .home-command-hero {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 1.25rem;
-  margin-bottom: 1.35rem;
+  margin-bottom: 1.05rem;
   padding: 1.15rem 1.25rem;
   border-radius: 1rem;
   border: 1px solid var(--pro-line);
@@ -1700,7 +1705,8 @@ body.app-body > .app-main > section.take-shell:first-of-type {
 }
 
 .home-today-command {
-  margin-bottom: 1.75rem;
+  margin-top: 0.15rem;
+  margin-bottom: 0.5rem;
 }
 
 .pro-body .today-command-primary {
@@ -1851,7 +1857,8 @@ body.app-body > .app-main > section.take-shell:first-of-type {
 }
 
 .pro-body .home-subjects {
-  margin-top: 0.35rem;
+  margin-top: 0;
+  margin-bottom: 0.85rem;
   padding: 0;
   background: none;
   border: 0;
@@ -4030,6 +4037,30 @@ body.app-body > .app-main > section.take-shell:first-of-type {
 
 .question-status-row {
   margin-bottom: 0.65rem;
+}
+
+.take-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.take-nav .today-action,
+.take-nav .btn-primary {
+  margin-top: 0;
+  width: auto;
+  min-width: 8.5rem;
+}
+
+.take-nav #next-btn,
+.take-nav #submit-btn {
+  margin-left: auto;
+}
+
+.take-nav [hidden] {
+  display: none !important;
 }
 
 .pro-body .take-question {

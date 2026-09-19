@@ -1243,7 +1243,7 @@ def home():
         "user": user,
         "greeting": f"Hi, {first_name}",
         "topbar_sub": "Home",
-        "guide_note": "Here’s what to do today — then continue in a subject when you’re ready.",
+        "guide_note": "Open a subject to keep learning — then check Today for what to do next.",
         "weekly_goal": {
             "percent": overall,
             "has_progress": bool(tracked),

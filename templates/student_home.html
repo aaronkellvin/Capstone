@@ -3,31 +3,78 @@
 {% block title %}Home — Bloom{% endblock %}
 {% block body_class %}home-command{% endblock %}
 {% block page_header %}
-  <section class="home-command-hero" aria-labelledby="home-greeting">
-    <div class="home-command-hero-copy">
-      <p class="pro-hero-kicker">Your day</p>
-      <h1 class="pro-hero-title" id="home-greeting">{{ greeting }}</h1>
-      <p class="pro-hero-sub">{{ guide_note }}</p>
-    </div>
-    <div class="home-command-pulse" aria-label="Quick signals">
-      <a class="home-pulse-chip" href="{{ url_for('practice') }}">
-        <span class="home-pulse-value">{% if weekly_goal.has_progress %}{{ weekly_goal.percent }}%{% else %}—{% endif %}</span>
-        <span class="home-pulse-label">Practice avg</span>
-      </a>
-      {% if unread_announcements %}
-        <a class="home-pulse-chip is-alert" href="{{ url_for('announcements') }}">
-          <span class="home-pulse-value">{{ unread_announcements }}</span>
-          <span class="home-pulse-label">Unread news</span>
+  <div class="home-first-region">
+    <section class="home-command-hero" aria-labelledby="home-greeting">
+      <div class="home-command-hero-copy">
+        <p class="pro-hero-kicker">Your classroom</p>
+        <h1 class="pro-hero-title" id="home-greeting">{{ greeting }}</h1>
+        <p class="pro-hero-sub">{{ guide_note }}</p>
+      </div>
+      <div class="home-command-pulse" aria-label="Quick signals">
+        <a class="home-pulse-chip" href="{{ url_for('practice') }}">
+          <span class="home-pulse-value">{% if weekly_goal.has_progress %}{{ weekly_goal.percent }}%{% else %}—{% endif %}</span>
+          <span class="home-pulse-label">Practice avg</span>
         </a>
-      {% endif %}
-      {% if unread_messages %}
-        <a class="home-pulse-chip is-messages" href="{{ url_for('messages_inbox') }}">
-          <span class="home-pulse-value">{{ unread_messages }}</span>
-          <span class="home-pulse-label">Messages</span>
-        </a>
-      {% endif %}
-    </div>
-  </section>
+        {% if unread_announcements %}
+          <a class="home-pulse-chip is-alert" href="{{ url_for('announcements') }}">
+            <span class="home-pulse-value">{{ unread_announcements }}</span>
+            <span class="home-pulse-label">Unread news</span>
+          </a>
+        {% endif %}
+        {% if unread_messages %}
+          <a class="home-pulse-chip is-messages" href="{{ url_for('messages_inbox') }}">
+            <span class="home-pulse-value">{{ unread_messages }}</span>
+            <span class="home-pulse-label">Messages</span>
+          </a>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="home-section home-subjects" aria-labelledby="subjects-title">
+      <div class="section-heading-row">
+        <div>
+          <p class="section-eyebrow">Continue learning</p>
+          <h2 id="subjects-title" class="section-title section-title-sm">My Subjects</h2>
+        </div>
+        <p class="count-badge count-badge-muted">Grade 7 · {{ subjects|length }} subjects</p>
+      </div>
+
+      <div class="subject-grid">
+        {% for subject in subjects %}
+          <a class="subject-card subject-{{ subject.slug }}" href="{{ url_for('subject_hub', slug=subject.slug) }}">
+            <div class="subject-card-top">
+              <span class="subject-badge" aria-hidden="true">{{ subject.name[:1] }}</span>
+              <span class="status-pill status-subject subject-{{ subject.slug }}">{{ subject.name }}</span>
+            </div>
+            <p class="subject-name">{{ subject.name or subject.slug|title }}</p>
+            <p class="subject-progress {% if not subject.has_progress %}is-empty{% endif %}">
+              {% if not subject.has_progress %}
+                Not started
+              {% elif subject.progress_percent <= 0 %}
+                No auto-scored items yet · {{ subject.progress_insight }}
+              {% else %}
+                {{ subject.progress_percent }}% avg score · {{ subject.progress_insight }}
+              {% endif %}
+            </p>
+            <div
+              class="subject-meter {% if subject.progress_percent <= 0 %}is-empty{% endif %}"
+              role="progressbar"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="{{ subject.progress_percent }}"
+              aria-label="{{ subject.name }} average practice score"
+            >
+              <span style="width: {{ subject.progress_percent }}%;"></span>
+            </div>
+            <div class="subject-footer">
+              <p class="subject-next">{{ subject.next_action }}</p>
+              <span class="subject-open">Open</span>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
 {% endblock %}
 {% block content %}
   <section class="home-today home-today-command" aria-labelledby="today-title">
@@ -70,12 +117,12 @@
         <p class="empty-kicker">Your next step</p>
         {% if weekly_goal.has_progress %}
           <h3 class="empty-title">You’re all caught up</h3>
-          <p class="empty-copy">When something needs attention, it will show up here. Pick a subject below to keep learning.</p>
+          <p class="empty-copy">When something needs attention, it will show up here. Open a subject above to keep learning.</p>
         {% else %}
-          <h3 class="empty-title">Start with a subject</h3>
+          <h3 class="empty-title">Nothing waiting yet</h3>
           <p class="empty-copy">{{ weekly_goal.hint }}</p>
         {% endif %}
-        <a class="today-action" href="#subjects-title">Explore subjects <span aria-hidden="true">→</span></a>
+        <a class="today-action" href="#subjects-title">Back to subjects <span aria-hidden="true">↑</span></a>
       </article>
     {% endif %}
 
@@ -107,50 +154,5 @@
         </div>
       </div>
     {% endif %}
-  </section>
-
-  <section class="home-section home-subjects" aria-labelledby="subjects-title">
-    <div class="section-heading-row">
-      <div>
-        <p class="section-eyebrow">Continue learning</p>
-        <h2 id="subjects-title" class="section-title section-title-sm">My Subjects</h2>
-      </div>
-      <p class="count-badge count-badge-muted">Grade 7 · {{ subjects|length }} subjects</p>
-    </div>
-
-    <div class="subject-grid">
-      {% for subject in subjects %}
-        <a class="subject-card subject-{{ subject.slug }}" href="{{ url_for('subject_hub', slug=subject.slug) }}">
-          <div class="subject-card-top">
-            <span class="subject-badge" aria-hidden="true">{{ subject.name[:1] }}</span>
-            <span class="status-pill status-subject subject-{{ subject.slug }}">{{ subject.name }}</span>
-          </div>
-          <p class="subject-name">{{ subject.name or subject.slug|title }}</p>
-          <p class="subject-progress {% if not subject.has_progress %}is-empty{% endif %}">
-            {% if not subject.has_progress %}
-              Not started
-            {% elif subject.progress_percent <= 0 %}
-              No auto-scored items yet · {{ subject.progress_insight }}
-            {% else %}
-              {{ subject.progress_percent }}% avg score · {{ subject.progress_insight }}
-            {% endif %}
-          </p>
-          <div
-            class="subject-meter {% if subject.progress_percent <= 0 %}is-empty{% endif %}"
-            role="progressbar"
-            aria-valuemin="0"
-            aria-valuemax="100"
-            aria-valuenow="{{ subject.progress_percent }}"
-            aria-label="{{ subject.name }} average practice score"
-          >
-            <span style="width: {{ subject.progress_percent }}%;"></span>
-          </div>
-          <div class="subject-footer">
-            <p class="subject-next">{{ subject.next_action }}</p>
-            <span class="subject-open">Open</span>
-          </div>
-        </a>
-      {% endfor %}
-    </div>
   </section>
 {% endblock %}

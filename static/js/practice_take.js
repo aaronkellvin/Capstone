@@ -74,6 +74,13 @@
 
   const progressTrack = document.querySelector(".take-progress");
 
+  const syncNav = () => {
+    prevBtn.disabled = index === 0;
+    const last = index === cards.length - 1;
+    nextBtn.hidden = last;
+    submitBtn.hidden = !last;
+  };
+
   const show = (nextIndex) => {
     cards[index].hidden = true;
     cards[index].classList.remove("is-active");
@@ -89,13 +96,11 @@
       step.classList.toggle("is-done", stepIndex < index);
     });
 
-    prevBtn.disabled = index === 0;
-    const last = index === cards.length - 1;
-    nextBtn.hidden = last;
-    submitBtn.hidden = !last;
+    syncNav();
   };
 
   restoreDraft();
+  syncNav();
 
   form.addEventListener("input", () => {
     dirty = true;
