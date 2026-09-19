@@ -9,7 +9,7 @@ from functools import wraps
 
 from urllib.parse import urlencode
 
-from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
+from flask import Flask, abort, flash, jsonify, redirect, render_template, request, send_from_directory, session, url_for
 from sqlalchemy import inspect as sa_inspect, or_, text
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
@@ -79,6 +79,8 @@ app.config["SESSION_COOKIE_SECURE"] = IS_PRODUCTION or os.environ.get("SESSION_C
     "yes",
 }
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+app.config["AVATAR_FOLDER"] = os.path.join(app.instance_path, "avatars")
+os.makedirs(app.config["AVATAR_FOLDER"], exist_ok=True)
 db.init_app(app)
 init_csrf(app)
 
@@ -207,6 +209,7 @@ def ensure_schema():
         ("quiz_draft", "difficulty", "VARCHAR(20) DEFAULT 'medium'"),
         ("attempt", "difficulty", "VARCHAR(20)"),
         ("assessment", "difficulty", "VARCHAR(20)"),
+        ("user", "avatar_filename", "VARCHAR(255)"),
     )
     with db.engine.begin() as conn:
         for table, column, ddl in additions:
@@ -235,14 +238,7 @@ def current_user():
     if not user:
         session.clear()
         return None
-    return {
-        "id": user.id,
-        "email": user.email,
-        "name": user.name,
-        "role": user.role,
-        "subject": user.subject,
-        "section": user.section,
-    }
+    return session_user_payload(user)
 
 
 def require_user():
@@ -286,6 +282,7 @@ def teacher_nav():
         {"label": "HOTS", "endpoint": "teacher_hots", "key": "hots"},
         {"label": "Monitor", "endpoint": "teacher_monitor", "key": "monitor"},
         {"label": "Announce", "endpoint": "teacher_announce", "key": "announce"},
+        {"label": "Profile", "endpoint": "profile", "key": "profile"},
     ]
 
 
@@ -469,6 +466,7 @@ def serialize_announcement(note, read_ids, selected_id=None, filter_name="all", 
         "preview": preview,
         "teacher": teacher_name,
         "initials": initials(teacher_name),
+        "photo_url": photo_url_for(note.teacher),
         "when": announcement_when_label(note.created_at),
         "posted": (
             f"{note.created_at.strftime('%B %d, %Y').replace(' 0', ' ')} · {note.created_at.strftime('%I:%M %p').lstrip('0')}"
@@ -650,6 +648,7 @@ def conversation_preview(conversation: Conversation, user_id: int) -> dict:
         "meta": (other.subject or other.role.title()) if other else "",
         "subject_slug": subject_slug,
         "initials": initials(other.name if other else "B"),
+        "photo_url": photo_url_for(other),
         "preview": preview,
         "when": relative_time(last.created_at if last else conversation.updated_at) if started else "",
         "unread": unread,
@@ -707,6 +706,8 @@ def session_user_payload(user: User) -> dict:
         "role": user.role,
         "subject": user.subject,
         "section": user.section,
+        "avatar_filename": user.avatar_filename,
+        "avatar_url": photo_url_for(user),
     }
 
 
@@ -912,21 +913,93 @@ def create_material(title, subject_slug, owner_id, source, filename, data) -> Ma
         subject_slug=subject_slug,
         owner_id=owner_id,
         source=source,
-        status="approved" if source == "teacher" else "pending",
+        status="pending",
         filename=stored,
         extracted_text=text,
     )
     db.session.add(material)
     db.session.flush()
-    if source == "teacher":
+    try:
         attach_summary(material)
-        material.status = "approved"
+    except Exception:
+        logger.exception("Could not summarize material %s", material.id)
     db.session.commit()
     return material
 
 
 def path_stem(filename: str) -> str:
     return os.path.splitext(filename)[0].replace("_", " ").replace("-", " ").title()
+
+
+AVATAR_MAX_BYTES = 2 * 1024 * 1024
+AVATAR_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
+
+
+def photo_url_for(user) -> str | None:
+    if not user:
+        return None
+    if isinstance(user, dict):
+        if user.get("avatar_url"):
+            return user["avatar_url"]
+        user_id = user.get("id")
+        filename = user.get("avatar_filename")
+    else:
+        user_id = getattr(user, "id", None)
+        filename = getattr(user, "avatar_filename", None)
+    if not user_id or not filename:
+        return None
+    return url_for("user_photo", user_id=user_id)
+
+
+def avatar_extension(filename: str, data: bytes) -> str:
+    ext = os.path.splitext((filename or "").lower())[1]
+    if ext == ".jpeg":
+        ext = ".jpg"
+    if ext not in AVATAR_EXTS:
+        raise ExtractError("Please upload a JPG, PNG, or WEBP photo.")
+    if ext == ".jpg" and not data.startswith(b"\xff\xd8\xff"):
+        raise ExtractError("That file does not look like a JPG photo.")
+    if ext == ".png" and not data.startswith(b"\x89PNG"):
+        raise ExtractError("That file does not look like a PNG photo.")
+    if ext == ".webp" and not (data.startswith(b"RIFF") and b"WEBP" in data[:16]):
+        raise ExtractError("That file does not look like a WEBP photo.")
+    return ext
+
+
+def avatar_file_path(filename: str) -> str | None:
+    if not filename:
+        return None
+    name = os.path.basename(filename)
+    if name != filename or ".." in filename:
+        return None
+    path = os.path.join(app.config["AVATAR_FOLDER"], name)
+    if not os.path.isfile(path):
+        return None
+    return path
+
+
+def save_avatar(user: User, file_storage) -> None:
+    filename, data = save_file(file_storage)
+    if len(data) > AVATAR_MAX_BYTES:
+        raise ExtractError("Photos are limited to 2 MB.")
+    ext = avatar_extension(filename, data)
+    stored = f"{user.id}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}{ext}"
+    path = os.path.join(app.config["AVATAR_FOLDER"], stored)
+    with open(path, "wb") as handle:
+        handle.write(data)
+    old = user.avatar_filename
+    user.avatar_filename = stored
+    if old:
+        old_path = avatar_file_path(old)
+        if old_path:
+            os.remove(old_path)
+
+
+def remove_avatar(user: User) -> None:
+    old_path = avatar_file_path(user.avatar_filename)
+    user.avatar_filename = None
+    if old_path:
+        os.remove(old_path)
 
 
 def attempt_meta(attempt: Attempt) -> str:
@@ -975,6 +1048,84 @@ def attach_summary(material: Material):
     summary.intro = payload["intro"]
     summary.sections_json = json.dumps(payload["sections"])
     db.session.add(summary)
+
+
+def stored_filename_label(filename: str) -> str:
+    if not filename:
+        return "Pasted text"
+    name = os.path.basename(filename)
+    if len(name) > 15 and name[14] == "_" and name[:14].isdigit():
+        return name[15:] or name
+    return name
+
+
+def material_file_path(material: Material) -> str | None:
+    if not material or not material.filename:
+        return None
+    name = os.path.basename(material.filename)
+    if name != material.filename or ".." in material.filename:
+        return None
+    path = os.path.join(app.config["UPLOAD_FOLDER"], name)
+    if not os.path.isfile(path):
+        return None
+    return path
+
+
+def teacher_owned_material(user, material_id: int) -> Material | None:
+    slug = teacher_subject_slug(user)
+    material = db.session.get(Material, material_id)
+    if not material or material.subject_slug != slug:
+        return None
+    return material
+
+
+def section_students_for(user) -> list[User]:
+    students = User.query.filter_by(role="student").order_by(User.name).all()
+    return [student for student in students if same_section(user, student)]
+
+
+def deploy_material(material: Material):
+    if not material.summary:
+        attach_summary(material)
+    material.status = "approved"
+    material.reject_reason = None
+
+
+def reject_material(material: Material):
+    material.status = "rejected"
+    material.reject_reason = "Not enough usable lesson text or not aligned to the class material."
+
+
+def teacher_student_progress(user, subject_slug: str) -> list[dict]:
+    rows = []
+    for student in section_students_for(user):
+        percent, insight, has_progress = bloom_progress(student.id, subject_slug)
+        attempts = (
+            Attempt.query.filter_by(user_id=student.id, subject_slug=subject_slug)
+            .order_by(Attempt.submitted_at.desc())
+            .all()
+        )
+        last = attempts[0] if attempts else None
+        rows.append(
+            {
+                "id": student.id,
+                "name": student.name,
+                "initials": initials(student.name),
+                "photo_url": photo_url_for(student),
+                "section": student.section or "Grade 7 · Pilot Section",
+                "percent": percent if has_progress else None,
+                "tone": assessment_score_tone(percent if has_progress else None),
+                "insight": insight if has_progress else "No attempts yet",
+                "progress_label": progress_display_label(percent, has_progress, insight if has_progress else ""),
+                "practice_n": sum(1 for item in attempts if item.kind == "practice"),
+                "assessment_n": sum(1 for item in attempts if item.kind == "assessment"),
+                "last_title": last.title if last else "No attempts yet",
+                "last_when": relative_time(last.submitted_at) if last else "",
+                "last_href": url_for("attempt_review", attempt_id=last.id) if last else None,
+                "message_href": url_for("messages_thread", user_id=student.id),
+            }
+        )
+    return rows
 
 
 def seed():
@@ -1039,6 +1190,10 @@ def seed_demo_content():
         db.session.add(material)
         db.session.flush()
         attach_summary(material)
+        seed_path = os.path.join(app.config["UPLOAD_FOLDER"], os.path.basename(material.filename))
+        if not os.path.isfile(seed_path):
+            with open(seed_path, "w", encoding="utf-8") as handle:
+                handle.write(text)
         if not Announcement.query.first():
             db.session.add(
                 Announcement(
@@ -1049,6 +1204,12 @@ def seed_demo_content():
                 )
             )
         db.session.commit()
+    material = Material.query.filter_by(slug="ecosystems").first()
+    if material and material.filename:
+        seed_path = os.path.join(app.config["UPLOAD_FOLDER"], os.path.basename(material.filename))
+        if not os.path.isfile(seed_path) and material.extracted_text:
+            with open(seed_path, "w", encoding="utf-8") as handle:
+                handle.write(material.extracted_text)
     ensure_demo_assessment()
     scrub_demo_chat_messages()
 
@@ -1420,7 +1581,7 @@ def student_backup_upload(user, slug):
             raise ExtractError("Please choose a Canvas file to upload.")
         filename, data = save_file(file)
         create_material(title or path_stem(filename), slug, user["id"], "student", filename, data)
-        flash("Backup uploaded. Practice unlocks after your teacher approves it.", "success")
+        flash("Backup uploaded. Practice unlocks after your teacher reviews the summary.", "success")
     except ExtractError as exc:
         flash(str(exc), "danger")
     return redirect(url_for("subject_hub", slug=slug, tab="study"))
@@ -2035,6 +2196,23 @@ def profile():
         return redirect(url_for("login"))
     record = db.session.get(User, user["id"])
     if request.method == "POST":
+        action = request.form.get("action", "password")
+        if action == "remove_photo":
+            remove_avatar(record)
+            db.session.commit()
+            flash("Profile photo removed.", "success")
+            return redirect(url_for("profile"))
+        if action == "photo" or request.files.get("photo"):
+            photo = request.files.get("photo")
+            try:
+                if not photo or not photo.filename:
+                    raise ExtractError("Choose a photo to upload.")
+                save_avatar(record, photo)
+                db.session.commit()
+                flash("Profile photo updated.", "success")
+            except ExtractError as exc:
+                flash(str(exc), "danger")
+            return redirect(url_for("profile"))
         current = request.form.get("current_password", "")
         new = request.form.get("new_password", "")
         confirm = request.form.get("confirm_password", "")
@@ -2050,71 +2228,39 @@ def profile():
             flash("Password updated. Use your new password next time.", "success")
         return redirect(url_for("profile"))
 
-    if user["role"] != "student":
-        return render_template(
-            "staff_page.html",
-            user=user,
-            topbar_sub="Profile",
-            role_nav=teacher_nav() if user["role"] == "teacher" else admin_nav(),
-            active_nav="profile",
-            title="Profile",
-            subtitle="Account details and password",
-            panels=[{"kicker": "Account", "title": user["name"], "meta": f"{user['email']} · {user['role']}", "action": None, "action_href": None, "soft": True}],
-            form_blocks=[
-                {
-                    "id": "account",
-                    "title": "Change password",
-                    "note": "Update your temporary password.",
-                    "action": url_for("profile"),
-                    "submit": "Update Password",
-                    "loading": "Updating password…",
-                    "fields": [
-                        {"id": "current_password", "name": "current_password", "label": "Current password", "type": "password", "placeholder": "", "required": True},
-                        {"id": "new_password", "name": "new_password", "label": "New password", "type": "password", "placeholder": "", "required": True, "minlength": 8},
-                        {
-                            "id": "confirm_password",
-                            "name": "confirm_password",
-                            "label": "Confirm new password",
-                            "type": "password",
-                            "placeholder": "",
-                            "required": True,
-                            "minlength": 8,
-                            "match": "#new_password",
-                            "match_message": "New passwords must match.",
-                        },
-                    ],
-                }
-            ],
-        )
     profile_subjects = []
-    for slug, meta in SUBJECTS.items():
-        percent, insight, has_progress = bloom_progress(user["id"], slug)
-        profile_subjects.append(
-            {
-                "slug": slug,
-                "name": meta["name"],
-                "progress_label": progress_display_label(percent, has_progress, insight if has_progress else ""),
-                "progress_percent": percent,
-                "has_progress": has_progress,
-                "href": url_for("subject_hub", slug=slug),
-            }
-        )
     recent_activity = []
-    for attempt in (
-        Attempt.query.filter_by(user_id=user["id"]).order_by(Attempt.submitted_at.desc()).limit(3)
-    ):
-        recent_activity.append(
-            {
-                "title": attempt.title,
-                "meta": attempt_meta(attempt),
-                "kind": attempt.kind,
-                "subject": SUBJECTS.get(attempt.subject_slug, {}).get("name", "Subject"),
-                "subject_slug": attempt.subject_slug,
-                "href": url_for("attempt_review", attempt_id=attempt.id),
-            }
-        )
+    if user["role"] == "student":
+        for slug, meta in SUBJECTS.items():
+            percent, insight, has_progress = bloom_progress(user["id"], slug)
+            profile_subjects.append(
+                {
+                    "slug": slug,
+                    "name": meta["name"],
+                    "progress_label": progress_display_label(percent, has_progress, insight if has_progress else ""),
+                    "progress_percent": percent,
+                    "has_progress": has_progress,
+                    "href": url_for("subject_hub", slug=slug),
+                }
+            )
+        for attempt in (
+            Attempt.query.filter_by(user_id=user["id"]).order_by(Attempt.submitted_at.desc()).limit(3)
+        ):
+            recent_activity.append(
+                {
+                    "title": attempt.title,
+                    "meta": attempt_meta(attempt),
+                    "kind": attempt.kind,
+                    "subject": SUBJECTS.get(attempt.subject_slug, {}).get("name", "Subject"),
+                    "subject_slug": attempt.subject_slug,
+                    "href": url_for("attempt_review", attempt_id=attempt.id),
+                }
+            )
     context = {
         "user": user,
+        "topbar_sub": "Profile",
+        "role_nav": teacher_nav() if user["role"] == "teacher" else (admin_nav() if user["role"] == "admin" else None),
+        "active_nav": "profile",
         "profile_stats": [
             {"label": "Subjects", "value": len(SUBJECTS), "tone": "blue"},
             {
@@ -2127,12 +2273,26 @@ def profile():
                 "value": unread_message_count(user["id"]),
                 "tone": "violet",
             },
-        ],
-        "profile_subjects": profile_subjects,
-        "recent_activity": recent_activity,
+        ] if user["role"] == "student" else [],
+        "profile_subjects": profile_subjects if user["role"] == "student" else [],
+        "recent_activity": recent_activity if user["role"] == "student" else [],
     }
     context.update(announcements_context(user))
     return render_template("profile.html", **context)
+
+
+@app.route("/users/<int:user_id>/photo")
+def user_photo(user_id):
+    viewer = require_user()
+    if not viewer:
+        return redirect(url_for("login"))
+    person = db.session.get(User, user_id)
+    if not person or not person.avatar_filename:
+        abort(404)
+    path = avatar_file_path(person.avatar_filename)
+    if not path:
+        abort(404)
+    return send_from_directory(app.config["AVATAR_FOLDER"], os.path.basename(person.avatar_filename))
 
 
 @app.route("/announcements")
@@ -2330,9 +2490,13 @@ def teacher_home(user):
                 "subject_slug": slug,
                 "kicker": "Materials",
                 "title": f"{pending} material{'s' if pending != 1 else ''} pending review",
-                "meta": "Approve student backups so practice can unlock",
+                "meta": "Check the file and summary before students can practice",
                 "action": "Review",
-                "href": url_for("teacher_materials"),
+                "href": (
+                    url_for("teacher_material_review", material_id=pending_materials[0].id)
+                    if pending == 1
+                    else url_for("teacher_materials")
+                ),
             }
         )
     draft_sets = Assessment.query.filter_by(subject_slug=slug, status="draft").order_by(Assessment.created_at.desc()).all()
@@ -2393,9 +2557,9 @@ def teacher_home(user):
                 "href": url_for("teacher_hots"),
             },
             {
-                "label": "Pending uploads",
+                "label": "Pending review",
                 "value": str(pending),
-                "meta": "Student backup",
+                "meta": "File + summary",
                 "tone": "gray",
                 "href": url_for("teacher_materials"),
             },
@@ -2418,30 +2582,59 @@ def teacher_home(user):
     )
 
 
+def material_review_payload(material: Material) -> dict:
+    owner = material.owner
+    has_file = bool(material_file_path(material))
+    return {
+        "id": material.id,
+        "title": material.title,
+        "status": material.status,
+        "source": material.source,
+        "source_label": "Student backup" if material.source == "student" else "Teacher upload",
+        "owner_name": owner.name if owner else "Unknown",
+        "filename": stored_filename_label(material.filename),
+        "char_count": len(material.extracted_text or ""),
+        "extracted_text": material.extracted_text or "",
+        "reject_reason": material.reject_reason,
+        "created_at": material.created_at.strftime("%b %d, %Y") if material.created_at else "",
+        "has_file": has_file,
+        "file_href": url_for("teacher_material_file", material_id=material.id) if has_file else None,
+        "review_href": url_for("teacher_material_review", material_id=material.id),
+        "has_summary": bool(material.summary),
+        "summary": {
+            "intro": material.summary.intro if material.summary else "",
+            "sections": material.summary.sections() if material.summary else [],
+        },
+        "student_summary_href": (
+            url_for("summary_reader", slug=material.subject_slug, material_slug=material.slug)
+            if material.status == "approved" and material.summary
+            else None
+        ),
+    }
+
+
 @app.route("/teacher/materials", methods=["GET", "POST"])
 @require_role("teacher")
 def teacher_materials(user):
     slug = teacher_subject_slug(user)
     if request.method == "POST":
         action = request.form.get("action", "upload")
-        if action == "approve":
-            material = db.session.get(Material, request.form.get("material_id", type=int))
-            if material and material.subject_slug == slug:
-                try:
-                    attach_summary(material)
-                    material.status = "approved"
-                    db.session.commit()
-                    flash(f"{material.title} approved and summarized.", "success")
-                except Exception:
-                    flash("Could not generate a summary. Try again or paste more text.", "danger")
-            return redirect(url_for("teacher_materials"))
-        if action == "reject":
-            material = db.session.get(Material, request.form.get("material_id", type=int))
-            if material and material.subject_slug == slug:
-                material.status = "rejected"
-                material.reject_reason = "Not enough usable lesson text or not aligned to the class material."
+        if action in {"approve", "reject"}:
+            material = teacher_owned_material(user, request.form.get("material_id", type=int))
+            if not material:
+                flash("That material is not available.", "danger")
+                return redirect(url_for("teacher_materials"))
+            if action == "reject":
+                reject_material(material)
                 db.session.commit()
                 flash("Upload rejected.", "success")
+                return redirect(url_for("teacher_materials"))
+            try:
+                deploy_material(material)
+                db.session.commit()
+                flash(f"{material.title} is now available to students.", "success")
+            except Exception:
+                flash("Could not generate a summary. Open the review page and try again.", "danger")
             return redirect(url_for("teacher_materials"))
         title = request.form.get("title", "").strip()
         notes = request.form.get("notes", "").strip()
@@ -2453,57 +2646,93 @@ def teacher_materials(user):
                 filename, data = "pasted-lesson.txt", notes.encode("utf-8")
             else:
                 raise ExtractError("Upload a file or paste lesson text.")
-            create_material(title or path_stem(filename), slug, user["id"], "teacher", filename, data)
-            flash("Material uploaded, summarized, and approved for your section.", "success")
+            material = create_material(title or path_stem(filename), slug, user["id"], "teacher", filename, data)
+            flash("Material uploaded. Review the summary before deploying it to students.", "success")
+            return redirect(url_for("teacher_material_review", material_id=material.id))
         except ExtractError as exc:
             flash(str(exc), "danger")
         return redirect(url_for("teacher_materials"))
 
-    panels = []
-    for material in Material.query.filter_by(subject_slug=slug).order_by(Material.created_at.desc()):
-        panels.append(
-            {
-                "kicker": material.status.replace("_", " ").title() + f" · {material.source}",
-                "title": material.title,
-                "meta": (material.filename or "Pasted text") + f" · {len(material.extracted_text or '')} characters",
-                "action": "Approve" if material.status == "pending" else None,
-                "form_action": url_for("teacher_materials") if material.status == "pending" else None,
-                "hidden": {"action": "approve", "material_id": material.id} if material.status == "pending" else None,
-                "reject": material.status == "pending",
-                "material_id": material.id,
-                "soft": material.status != "pending",
-            }
-        )
+    items = [material_review_payload(item) for item in Material.query.filter_by(subject_slug=slug).order_by(Material.created_at.desc())]
+    pending = [item for item in items if item["status"] == "pending"]
+    deployed = [item for item in items if item["status"] == "approved"]
+    rejected = [item for item in items if item["status"] == "rejected"]
     return render_template(
-        "staff_page.html",
+        "teacher_materials.html",
         user=user,
-        topbar_sub="Materials",
+        topbar_sub=f"Teacher · {SUBJECTS[slug]['name']}",
         role_nav=teacher_nav(),
         active_nav="materials",
-        title="Materials",
-        subtitle=(
-            f"Every upload on this page is filed under {SUBJECTS[slug]['name']}. "
-            "Approve student backups before they can practice."
-        ),
-        panels=panels,
-        form_blocks=[
-            {
-                "title": "Upload material",
-                "note": (
-                    f"Subject: {SUBJECTS[slug]['name']}. PDF, DOCX, PPTX, or pasted text. "
-                    "Scanned PDFs without extractable text are rejected."
-                ),
-                "action": url_for("teacher_materials"),
-                "enctype": "multipart/form-data",
-                "loading": "Uploading and summarizing…",
-                "submit": "Upload & summarize",
-                "fields": [
-                    {"id": "title", "name": "title", "label": "Material title", "type": "text", "placeholder": "Ecosystems", "required": True},
-                    {"id": "file", "name": "file", "label": "File", "type": "file", "placeholder": "", "required": False, "accept": ".pdf,.docx,.pptx,.txt"},
-                    {"id": "notes", "name": "notes", "label": "Or paste text", "type": "textarea", "placeholder": "Paste lesson text here...", "required": False},
-                ],
-            }
-        ],
+        subject_name=SUBJECTS[slug]["name"],
+        subject_slug=slug,
+        pending=pending,
+        deployed=deployed,
+        rejected=rejected,
+    )
+
+
+@app.route("/teacher/materials/<int:material_id>", methods=["GET", "POST"])
+@require_role("teacher")
+def teacher_material_review(user, material_id):
+    material = teacher_owned_material(user, material_id)
+    if not material:
+        flash("That material is not available.", "danger")
+        return redirect(url_for("teacher_materials"))
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action == "summarize":
+            try:
+                attach_summary(material)
+                db.session.commit()
+                flash("Summary updated. Review it before deploying.", "success")
+            except Exception:
+                flash("Could not generate a summary. Try again or paste more lesson text.", "danger")
+            return redirect(url_for("teacher_material_review", material_id=material.id))
+        if action == "approve":
+            try:
+                deploy_material(material)
+                db.session.commit()
+                flash(f"{material.title} is now available to students.", "success")
+                return redirect(url_for("teacher_materials"))
+            except Exception:
+                flash("Could not deploy this material. Generate a summary first.", "danger")
+            return redirect(url_for("teacher_material_review", material_id=material.id))
+        if action == "reject":
+            reject_material(material)
+            db.session.commit()
+            flash("Upload rejected.", "success")
+            return redirect(url_for("teacher_materials"))
+        return redirect(url_for("teacher_material_review", material_id=material.id))
+
+    slug = teacher_subject_slug(user)
+    return render_template(
+        "teacher_material_review.html",
+        user=user,
+        topbar_sub=f"Teacher · {SUBJECTS[slug]['name']}",
+        role_nav=teacher_nav(),
+        active_nav="materials",
+        subject_name=SUBJECTS[slug]["name"],
+        material=material_review_payload(material),
+    )
+
+
+@app.route("/teacher/materials/<int:material_id>/file")
+@require_role("teacher")
+def teacher_material_file(user, material_id):
+    material = teacher_owned_material(user, material_id)
+    if not material:
+        abort(404)
+    path = material_file_path(material)
+    if not path:
+        flash("That uploaded file is not stored on this server.", "danger")
+        return redirect(url_for("teacher_material_review", material_id=material.id))
+    download_name = stored_filename_label(material.filename)
+    inline = os.path.splitext(download_name)[1].lower() in {".pdf", ".txt", ".png", ".jpg", ".jpeg", ".gif", ".webp"}
+    return send_from_directory(
+        app.config["UPLOAD_FOLDER"],
+        os.path.basename(material.filename),
+        as_attachment=not inline,
+        download_name=download_name,
     )
 
 
@@ -2645,37 +2874,65 @@ def teacher_monitor(user):
             flash("Feedback released.", "success")
         return redirect(url_for("teacher_monitor"))
 
+    student_rows = teacher_student_progress(user, slug)
+    student_count = len(student_rows)
+    scored = [row["percent"] for row in student_rows if row["percent"] is not None]
+    class_avg = int(round(sum(scored) / len(scored))) if scored else None
+    submitted_students = sum(1 for row in student_rows if row["assessment_n"])
     panels = []
     for assessment in Assessment.query.filter_by(subject_slug=slug).order_by(Assessment.created_at.desc()):
-        attempts = Attempt.query.filter_by(assessment_id=assessment.id, kind="assessment").all()
-        students = User.query.filter_by(role="student").count() or 1
-        avg = int(sum(a.score_auto for a in attempts) / max(len(attempts), 1)) if attempts else 0
+        attempts = (
+            Attempt.query.filter_by(assessment_id=assessment.id, kind="assessment")
+            .order_by(Attempt.submitted_at.desc())
+            .all()
+        )
+        percents = [attempt_score_percent(item) for item in attempts if item.score_total_auto]
+        avg = int(round(sum(percents) / len(percents))) if percents else None
         panels.append(
             {
-                "kicker": assessment.status.title(),
                 "title": assessment.title,
-                "meta": (
-                    f"{len(attempts)}/{students} submitted · Avg auto {avg} · "
-                    f"{difficulty_label(assessment.difficulty) if assessment.difficulty else 'Medium'} · "
-                    f"Extra attempt {'on' if assessment.extra_attempt else 'off'}"
-                ),
                 "assessment_id": assessment.id,
                 "status": assessment.status,
+                "status_label": assessment.status.title(),
+                "submitted": len(attempts),
+                "student_count": student_count or 1,
+                "avg": avg,
+                "difficulty": difficulty_label(assessment.difficulty) if assessment.difficulty else "Medium",
+                "extra_attempt": assessment.extra_attempt,
                 "release_scores": assessment.release_scores,
                 "release_answers": assessment.release_answers,
                 "release_feedback": assessment.release_feedback,
+                "releases": [
+                    {"label": "Scores", "on": assessment.release_scores},
+                    {"label": "Answers", "on": assessment.release_answers},
+                    {"label": "Feedback", "on": assessment.release_feedback},
+                ],
+                "submissions": [
+                    {
+                        "name": item.user.name if item.user else "Student",
+                        "meta": attempt_meta(item),
+                        "href": url_for("attempt_review", attempt_id=item.id),
+                        "percent": attempt_score_percent(item),
+                        "tone": assessment_score_tone(attempt_score_percent(item)),
+                    }
+                    for item in attempts
+                ],
             }
         )
     practice_n = Attempt.query.filter_by(kind="practice", subject_slug=slug).count()
     return render_template(
         "teacher_monitor.html",
         user=user,
-        topbar_sub="Monitoring",
+        topbar_sub=f"Teacher · {SUBJECTS[slug]['name']}",
         role_nav=teacher_nav(),
         active_nav="monitor",
         panels=panels,
         practice_n=practice_n,
         subject_name=SUBJECTS[slug]["name"],
+        subject_slug=slug,
+        students=student_rows,
+        class_avg=class_avg,
+        submitted_students=submitted_students,
     )
 
 
@@ -2985,6 +3242,7 @@ def messages_inbox():
                         "meta": teacher.subject or "Teacher",
                         "subject_slug": subject_slug,
                         "initials": initials(teacher.name),
+                        "photo_url": photo_url_for(teacher),
                         "preview": preview,
                         "when": "",
                         "unread": 0,
@@ -3088,6 +3346,7 @@ def messages_thread(user_id):
             "meta": other.subject or other.role.title(),
             "subject_slug": subject_slug_from_name(other.subject),
             "initials": initials(other.name),
+            "photo_url": photo_url_for(other),
         },
         "messages": messages,
         "draft": draft,

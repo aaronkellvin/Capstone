@@ -16,7 +16,9 @@
       <header class="chat-head">
         <a class="hub-back chat-back" href="{{ url_for('messages_inbox') }}"><span aria-hidden="true">←</span> Back to conversations</a>
         <div class="chat-person">
-          <span class="avatar avatar-lg chat-avatar" aria-hidden="true">{{ other.initials }}</span>
+          {% with class_name="avatar avatar-lg chat-avatar", initials=other.initials, photo_url=other.photo_url %}
+            {% include "partials/user_avatar.html" %}
+          {% endwith %}
           <div class="chat-person-copy">
             <h1 class="chat-name">{{ other.name }}</h1>
             <div class="status-row">

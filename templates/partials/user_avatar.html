@@ -1,0 +1,5 @@
+{% if photo_url %}
+  <img class="{{ class_name }} is-photo" src="{{ photo_url }}" alt="" />
+{% else %}
+  <span class="{{ class_name }}" aria-hidden="true">{{ initials }}</span>
+{% endif %}

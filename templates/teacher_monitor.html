@@ -1,70 +1,173 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Monitoring — Bloom</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-</head>
-<body class="app-body staff-body">
-  <div class="app-bg" aria-hidden="true">
-    <span class="ribbon ribbon-blue"></span>
-    <span class="ribbon ribbon-red"></span>
-    <span class="dot-field"></span>
+{% extends "layouts/pro.html" %}
+{% block title %}Monitor — Bloom{% endblock %}
+{% block body_class %}teacher-workspace teacher-monitor-page subject-accent-{{ subject_slug }}{% endblock %}
+{% block page_header %}
+  <div class="home-first-region">
+    <section class="home-command-hero" aria-labelledby="monitor-title">
+      <div class="home-command-hero-copy">
+        <p class="pro-hero-kicker">Monitor · {{ subject_name }}</p>
+        <h1 class="pro-hero-title" id="monitor-title">Student progress</h1>
+        <p class="pro-hero-sub">See who has started, who submitted, and what still needs a release.</p>
+      </div>
+      <div class="home-command-pulse" aria-label="Class signals">
+        <div class="home-pulse-chip {% if class_avg is none %}is-quiet{% endif %}">
+          <span class="home-pulse-value">{% if class_avg is not none %}{{ class_avg }}%{% else %}—{% endif %}</span>
+          <span class="home-pulse-label">Class avg score</span>
+        </div>
+        <div class="home-pulse-chip">
+          <span class="home-pulse-value">{{ submitted_students }}/{{ students|length }}</span>
+          <span class="home-pulse-label">Submitted HOTS</span>
+        </div>
+        <div class="home-pulse-chip {% if not practice_n %}is-quiet{% endif %}">
+          <span class="home-pulse-value">{{ practice_n }}</span>
+          <span class="home-pulse-label">Practice checks</span>
+        </div>
+      </div>
+    </section>
   </div>
+{% endblock %}
+{% block content %}
+  <section class="home-section" aria-labelledby="roster-title">
+    <div class="section-heading-row">
+      <div>
+        <p class="section-eyebrow">Your section</p>
+        <h2 id="roster-title" class="section-title section-title-sm">Students</h2>
+      </div>
+      <span class="count-badge {% if not students %}count-badge-muted{% endif %}">{{ students|length }}</span>
+    </div>
 
-  {% include "partials/staff_topbar.html" %}
+    {% if students %}
+      <div class="teacher-student-grid" role="list" aria-label="Student progress">
+        {% for student in students %}
+          <article class="teacher-student-card" role="listitem">
+            <div class="teacher-student-top">
+              <div class="teacher-roster-name">
+                {% with class_name="pro-avatar", initials=student.initials, photo_url=student.photo_url %}
+                  {% include "partials/user_avatar.html" %}
+                {% endwith %}
+                <div>
+                  <strong>{{ student.name }}</strong>
+                  <span>{{ student.section }}</span>
+                </div>
+              </div>
+              <a class="today-action today-action-soft teacher-student-message" href="{{ student.message_href }}">Message</a>
+            </div>
 
-  <main class="app-main">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <ul class="flash-list home-flash">
-          {% for category, message in messages %}
-            <li class="flash flash-{{ category }}">{{ message }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
-
-    <section class="home-section">
-      <h1 class="section-title">Monitoring</h1>
-      <p class="section-note">{{ subject_name }} · Section completion, extra attempts, and independent release controls.</p>
-    </section>
-
-    <section class="stat-grid">
-      <article class="stat-card">
-        <p class="stat-label">Practice Checks</p>
-        <p class="stat-value">{{ practice_n }}</p>
-        <p class="stat-meta">Personal practice attempts in this subject</p>
-      </article>
-    </section>
-
-    {% if panels %}
-      <div class="hub-list stack-md">
-        {% for panel in panels %}
-          <article class="hub-card hub-card-stack">
-            <div>
-              <p class="hub-card-kicker">{{ panel.kicker }}</p>
-              <h2 class="hub-card-title">{{ panel.title }}</h2>
-              <p class="hub-card-meta">{{ panel.meta }}</p>
-              <p class="hub-card-meta">
-                Scores {{ "released" if panel.release_scores else "held" }}
-                · Answers {{ "released" if panel.release_answers else "held" }}
-                · Feedback {{ "released" if panel.release_feedback else "held" }}
+            <div class="teacher-student-progress">
+              <div class="teacher-student-score">
+                <span class="teacher-progress-value">{% if student.percent is not none %}{{ student.percent }}%{% else %}—{% endif %}</span>
+                <span class="teacher-progress-label">{{ student.insight }}</span>
+              </div>
+              <p class="work-item-meter meter-{{ student.tone }}" style="--meter-value: {{ student.percent or 0 }}%;" role="img" aria-label="{{ student.progress_label }}">
+                <span class="work-item-meter-fill"></span>
               </p>
             </div>
+
+            <dl class="teacher-student-stats">
+              <div>
+                <dt>Practice</dt>
+                <dd>{{ student.practice_n }}</dd>
+              </div>
+              <div>
+                <dt>Assessments</dt>
+                <dd>{{ student.assessment_n }}</dd>
+              </div>
+            </dl>
+
+            <div class="teacher-student-latest">
+              {% if student.last_href %}
+                <a class="text-link" href="{{ student.last_href }}">{{ student.last_title }}</a>
+                <span class="hub-card-meta">{{ student.last_when }}</span>
+              {% else %}
+                <span class="hub-card-meta">{{ student.last_title }}</span>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <article class="hub-card">
+        <div>
+          <h3 class="hub-card-title">No students in this section yet</h3>
+          <p class="hub-card-meta">When students sign in, their {{ subject_name }} practice and assessment scores appear here.</p>
+        </div>
+      </article>
+    {% endif %}
+  </section>
+
+  <section class="home-section" aria-labelledby="hots-monitor-title">
+    <div class="section-heading-row">
+      <div>
+        <p class="section-eyebrow">HOTS sets</p>
+        <h2 id="hots-monitor-title" class="section-title section-title-sm">Assessments</h2>
+      </div>
+      <span class="count-badge count-badge-muted">{{ panels|length }}</span>
+    </div>
+
+    {% if panels %}
+      <div class="teacher-monitor-list">
+        {% for panel in panels %}
+          <article class="teacher-monitor-card is-{{ panel.status }}">
+            <div class="teacher-monitor-head">
+              <div>
+                <p class="teacher-status-pill is-{{ panel.status }}">{{ panel.status_label }}</p>
+                <h3 class="hub-card-title">{{ panel.title }}</h3>
+              </div>
+              {% if panel.extra_attempt %}
+                <span class="count-badge">Extra attempt on</span>
+              {% endif %}
+            </div>
+
+            <dl class="teacher-monitor-stats">
+              <div>
+                <dt>Submitted</dt>
+                <dd>{{ panel.submitted }}/{{ panel.student_count }}</dd>
+              </div>
+              <div>
+                <dt>Avg score</dt>
+                <dd>{% if panel.avg is not none %}{{ panel.avg }}%{% else %}—{% endif %}</dd>
+              </div>
+              <div>
+                <dt>Difficulty</dt>
+                <dd>{{ panel.difficulty }}</dd>
+              </div>
+            </dl>
+
+            <ul class="teacher-release-pills" aria-label="What students can see">
+              {% for item in panel.releases %}
+                <li class="teacher-release-pill {% if item.on %}is-on{% else %}is-off{% endif %}">
+                  {{ item.label }} {{ "released" if item.on else "held" }}
+                </li>
+              {% endfor %}
+            </ul>
+
+            {% if panel.submissions %}
+              <ul class="teacher-submission-list">
+                {% for item in panel.submissions %}
+                  <li>
+                    <a class="text-link" href="{{ item.href }}">{{ item.name }}</a>
+                    <span class="hub-card-meta">{{ item.meta }}</span>
+                    {% if item.percent is not none %}
+                      <span class="teacher-score-chip tone-{{ item.tone }}">{{ item.percent }}%</span>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="section-note">No submissions yet.</p>
+            {% endif %}
+
             <div class="hub-card-actions">
               {% if panel.status == "published" %}
                 <form method="POST" action="{{ url_for('teacher_monitor') }}" data-confirm="Close this assessment? Students already answering may still submit.">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                   <input type="hidden" name="assessment_id" value="{{ panel.assessment_id }}" />
                   <input type="hidden" name="action" value="close" />
                   <button class="today-action today-action-soft" type="submit">Close</button>
                 </form>
               {% elif panel.status == "closed" %}
                 <form method="POST" action="{{ url_for('teacher_monitor') }}" data-confirm="Reopen with one extra attempt? Original attempts stay in history.">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                   <input type="hidden" name="assessment_id" value="{{ panel.assessment_id }}" />
                   <input type="hidden" name="action" value="reopen" />
                   <button class="today-action" type="submit">Reopen + extra attempt</button>
@@ -72,6 +175,7 @@
               {% endif %}
               {% if not panel.release_scores %}
                 <form method="POST" action="{{ url_for('teacher_monitor') }}" data-confirm="Release scores to students? They will see automatic scores right away." data-loading="Releasing scores…">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                   <input type="hidden" name="assessment_id" value="{{ panel.assessment_id }}" />
                   <input type="hidden" name="action" value="release_scores" />
                   <button class="today-action today-action-soft" type="submit">Release scores</button>
@@ -79,6 +183,7 @@
               {% endif %}
               {% if not panel.release_answers %}
                 <form method="POST" action="{{ url_for('teacher_monitor') }}" data-confirm="Release correct answers to students?" data-loading="Releasing answers…">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                   <input type="hidden" name="assessment_id" value="{{ panel.assessment_id }}" />
                   <input type="hidden" name="action" value="release_answers" />
                   <button class="today-action today-action-soft" type="submit">Release answers</button>
@@ -86,6 +191,7 @@
               {% endif %}
               {% if not panel.release_feedback %}
                 <form method="POST" action="{{ url_for('teacher_monitor') }}" data-confirm="Release feedback explanations to students?" data-loading="Releasing feedback…">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                   <input type="hidden" name="assessment_id" value="{{ panel.assessment_id }}" />
                   <input type="hidden" name="action" value="release_feedback" />
                   <button class="today-action today-action-soft" type="submit">Release feedback</button>
@@ -96,13 +202,13 @@
         {% endfor %}
       </div>
     {% else %}
-      <article class="empty-state-card stack-md">
-        <p class="empty-kicker">Monitor</p>
-        <h3 class="empty-title">No assessments to monitor yet</h3>
-        <p class="empty-copy">Publish a HOTS set first, then track submissions here.</p>
+      <article class="hub-card">
+        <div>
+          <h3 class="hub-card-title">No assessments to monitor yet</h3>
+          <p class="hub-card-meta">Publish a HOTS set first, then track submissions here.</p>
+        </div>
+        <a class="today-action today-action-soft" href="{{ url_for('teacher_hots') }}">Open HOTS</a>
       </article>
     {% endif %}
-  </main>
-  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
-</body>
-</html>
+  </section>
+{% endblock %}

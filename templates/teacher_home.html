@@ -2,25 +2,27 @@
 {% block title %}Teacher Home — Bloom{% endblock %}
 {% block body_class %}home-command teacher-home-command subject-accent-{{ subject_slug }}{% endblock %}
 {% block page_header %}
-  <section class="home-command-hero" aria-labelledby="teacher-greeting">
-    <div class="home-command-hero-copy">
-      <p class="pro-hero-kicker">Your day</p>
-      <h1 class="pro-hero-title" id="teacher-greeting">{{ greeting }}</h1>
-      <p class="pro-hero-sub">{{ guide_note }}</p>
-    </div>
-    <div class="home-command-pulse" aria-label="Quick signals">
-      <a class="home-pulse-chip {% if not class_pulse.has_data %}is-quiet{% endif %}" href="{{ class_pulse.href }}">
-        <span class="home-pulse-value">{{ class_pulse.value }}</span>
-        <span class="home-pulse-label">{{ class_pulse.label }}</span>
-      </a>
-      {% if unread_messages %}
-        <a class="home-pulse-chip is-messages" href="{{ url_for('messages_inbox') }}">
-          <span class="home-pulse-value">{{ unread_messages }}</span>
-          <span class="home-pulse-label">Unread chats</span>
+  <div class="home-first-region">
+    <section class="home-command-hero" aria-labelledby="teacher-greeting">
+      <div class="home-command-hero-copy">
+        <p class="pro-hero-kicker">Your day</p>
+        <h1 class="pro-hero-title" id="teacher-greeting">{{ greeting }}</h1>
+        <p class="pro-hero-sub">{{ guide_note }}</p>
+      </div>
+      <div class="home-command-pulse" aria-label="Quick signals">
+        <a class="home-pulse-chip {% if not class_pulse.has_data %}is-quiet{% endif %}" href="{{ class_pulse.href }}">
+          <span class="home-pulse-value">{{ class_pulse.value }}</span>
+          <span class="home-pulse-label">{{ class_pulse.label }}</span>
         </a>
-      {% endif %}
-    </div>
-  </section>
+        {% if unread_messages %}
+          <a class="home-pulse-chip is-messages" href="{{ url_for('messages_inbox') }}">
+            <span class="home-pulse-value">{{ unread_messages }}</span>
+            <span class="home-pulse-label">Unread chats</span>
+          </a>
+        {% endif %}
+      </div>
+    </section>
+  </div>
 {% endblock %}
 {% block content %}
   <section class="home-today home-today-command" aria-labelledby="teacher-queue-title">

@@ -13,11 +13,15 @@
       aria-expanded="false"
       aria-controls="profile-panel"
     >
-      <span class="avatar" aria-hidden="true">{{ avatar_initials }}</span>
+      {% with class_name="avatar", initials=avatar_initials, photo_url=user.avatar_url %}
+        {% include "partials/user_avatar.html" %}
+      {% endwith %}
     </button>
     <div class="menu-panel profile-panel" id="profile-panel" hidden role="menu" aria-label="Account">
       <div class="profile-card">
-        <span class="avatar avatar-lg" aria-hidden="true">{{ avatar_initials }}</span>
+        {% with class_name="avatar avatar-lg", initials=avatar_initials, photo_url=user.avatar_url %}
+          {% include "partials/user_avatar.html" %}
+        {% endwith %}
         <div>
           <p class="profile-card-name">{{ user.name }}</p>
           <p class="profile-card-meta">{{ user.email }}</p>

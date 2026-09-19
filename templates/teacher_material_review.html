@@ -1,0 +1,90 @@
+{% extends "layouts/pro.html" %}
+{% block title %}{{ material.title }} — Bloom{% endblock %}
+{% block body_class %}teacher-workspace teacher-review-page{% endblock %}
+{% block page_kicker %}Materials · {{ material.status|replace('_', ' ')|title }}{% endblock %}
+{% block page_title %}{{ material.title }}{% endblock %}
+{% block page_subtitle %}{{ material.source_label }} from {{ material.owner_name }} · {{ material.filename }}{% endblock %}
+{% block page_actions %}
+  <a class="today-action today-action-soft" href="{{ url_for('teacher_materials') }}">Back to materials</a>
+{% endblock %}
+{% block content %}
+  <div class="teacher-review-grid">
+    <section class="teacher-review-pane" aria-labelledby="file-title">
+      <div class="section-heading-row">
+        <div>
+          <p class="section-eyebrow">Original upload</p>
+          <h2 id="file-title" class="section-title section-title-sm">The file</h2>
+        </div>
+      </div>
+      <p class="hub-card-meta">{{ material.char_count }} characters extracted · {{ material.created_at }}</p>
+      <div class="teacher-review-actions">
+        {% if material.file_href %}
+          <a class="today-action" href="{{ material.file_href }}" target="_blank" rel="noopener">Open uploaded file</a>
+        {% else %}
+          <p class="section-note">The original file is not stored on this server. Use the extracted text below.</p>
+        {% endif %}
+      </div>
+      <details class="teacher-extract" open>
+        <summary>Extracted lesson text</summary>
+        <pre>{{ material.extracted_text or "No extractable text was found in this upload." }}</pre>
+      </details>
+    </section>
+
+    <section class="teacher-review-pane" aria-labelledby="summary-title">
+      <div class="section-heading-row">
+        <div>
+          <p class="section-eyebrow">Before students see it</p>
+          <h2 id="summary-title" class="section-title section-title-sm">Summary</h2>
+        </div>
+      </div>
+
+      {% if material.has_summary %}
+        <p class="teacher-summary-intro">{{ material.summary.intro }}</p>
+        <div class="summary-sections">
+          {% for section in material.summary.sections %}
+            <article class="summary-section">
+              <h3 class="summary-heading">{{ section.heading }}</h3>
+              <p class="summary-body">{{ section.body }}</p>
+              <p class="summary-cite">Source: {{ section.citation }}</p>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="section-note">No summary yet. Generate one from the extracted text, then read it before deploying.</p>
+      {% endif %}
+
+      <div class="teacher-review-actions">
+        <form method="POST" action="{{ url_for('teacher_material_review', material_id=material.id) }}" data-loading="Generating summary…">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <input type="hidden" name="action" value="summarize" />
+          <button class="today-action today-action-soft" type="submit">{{ "Regenerate summary" if material.has_summary else "Generate summary" }}</button>
+        </form>
+        {% if material.student_summary_href %}
+          <a class="today-action today-action-soft" href="{{ material.student_summary_href }}">Student view</a>
+        {% endif %}
+      </div>
+
+      {% if material.status == "pending" %}
+        <div class="teacher-review-actions teacher-review-deploy">
+          <form method="POST" action="{{ url_for('teacher_material_review', material_id=material.id) }}" data-confirm="Deploy this summary to students? They will be able to read it and practice from it." data-loading="Deploying…">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <input type="hidden" name="action" value="approve" />
+            <button class="btn-primary" type="submit" {% if not material.has_summary %}disabled{% endif %}>Deploy to students</button>
+          </form>
+          <form method="POST" action="{{ url_for('teacher_material_review', material_id=material.id) }}" data-confirm="Reject this upload? Students will not be able to practice from it.">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <input type="hidden" name="action" value="reject" />
+            <button class="today-action today-action-soft" type="submit">Reject</button>
+          </form>
+        </div>
+        {% if not material.has_summary %}
+          <p class="section-note">Generate a summary before deploying.</p>
+        {% endif %}
+      {% elif material.status == "approved" %}
+        <p class="count-badge">Deployed to students</p>
+      {% else %}
+        <p class="section-note">{{ material.reject_reason or "This upload was rejected." }}</p>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}

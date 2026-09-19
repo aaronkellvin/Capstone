@@ -1,0 +1,114 @@
+{% extends "layouts/pro.html" %}
+{% block title %}Materials — Bloom{% endblock %}
+{% block body_class %}teacher-workspace subject-accent-{{ subject_slug }}{% endblock %}
+{% block page_kicker %}Materials{% endblock %}
+{% block page_title %}Review before class{% endblock %}
+{% block page_subtitle %}Open the uploaded file, check the summary, then deploy it to {{ subject_name }} students.{% endblock %}
+{% block content %}
+  <section class="home-section" aria-labelledby="upload-title">
+    <div class="section-heading-row">
+      <div>
+        <p class="section-eyebrow">Add a lesson</p>
+        <h2 id="upload-title" class="section-title section-title-sm">Upload material</h2>
+      </div>
+    </div>
+    <form class="login-form teacher-upload-form" method="POST" action="{{ url_for('teacher_materials') }}" enctype="multipart/form-data" data-loading="Uploading and summarizing…">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <input type="hidden" name="action" value="upload" />
+      <div class="field">
+        <label for="title">Material title</label>
+        <input id="title" name="title" type="text" placeholder="Ecosystems" required />
+      </div>
+      <div class="field">
+        <label for="file">File</label>
+        <input id="file" name="file" type="file" accept=".pdf,.docx,.pptx,.txt" />
+      </div>
+      <div class="field">
+        <label for="notes">Or paste text</label>
+        <textarea id="notes" name="notes" rows="4" placeholder="Paste lesson text here..."></textarea>
+      </div>
+      <p class="section-note">{{ subject_name }} · PDF, DOCX, PPTX, or pasted text. Students will not see it until you deploy the summary.</p>
+      <button type="submit" class="btn-primary">Upload &amp; prepare summary</button>
+    </form>
+  </section>
+
+  <section class="home-section" aria-labelledby="pending-title">
+    <div class="section-heading-row">
+      <div>
+        <p class="section-eyebrow">Needs you</p>
+        <h2 id="pending-title" class="section-title section-title-sm">Pending review</h2>
+      </div>
+      <span class="count-badge {% if not pending %}count-badge-muted{% endif %}">{{ pending|length }}</span>
+    </div>
+    {% if pending %}
+      <div class="hub-list stack-md">
+        {% for item in pending %}
+          <article class="hub-card">
+            <div>
+              <p class="hub-card-kicker">{{ item.source_label }} · {{ item.owner_name }}</p>
+              <h3 class="hub-card-title">{{ item.title }}</h3>
+              <p class="hub-card-meta">{{ item.filename }} · {{ item.char_count }} characters{% if item.has_summary %} · Summary ready{% else %} · Summary missing{% endif %}</p>
+            </div>
+            <a class="today-action" href="{{ item.review_href }}">Review</a>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <article class="hub-card">
+        <div>
+          <h3 class="hub-card-title">Nothing waiting</h3>
+          <p class="hub-card-meta">New uploads land here so you can read the file and summary first.</p>
+        </div>
+      </article>
+    {% endif %}
+  </section>
+
+  <section class="home-section" aria-labelledby="deployed-title">
+    <div class="section-heading-row">
+      <div>
+        <p class="section-eyebrow">In class</p>
+        <h2 id="deployed-title" class="section-title section-title-sm">Deployed to students</h2>
+      </div>
+      <span class="count-badge count-badge-muted">{{ deployed|length }}</span>
+    </div>
+    {% if deployed %}
+      <div class="hub-list stack-md">
+        {% for item in deployed %}
+          <article class="hub-card">
+            <div>
+              <p class="hub-card-kicker">Available · {{ item.source_label }}</p>
+              <h3 class="hub-card-title">{{ item.title }}</h3>
+              <p class="hub-card-meta">{{ item.filename }} · {{ item.owner_name }} · {{ item.created_at }}</p>
+            </div>
+            <a class="today-action today-action-soft" href="{{ item.review_href }}">View file &amp; summary</a>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="section-note">No materials are visible to students yet.</p>
+    {% endif %}
+  </section>
+
+  {% if rejected %}
+    <section class="home-section" aria-labelledby="rejected-title">
+      <div class="section-heading-row">
+        <div>
+          <p class="section-eyebrow">Not used</p>
+          <h2 id="rejected-title" class="section-title section-title-sm">Rejected</h2>
+        </div>
+      </div>
+      <div class="hub-list stack-md">
+        {% for item in rejected %}
+          <article class="hub-card">
+            <div>
+              <p class="hub-card-kicker">Rejected · {{ item.owner_name }}</p>
+              <h3 class="hub-card-title">{{ item.title }}</h3>
+              <p class="hub-card-meta">{{ item.reject_reason or item.filename }}</p>
+            </div>
+            <a class="today-action today-action-soft" href="{{ item.review_href }}">Open</a>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+{% endblock %}

@@ -61,7 +61,10 @@
 
   <div class="pro-sidebar-foot">
     <div class="pro-user-chip">
-      <span class="pro-avatar" aria-hidden="true">{% set parts = (user.name or 'B').split(' ') %}{{ (parts[0][:1] ~ (parts[-1][:1] if parts|length > 1 else ''))|upper }}</span>
+      {% set parts = (user.name or 'B').split(' ') %}
+      {% with class_name="pro-avatar", initials=(parts[0][:1] ~ (parts[-1][:1] if parts|length > 1 else ''))|upper, photo_url=user.avatar_url %}
+        {% include "partials/user_avatar.html" %}
+      {% endwith %}
       <div>
         <strong>{{ user.name if user else 'Bloom' }}</strong>
         <span>{{ user.role|capitalize if user else '' }}</span>

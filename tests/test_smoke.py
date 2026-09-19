@@ -3,6 +3,7 @@
 import os
 import tempfile
 import unittest
+from io import BytesIO
 
 # Isolate a temp DB before importing the app module side effects.
 os.environ["BLOOM_ENV"] = "development"
@@ -34,6 +35,8 @@ class BloomSmokeTest(unittest.TestCase):
         bloom.app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.environ["BLOOM_TEST_DB"]
         bloom.app.config["TESTING"] = True
         bloom.app.config["WTF_CSRF_ENABLED"] = False  # unused; custom CSRF still active
+        bloom.app.config["AVATAR_FOLDER"] = os.path.join(_tmp.name, "avatars")
+        os.makedirs(bloom.app.config["AVATAR_FOLDER"], exist_ok=True)
         with bloom.app.app_context():
             db.drop_all()
             db.create_all()
@@ -303,6 +306,128 @@ class BloomSmokeTest(unittest.TestCase):
         self._login("student@test.local", "student123")
         response = self.client.get("/teacher", follow_redirects=False)
         self.assertIn(response.status_code, {302, 403})
+
+    def test_teacher_monitor_lists_student_progress(self):
+        self._login("teacher@test.local", "teacher123")
+        response = self.client.get("/teacher/monitor")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'id="pro-sidebar"', response.data)
+        self.assertIn(b"Other Student", response.data)
+        self.assertIn(b"avg score", response.data)
+        self.assertIn(b"/results/", response.data)
+
+    def test_teacher_reviews_file_and_deploys_summary(self):
+        upload_dir = bloom.app.config["UPLOAD_FOLDER"]
+        os.makedirs(upload_dir, exist_ok=True)
+        stored = "20260101120000_backup.txt"
+        path = os.path.join(upload_dir, stored)
+        with bloom.app.app_context():
+            student = db.session.get(User, self.student_id)
+            material = Material(
+                slug="student-backup",
+                title="Student backup",
+                subject_slug="science",
+                owner_id=student.id,
+                source="student",
+                status="pending",
+                filename=stored,
+                extracted_text="Energy moves through food chains.",
+            )
+            db.session.add(material)
+            db.session.flush()
+            db.session.add(
+                Summary(
+                    material_id=material.id,
+                    intro="A short backup summary.",
+                    sections_json='[{"id": "s1", "heading": "Energy", "body": "Energy moves.", "citation": "p. 1"}]',
+                )
+            )
+            db.session.commit()
+            material_id = material.id
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write("Energy moves through food chains.")
+        try:
+            self._login("teacher@test.local", "teacher123")
+            materials = self.client.get("/teacher/materials")
+            self.assertEqual(materials.status_code, 200)
+            self.assertIn(b"Pending review", materials.data)
+            self.assertIn(b"Student backup", materials.data)
+            review = self.client.get(f"/teacher/materials/{material_id}")
+            self.assertEqual(review.status_code, 200)
+            self.assertIn(b"A short backup summary.", review.data)
+            self.assertIn(b"Open uploaded file", review.data)
+            self.assertIn(b"Deploy to students", review.data)
+            file_resp = self.client.get(f"/teacher/materials/{material_id}/file")
+            self.assertEqual(file_resp.status_code, 200)
+            self.assertIn(b"Energy moves through food chains.", file_resp.data)
+            file_resp.close()
+            token = self._csrf()
+            deploy = self.client.post(
+                f"/teacher/materials/{material_id}",
+                data={"action": "approve", "csrf_token": token},
+                follow_redirects=False,
+            )
+            self.assertEqual(deploy.status_code, 302)
+            with bloom.app.app_context():
+                self.assertEqual(db.session.get(Material, material_id).status, "approved")
+            with self.client.session_transaction() as sess:
+                sess.clear()
+            self._login("student@test.local", "student123")
+            blocked = self.client.get(f"/teacher/materials/{material_id}/file", follow_redirects=False)
+            self.assertIn(blocked.status_code, {302, 403})
+            visible = self.client.get("/subjects/science/summaries/student-backup")
+            self.assertEqual(visible.status_code, 200)
+            self.assertIn(b"A short backup summary.", visible.data)
+        finally:
+            if os.path.isfile(path):
+                os.remove(path)
+
+    def test_other_subject_teacher_cannot_open_material(self):
+        with bloom.app.app_context():
+            english = User(
+                email="english@test.local",
+                name="English Teacher",
+                role="teacher",
+                subject="English",
+                password_hash=generate_password_hash("teacher123"),
+            )
+            db.session.add(english)
+            db.session.commit()
+            material = Material.query.filter_by(slug="ecosystems").first()
+            material_id = material.id
+        self._login("english@test.local", "teacher123")
+        review = self.client.get(f"/teacher/materials/{material_id}", follow_redirects=False)
+        self.assertEqual(review.status_code, 302)
+        self.assertIn("/teacher/materials", review.headers["Location"])
+        file_resp = self.client.get(f"/teacher/materials/{material_id}/file", follow_redirects=False)
+        self.assertEqual(file_resp.status_code, 404)
+
+    def test_user_can_upload_profile_photo(self):
+        png = (
+            b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
+            b"\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc``\x00\x00"
+            b"\x00\x04\x00\x01\xf6\x178U\x00\x00\x00\x00IEND\xaeB`\x82"
+        )
+        self._login("student@test.local", "student123")
+        token = self._csrf()
+        upload = self.client.post(
+            "/profile",
+            data={"action": "photo", "csrf_token": token, "photo": (BytesIO(png), "me.png")},
+            follow_redirects=False,
+        )
+        self.assertEqual(upload.status_code, 302)
+        photo = self.client.get(f"/users/{self.student_id}/photo")
+        self.assertEqual(photo.status_code, 200)
+        self.assertTrue(photo.data.startswith(b"\x89PNG"))
+        photo.close()
+        page = self.client.get("/profile")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn(b"/users/", page.data)
+        self.assertIn(b"is-photo", page.data)
+        with self.client.session_transaction() as sess:
+            sess.clear()
+        blocked = self.client.get(f"/users/{self.student_id}/photo", follow_redirects=False)
+        self.assertIn(blocked.status_code, {302, 401, 403})
 
     def test_logout_get_does_not_clear_session(self):
         self._login("student@test.local", "student123")

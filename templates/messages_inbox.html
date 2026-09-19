@@ -64,7 +64,9 @@
             data-unread="{{ 1 if thread.unread else 0 }}"
             data-search="{{ thread.search }}"
           >
-            <span class="message-avatar" aria-hidden="true">{{ thread.initials }}</span>
+            {% with class_name="message-avatar", initials=thread.initials, photo_url=thread.photo_url %}
+              {% include "partials/user_avatar.html" %}
+            {% endwith %}
             <div class="message-row-main">
               <div class="message-row-top">
                 <span class="status-pill status-subject subject-{{ thread.subject_slug }}">{{ thread.meta }}</span>

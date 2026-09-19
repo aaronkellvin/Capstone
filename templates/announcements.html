@@ -86,7 +86,9 @@
                         data-search="{{ note.search }}"
                         {% if note.selected %}aria-current="page"{% endif %}
                       >
-                        <span class="avatar announce-avatar" aria-hidden="true">{{ note.initials }}</span>
+                        {% with class_name="avatar announce-avatar", initials=note.initials, photo_url=note.photo_url %}
+                          {% include "partials/user_avatar.html" %}
+                        {% endwith %}
                         <div class="announce-item-copy">
                           <div class="announce-item-top">
                             <p class="announce-item-title">{{ note.title }}</p>

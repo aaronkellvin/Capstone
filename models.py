@@ -14,6 +14,7 @@ class User(db.Model):
     subject = db.Column(db.String(40))  # English | Mathematics | Science
     password_hash = db.Column(db.String(255), nullable=False)
     section = db.Column(db.String(80), default="Grade 7 · Pilot Section")
+    avatar_filename = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
