@@ -22,4 +22,10 @@
     if (!pill || !filterRow.contains(pill)) return;
     applyFilter(pill.getAttribute("data-subject-filter") || "all");
   });
+
+  // Freeze grid stagger after first entrance so subject-filter show/hide does not replay it
+  // (same pattern as messages_inbox.js — hidden rows would otherwise restart nth-child animation).
+  window.setTimeout(() => {
+    grid.classList.add("is-stagger-done");
+  }, 650);
 })();

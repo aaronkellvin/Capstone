@@ -1,7 +1,7 @@
 # Student UX Audit — Bloom
 
 **Date:** 2026-09-20 (decisions logged 2026-09-21)  
-**Mode:** Observational audit + prioritized proposal; N1–N3 / S3 decisions recorded below (N2/N3 code already shipped; this pass is documentation only)  
+**Mode:** Observational audit + prioritized proposal; N1–N3 / S1–S3 decisions recorded below (S1/S2/N2/N3 code already shipped; decision-log updates are documentation only)  
 **Prior art (read first; do not re-litigate):**  
 `docs/TEACHER_UX_AUDIT.md` (N1 sidebar reorder + N2 Announce→pro.html = **Deferred — post-defense**), `docs/UI_GAP_ANALYSIS.md`, `docs/MOTION_DESIGN_NOTES.md`, `docs/VISUAL_HIERARCHY_NOTES.md`  
 
@@ -55,7 +55,7 @@ Cognitive: Where / Do / Next / Progress / Attention are clear (command hero, sub
 | Finding | Tag |
 | --- | --- |
 | Subject cards (`.subject-card`) and Today primary (`.today-action`) are intentional, not teacher-queue clones. No forced unify. | — |
-| No `pro-stagger-in` / `pro-card-interactive` on `.subject-grid` or Today lists, while Messages uses both — optional affordance parity only. | **SAFE** (motion class opt-in only) |
+| `pro-stagger-in` / `pro-card-interactive` on `.subject-grid`, Today primary/secondary — see Decision log S1. | **Resolved** (S1) |
 | Responsive: subject grid + Today already have ≤700px / ≤860px rules in `bloom-pro.css`. No markup red flag. | — |
 
 ### `subject_hub.html` — solid shell; intentional density vs global WIC
@@ -65,6 +65,7 @@ Cognitive: Hub command + path + tabs answer Where / Do / Next well. Progress is 
 | Finding | Tag |
 | --- | --- |
 | Practice tab rows = `article.hub-card` + `a.today-action`; Results tab = `hub-card` + soft Review. Global Practice/Results use `work_item_card` + `.wic-btn`. **Resolved — keep split (intentional density)** — see Decision log N1. | **Resolved** (N1) |
+| Assessments / practice / results queues: `pro-stagger-in` + `pro-card-interactive` (unlocked). Study list: stagger only — no interactive on multi-CTA `hub-card-stack`. See Decision log S1. | **Resolved** (S1) |
 | Tab empties correctly use `.empty-state-card` + `.today-action` (e.g. practice empty → Study). Class pairing vs Practice library empty is intentional — see S3. | — |
 | `active_tab = "home"` while inside a subject — sidebar says Home, which matches entry from Home; not a bug. | — |
 | Dense hub-path (4 steps) + panels: CSS stacks path on narrow; watch vertical length on phone — no broken fixed widths spotted. | Note only |
@@ -75,7 +76,7 @@ Cognitive: Hub command + path + tabs answer Where / Do / Next well. Progress is 
 | --- | --- |
 | WorkItemCard + filter chips + ready/locked badges — consistent with Results. | — |
 | Empty: `.empty-state-card.practice-empty` + `.wic-btn.wic-btn-secondary` → **Go to Study** (`url_for('home')#subjects-title`). Class pairing with Results empty unchanged; destination fixed — see Decision log N2. | **Resolved** (N2) |
-| No list motion classes (vs Messages). | **SAFE** |
+| `work-item-grid` `pro-stagger-in`; unlocked cards interactive via macro; filter freeze `is-stagger-done` — see Decision log S1. | **Resolved** (S1) |
 
 ### `practice_setup.html` — already solid
 
@@ -93,12 +94,12 @@ Cognitive: Hub command + path + tabs answer Where / Do / Next well. Progress is 
 | `pro-focus` body — intentional quiet chrome. | — |
 | Assessment take sets `active_tab = "none"` (no sidebar highlight); practice take keeps `practice`. Locked-in assessment mode — see Decision log N3. | **Resolved** (N3) |
 
-### `assessment_lobby.html` — mostly solid; small hierarchy note
+### `assessment_lobby.html` — already solid
 
 | Finding | Tag |
 | --- | --- |
 | Primary Start = `.btn-primary.btn-inline`; secondary Ask Teacher = soft — correct weight. | — |
-| Title uses `.section-title` (full scale) rather than `.section-title.section-title-sm` / take-title pattern used elsewhere in focused flows. Slightly louder than sibling take/summary pages. | **SAFE** (class alignment to existing sm/take title) |
+| Title uses `.section-title.section-title-sm` — quieter contextual scale; see Decision log S2. | **Resolved** (S2) |
 | Checklist hierarchy is clear; primary action is visually primary. | — |
 
 ### `summary_reader.html` — already solid
@@ -113,7 +114,7 @@ Cognitive: Hub command + path + tabs answer Where / Do / Next well. Progress is 
 | --- | --- |
 | Story + WorkItemCard list + filters — strong Where/Do/Next/Progress. | — |
 | Empty uses `.wic-btn` → Practice — consistent with Practice empty using WIC buttons. | — |
-| No list motion (vs Messages). | **SAFE** |
+| `work-item-list` `pro-stagger-in`; unlocked cards interactive via macro — see Decision log S1. | **Resolved** (S1) |
 | **Do not** audit story branching / release / exhausted content here. | — |
 
 ### `practice_result.html` — visual only; logic out of scope
@@ -163,7 +164,7 @@ Cognitive: Hub command + path + tabs answer Where / Do / Next well. Progress is 
 | Start / open a practice item | `subject_hub.html` Practice tab: `.hub-card` + `.today-action` | `practice_hub.html`: `work_item_card` + `.wic-btn-primary` | **Resolved** (N1 — keep split) |
 | Open a past result row | `subject_hub.html` Results tab: `.hub-card` + `.today-action-soft` | `results.html`: `work_item_card` (+ score meter) | **Resolved** (N1 — keep split) |
 | Empty primary CTA class | Hub empties: `.today-action` | Practice/Results empties: `.wic-btn.wic-btn-secondary` | **Resolved** (S3 — context rule) |
-| Interactive list entrance/affordance | `messages_inbox.html`: `.pro-stagger-in` + `.pro-card-interactive` | Home subjects / Practice grid / Results list: no motion utilities | **SAFE** (still open) |
+| Interactive list entrance/affordance | `messages_inbox.html`: `.pro-stagger-in` + `.pro-card-interactive` | Home / Practice / Results / Subject Hub queues — now wired; Announcements left alone | **Resolved** (S1) |
 | Form commit vs take submit | Setup/lobby/summary/profile: `.btn-primary` | Take Submit: `.today-action` | Intentional take chrome — **not** a SAFE unify |
 
 ---
@@ -172,7 +173,7 @@ Cognitive: Hub command + path + tabs answer Where / Do / Next well. Progress is 
 
 | Screen | Note | Tag |
 | --- | --- | --- |
-| `assessment_lobby.html` | Full `.section-title` is slightly heavier than other focused flows using quieter titles. | **SAFE** |
+| `assessment_lobby.html` | Title scale aligned to `.section-title.section-title-sm`. | **Resolved** (S2) |
 | Subject Hub Practice | Primary Start is solid `.today-action` — correct weight for the row; hub vs WIC atom split is intentional density (N1), not a buried CTA. | — |
 | Home / Results / Messages | Primary actions are already the visually loudest controls. | — |
 
@@ -186,7 +187,7 @@ Cognitive: Hub command + path + tabs answer Where / Do / Next well. Progress is 
 | Submit practice/assessment | `data-loading` (+ assess confirm) | Good |
 | Start assessment (lobby) | form POST; overlay if wired globally | Good |
 | Open message row | CSS `pro-card-interactive` hover/focus | **Reference** |
-| Open subject / practice / result cards | Rely on link styling; many lack `pro-card-interactive` | **SAFE** to add where the whole card/row is the hit target |
+| Open subject / practice / result cards | `pro-card-interactive` (+ list stagger) where wired in S1 | **Resolved** (S1) |
 | Announcement select | Custom JS selection (not pro-card-interactive) | Leave — different interaction model |
 
 ---
@@ -205,17 +206,16 @@ No definite “will break” markup smoking gun; subject hub length + announce s
 
 ---
 
-## Already-solid vs remaining optional polish
+## Already-solid vs closed polish
 
 **Already solid (dedicated redesigns held up):**  
 `student_home`, `practice_hub`, `practice_setup`, take shells, `summary_reader`, `results` (presentation), `announcements`, `messages_*`, `profile`, login.
 
 **Intentional (not a defect — Decision log):**  
-Hub vs WorkItemCard density split (N1); empty CTA class pairing by context (S3).
+Hub vs WorkItemCard density split (N1); empty CTA class pairing by context (S3); Announcements custom selection (no `pro-card-interactive`).
 
-**Still optional SAFE (not yet approved for code):**  
-1. **Motion affordance gap** on student list/card hit targets vs Messages (S1).  
-2. Minor **lobby title scale** vs other focused pages (S2).
+**Closed SAFE (code shipped):**  
+S1 motion affordance parity; S2 assessment lobby title scale.
 
 ---
 
@@ -225,8 +225,8 @@ Hub vs WorkItemCard density split (N1); empty CTA class pairing by context (S3).
 
 | ID | Item | Status |
 | --- | --- | --- |
-| S1 | Opt-in `pro-card-interactive` (+ parent `pro-stagger-in` where lists enter) on clickable student list surfaces that lack it — matching Messages / MOTION notes | **Open** — not yet approved for code |
-| S2 | Align `assessment_lobby.html` title class to quieter existing pattern (`.section-title.section-title-sm` or take-title equivalent already in CSS) | **Open** — not yet approved for code |
+| S1 | Opt-in `pro-card-interactive` (+ parent `pro-stagger-in` where lists enter) on clickable student list surfaces — matching Messages / MOTION notes | **Resolved & implemented** (2026-09-21) |
+| S2 | Align `assessment_lobby.html` title class to quieter existing pattern (`.section-title.section-title-sm`) | **Resolved & implemented** (2026-09-21) |
 | S3 | Empty CTA class rule by context (hub/today → `.today-action`; WIC library → `.wic-btn`) — document only; no markup unify | **Resolved — documented** (2026-09-21); see Decision log |
 
 ### NEEDS DECISION
@@ -247,9 +247,9 @@ Hub vs WorkItemCard density split (N1); empty CTA class pairing by context (S3).
 
 ## Decision log — Gate
 
-**Decisions recorded 2026-09-21:** N1 (keep split), N2 (Practice empty → Study entry), N3 (assessment-take no nav highlight), S3 (empty CTA class rule).  
-**Code already shipped for N2 + N3;** this gate entry is documentation only. **No code** toward unifying hub → WIC (N1 rejected unify path).  
-**Still open (SAFE, no code until approved):** S1 (motion opt-in), S2 (lobby title scale).
+**Decisions recorded 2026-09-21:** N1 (keep split), N2 (Practice empty → Study entry), N3 (assessment-take no nav highlight), S1 (motion parity), S2 (lobby title scale), S3 (empty CTA class rule).  
+**Code already shipped for S1, S2, N2, N3;** later gate entries for S1/S2 are documentation only. **No code** toward unifying hub → WIC (N1 rejected unify path).  
+**Student audit SAFE + N\* set fully closed** (S1–S3, N1–N3).
 
 ### N1 — Resolved — keep split (intentional density)
 
@@ -278,6 +278,23 @@ Both share `--bloom` / `--pro` / `--wic` tokens where applicable; do not invent 
 
 **Scope:** `assessment_take.html` only. Lobby / results / review / practice-take `active_tab` behavior unchanged.
 
+### S1 — Resolved & implemented
+
+**Shipped:** `pro-card-interactive` + `pro-stagger-in` wired for student motion parity with Messages / teacher Materials–Monitor patterns. Existing `bloom-pro.css` utilities only — **no new animation rules**. `prefers-reduced-motion` coverage was already built into those utilities and inherited; not re-implemented.
+
+| Surface | What shipped |
+| --- | --- |
+| Home | `.subject-grid` stagger + interactive subject links; Today primary/secondary cards interactive; secondary list stagger |
+| Practice / Results | Parent stagger on `work-item-grid` / `work-item-list`; unlocked `work_item_card` gets `pro-card-interactive` via the existing macro |
+| Subject Hub | Assessments / practice / results queues staggered like Teacher Home (interactive on unlocked queue cards); Study list stagger only — **no** interactive lift on multi-CTA `hub-card-stack`, per `docs/MOTION_DESIGN_NOTES.md` (multi-action cards must not imply a single whole-card hit target) |
+| Practice filter | `is-stagger-done` freeze in `practice_hub.js` after first entrance — same pattern as Messages, so subject-filter show/hide does not replay stagger |
+
+**Explicitly left untouched:** `announcements.html` — custom JS selection logic, not a simple clickable-row list. Consistent with leaving specialized JS interaction models alone during the teacher-side motion pass (and with Messages filter/JS ownership of stagger freeze rather than inventing a second announce motion system).
+
+### S2 — Resolved & implemented
+
+**Shipped:** `assessment_lobby.html` title class changed from `.section-title` to `.section-title.section-title-sm`, matching the quieter contextual/secondary heading scale used elsewhere in the pro shell (Practice library, Results history, Materials section heads, etc.).
+
 ### S3 — Resolved — documented (empty CTA class rule)
 
 Same density/context reasoning as N1 — not a new invention; records what the audit already observed working correctly.
@@ -291,4 +308,4 @@ Same density/context reasoning as N1 — not a new invention; records what the a
 
 ---
 
-*End of audit. N1 / N2 / N3 / S3 closed in the Decision log. S1 / S2 remain optional SAFE pending explicit approval.*
+*End of audit. N1 / N2 / N3 / S1 / S2 / S3 closed in the Decision log. Student SAFE + N\* set complete.*

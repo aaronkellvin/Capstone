@@ -8,7 +8,7 @@
     <section class="lobby-card" aria-labelledby="lobby-title">
       <a class="hub-back" href="{{ url_for('subject_hub', slug=assessment.subject_slug) }}">Back to {{ assessment.subject }}</a>
       <p class="hero-kicker">{{ assessment.subject }}</p>
-      <h1 id="lobby-title" class="section-title">{{ assessment.title }}</h1>
+      <h1 id="lobby-title" class="section-title section-title-sm">{{ assessment.title }}</h1>
       <p class="section-note">
         {{ assessment.deadline_label }}
         {% if assessment.difficulty_name %} · Difficulty: <strong>{{ assessment.difficulty_name }}</strong>{% endif %}

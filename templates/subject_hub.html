@@ -91,9 +91,9 @@
               <span class="hub-count">{{ group.entries|length }}</span>
             </div>
             {% if group.entries %}
-              <div class="hub-list">
+              <div class="hub-list pro-stagger-in">
                 {% for item in group.entries %}
-                  <article class="hub-card">
+                  <article class="hub-card pro-card-interactive">
                     <div>
                       <p class="hub-card-kicker">{{ item.status_label }}</p>
                       <h4 class="hub-card-title">{{ item.title }}</h4>
@@ -124,7 +124,7 @@
       </div>
 
       {% if materials %}
-        <div class="hub-list">
+        <div class="hub-list pro-stagger-in">
           {% for material in materials %}
             <article class="hub-card hub-card-stack">
               <div>
@@ -185,9 +185,9 @@
       </div>
 
       {% if practice_items %}
-        <div class="hub-list">
+        <div class="hub-list pro-stagger-in">
           {% for item in practice_items %}
-            <article class="hub-card">
+            <article class="hub-card {% if not item.locked %}pro-card-interactive{% endif %}">
               <div>
                 <p class="hub-card-kicker">{{ item.kicker }}</p>
                 <h4 class="hub-card-title">{{ item.title }}</h4>
@@ -221,9 +221,9 @@
       </div>
 
       {% if result_items %}
-        <div class="hub-list">
+        <div class="hub-list pro-stagger-in">
           {% for item in result_items %}
-            <article class="hub-card">
+            <article class="hub-card pro-card-interactive">
               <div>
                 <p class="hub-card-kicker">{{ item.kicker }}</p>
                 <h4 class="hub-card-title">{{ item.title }}</h4>
