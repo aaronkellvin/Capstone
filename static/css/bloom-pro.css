@@ -1667,6 +1667,31 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
     var(--bloom-surface);
 }
 
+/* Teacher Home — subject-tint hero (hub-command recipe; vars from body.subject-accent-*) */
+.pro-body.teacher-home-command .home-command-hero {
+  border: 1px solid color-mix(in srgb, var(--subject-color) 28%, white);
+  border-left: 5px solid var(--subject-color);
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--subject-soft) 75%, white), transparent 46%),
+    var(--bloom-surface);
+}
+
+/* Teacher Home — empty Open items: student Today-empty / today-featured presence */
+.pro-body.teacher-home-command .home-today .teacher-home-empty {
+  display: grid;
+  gap: 0.55rem;
+  align-content: center;
+  min-height: 9.5rem;
+  padding: 1.45rem 1.4rem;
+  /* Beat later .empty-state-card blue left-border; keep subject wash from today-featured */
+  border: 1px solid color-mix(in srgb, var(--subject-color, var(--bloom-primary)) 34%, white);
+  border-left: 5px solid var(--subject-color, var(--bloom-primary));
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--subject-soft, var(--pro-blue-soft)) 80%, white), transparent 42%),
+    linear-gradient(180deg, #fff, var(--subject-soft, var(--pro-blue-soft)));
+  box-shadow: var(--pro-shadow-hover);
+}
+
 .home-command-hero-copy {
   min-width: 0;
   flex: 1 1 auto;

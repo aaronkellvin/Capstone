@@ -54,17 +54,13 @@
         {% endfor %}
       </div>
     {% else %}
-      <div class="hub-list stack-md">
-        <article class="hub-card pro-toast-in">
-          <div>
-            <h3 class="hub-card-title">{{ empty_cta.title }}</h3>
-            <p class="hub-card-meta">{{ empty_cta.note }}</p>
-          </div>
-          <a class="today-action today-action-soft" href="{{ empty_cta.href }}">
-            {{ empty_cta.action }} <span aria-hidden="true">→</span>
-          </a>
-        </article>
-      </div>
+      <article class="empty-state-card today-empty today-featured today-command-primary pro-toast-in teacher-home-empty">
+        <h3 class="empty-title">{{ empty_cta.title }}</h3>
+        <p class="empty-copy">{{ empty_cta.note }}</p>
+        <a class="today-action today-action-soft" href="{{ empty_cta.href }}">
+          {{ empty_cta.action }} <span aria-hidden="true">→</span>
+        </a>
+      </article>
     {% endif %}
   </section>
 
