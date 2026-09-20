@@ -697,18 +697,46 @@ def find_conversation(user, other):
     return Conversation.query.filter_by(student_id=other.id, teacher_id=user["id"]).first()
 
 
-def ask_teacher_context(user, subject_name: str, topic: str):
+def ask_teacher_context(user, subject_name: str, topic: str, draft: str | None = None):
     if not user or user["role"] != "student" or not subject_name:
         return None
     teachers = User.query.filter_by(role="teacher", subject=subject_name).order_by(User.name).all()
     teacher = next((item for item in teachers if same_section(user, item)), None) or (teachers[0] if teachers else None)
     if not teacher:
         return None
-    draft = f"Hi, I have a question about {topic}."
+    message = draft or f"Hi, I have a question about {topic}."
     return {
         "name": teacher.name,
-        "href": url_for("messages_thread", user_id=teacher.id, draft=draft),
+        "href": url_for("messages_thread", user_id=teacher.id, draft=message),
     }
+
+
+def assessment_attempt_counts(user_id: int, assessment: Assessment) -> tuple[int, int]:
+    """Return (taken, allowed) using the same formula as lobby / start / take / submit."""
+    taken = Attempt.query.filter_by(
+        user_id=user_id, assessment_id=assessment.id, kind="assessment"
+    ).count()
+    allowed = assessment.attempt_limit + (1 if assessment.extra_attempt else 0)
+    return taken, allowed
+
+
+def nearest_approved_material(subject_slug: str, at_time: datetime | None) -> Material | None:
+    """Pick approved material in subject closest in time to at_time (usually attempt.submitted_at).
+
+    TODO: Attempt should store material_id/material_slug at creation time to remove this fallback
+    entirely — logged as known follow-up, not fixed here (schema change deferred past defense).
+    """
+    approved = Material.query.filter_by(subject_slug=subject_slug, status="approved").all()
+    if not approved:
+        return None
+    if not at_time:
+        return max(approved, key=lambda m: m.created_at or datetime.min)
+    return min(
+        approved,
+        key=lambda m: abs(
+            ((m.created_at or at_time) - at_time).total_seconds()
+        ),
+    )
 
 
 def session_user_payload(user: User) -> dict:
@@ -1806,6 +1834,7 @@ def attempt_review(attempt_id):
         hero_title = "Nice work. Let’s review and improve."
     else:
         hero_title = "Let’s review and improve."
+    assessment_exhausted = False
     if attempt.kind == "assessment" and attempt.assessment and user["role"] == "student":
         assessment = attempt.assessment
         if not assessment.release_scores:
@@ -1821,65 +1850,127 @@ def attempt_review(attempt_id):
             if not assessment.release_scores:
                 item["status_label"] = "Submitted"
                 item["status"] = "review"
+        taken, allowed = assessment_attempt_counts(user["id"], assessment)
+        # Closed/exhausted Improve messaging only after scores are released — pending wins otherwise
+        # (same precedence as results.html's story branch).
+        assessment_exhausted = taken >= allowed and assessment.release_scores
+        if assessment_exhausted:
+            hero_title = "This assessment is closed."
 
     next_steps = []
+    ask_teacher = ask_teacher_context(user, meta["name"], attempt.title)
     if user["role"] == "student":
         material = None
         if attempt.assessment and attempt.assessment.material_id:
             material = db.session.get(Material, attempt.assessment.material_id)
         if not material:
-            material = (
-                Material.query.filter_by(subject_slug=attempt.subject_slug, status="approved")
-                .order_by(Material.created_at.desc())
-                .first()
+            material = nearest_approved_material(attempt.subject_slug, attempt.submitted_at)
+        if assessment_exhausted:
+            ask_teacher = ask_teacher_context(
+                user,
+                meta["name"],
+                attempt.title,
+                draft=f"Hi, could I get an extra attempt on {attempt.title}?",
             )
-        needs_retry = unanswered > 0 or (
-            attempt.score_total_auto and attempt.score_auto < attempt.score_total_auto
-        )
-        if material:
-            next_steps.append(
-                {
-                    "kicker": "Practice again" if needs_retry else "Keep going",
-                    "title": f"{'Try another check on' if needs_retry else 'Practice'} {material.title}",
-                    "meta": (
-                        "Use the feedback above while it’s fresh."
-                        if needs_retry
-                        else "Another short practice builds confidence."
-                    ),
-                    "action": "Practice again" if needs_retry else "Start practice",
-                    "href": url_for(
-                        "practice_setup",
-                        subject_slug=material.subject_slug,
-                        material_slug=material.slug,
-                    ),
-                    "primary": True,
-                }
-            )
-            if material.summary:
+            if ask_teacher:
                 next_steps.append(
                     {
-                        "kicker": "Understand first",
-                        "title": f"Re-read the {material.title} summary",
-                        "meta": "Review key ideas, then try another practice.",
-                        "action": "Open summary",
+                        "kicker": "Assessment closed",
+                        "title": "Request an extra attempt",
+                        "meta": "Your teacher can reopen this HOTS check with one more try.",
+                        "action": "Message teacher",
+                        "href": ask_teacher["href"],
+                        "primary": True,
+                    }
+                )
+            if material:
+                next_steps.append(
+                    {
+                        "kicker": "Practice on your own",
+                        "title": f"Practice this topic: {material.title}",
+                        "meta": "Separate from the closed assessment — builds understanding for next time.",
+                        "action": "Practice this topic",
                         "href": url_for(
-                            "summary_reader",
-                            slug=material.subject_slug,
+                            "practice_setup",
+                            subject_slug=material.subject_slug,
                             material_slug=material.slug,
                         ),
                         "primary": False,
                     }
                 )
-        next_steps.append(
-            {
-                "kicker": "Subject hub",
-                "title": f"Continue in {meta['name']}",
-                "meta": "Study, practice, or open assessments from one place.",
-                "action": "Open subject",
-                "href": url_for("subject_hub", slug=attempt.subject_slug, tab="practice"),
-                "primary": False,
-            }
-        )
+                if material.summary:
+                    next_steps.append(
+                        {
+                            "kicker": "Understand first",
+                            "title": f"Re-read the {material.title} summary",
+                            "meta": "Review key ideas while feedback is fresh.",
+                            "action": "Open summary",
+                            "href": url_for(
+                                "summary_reader",
+                                slug=material.subject_slug,
+                                material_slug=material.slug,
+                            ),
+                            "primary": False,
+                        }
+                    )
+            next_steps.append(
+                {
+                    "kicker": "Subject hub",
+                    "title": f"Continue in {meta['name']}",
+                    "meta": "Study or practice from one place. This HOTS assessment stays closed.",
+                    "action": "Open subject",
+                    "href": url_for("subject_hub", slug=attempt.subject_slug, tab="practice"),
+                    "primary": False,
+                }
+            )
+        else:
+            needs_retry = unanswered > 0 or (
+                attempt.score_total_auto and attempt.score_auto < attempt.score_total_auto
+            )
+            if material:
+                next_steps.append(
+                    {
+                        "kicker": "Practice again" if needs_retry else "Keep going",
+                        "title": f"{'Try another check on' if needs_retry else 'Practice'} {material.title}",
+                        "meta": (
+                            "Use the feedback above while it’s fresh."
+                            if needs_retry
+                            else "Another short practice builds confidence."
+                        ),
+                        "action": "Practice again" if needs_retry else "Start practice",
+                        "href": url_for(
+                            "practice_setup",
+                            subject_slug=material.subject_slug,
+                            material_slug=material.slug,
+                        ),
+                        "primary": True,
+                    }
+                )
+                if material.summary:
+                    next_steps.append(
+                        {
+                            "kicker": "Understand first",
+                            "title": f"Re-read the {material.title} summary",
+                            "meta": "Review key ideas, then try another practice.",
+                            "action": "Open summary",
+                            "href": url_for(
+                                "summary_reader",
+                                slug=material.subject_slug,
+                                material_slug=material.slug,
+                            ),
+                            "primary": False,
+                        }
+                    )
+            next_steps.append(
+                {
+                    "kicker": "Subject hub",
+                    "title": f"Continue in {meta['name']}",
+                    "meta": "Study, practice, or open assessments from one place.",
+                    "action": "Open subject",
+                    "href": url_for("subject_hub", slug=attempt.subject_slug, tab="practice"),
+                    "primary": False,
+                }
+            )
 
     improve_count = sum(1 for item in review_items if item.get("status") == "improve")
     good_count = sum(1 for item in review_items if item.get("status") == "good")
@@ -1891,7 +1982,8 @@ def attempt_review(attempt_id):
         "encouragement": encouragement,
         "hero_title": hero_title,
         "review_items": review_items,
-        "ask_teacher": ask_teacher_context(user, meta["name"], attempt.title),
+        "ask_teacher": ask_teacher,
+        "assessment_exhausted": assessment_exhausted,
         "difficulty_name": difficulty_label(attempt.difficulty) if attempt.difficulty else None,
         "kind": attempt.kind,
         "next_steps": next_steps,
@@ -2152,6 +2244,10 @@ def results():
             score_label = "Open response"
             score_tone = "neutral"
             score_percent = None
+        attempts_exhausted = False
+        if attempt.kind == "assessment" and attempt.assessment:
+            taken, allowed = assessment_attempt_counts(user["id"], attempt.assessment)
+            attempts_exhausted = taken >= allowed
         items.append(
             {
                 "kind": attempt.kind.title(),
@@ -2168,6 +2264,7 @@ def results():
                 "difficulty": difficulty_label(attempt.difficulty) if attempt.difficulty else None,
                 "action": "Review",
                 "href": url_for("attempt_review", attempt_id=attempt.id),
+                "attempts_exhausted": attempts_exhausted,
             }
         )
     story = None
@@ -2180,6 +2277,18 @@ def results():
                 "copy": "Submitted and waiting for your teacher to release scores and feedback.",
                 "cta_href": latest["href"],
                 "cta_label": "Open submission",
+            }
+        elif latest.get("attempts_exhausted"):
+            story = {
+                "eyebrow": "Assessment closed",
+                "title": latest["title"],
+                "copy": (
+                    f"You’ve used your available attempts on this HOTS check. "
+                    f"Review feedback in {latest['subject']}, practice the topic on your own, "
+                    "or ask your teacher for an extra attempt."
+                ),
+                "cta_href": latest["href"],
+                "cta_label": "Review feedback",
             }
         elif latest.get("score_percent") is not None and latest["score_percent"] < 70:
             story = {
