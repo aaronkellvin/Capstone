@@ -299,6 +299,27 @@ def teacher_nav():
     ]
 
 
+def assessments_awaiting_release(subject_slug: str) -> list:
+    """Assessments with submissions that still need release — same flags/attempt filter as Monitor panels."""
+    awaiting = []
+    for assessment in Assessment.query.filter_by(subject_slug=subject_slug).order_by(
+        Assessment.created_at.desc()
+    ):
+        # Same filter as teacher_monitor panel building.
+        submitted = Attempt.query.filter_by(
+            assessment_id=assessment.id, kind="assessment"
+        ).count()
+        if not submitted:
+            continue
+        if (
+            not assessment.release_scores
+            or not assessment.release_answers
+            or not assessment.release_feedback
+        ):
+            awaiting.append(assessment)
+    return awaiting
+
+
 def admin_nav():
     return [
         {"label": "Home", "endpoint": "admin_home", "key": "home"},
@@ -2636,6 +2657,22 @@ def teacher_home(user):
                 "href": url_for("teacher_hots"),
             }
         )
+    awaiting_release = assessments_awaiting_release(slug)
+    if awaiting_release:
+        n = len(awaiting_release)
+        attention.append(
+            {
+                "type": "release",
+                "priority": "primary" if not attention else "secondary",
+                "subject": subject_name,
+                "subject_slug": slug,
+                "kicker": "Monitor",
+                "title": f"{n} assessment{'s' if n != 1 else ''} awaiting release",
+                "meta": "Students have submitted — release scores, answers, or feedback when ready",
+                "action": "Open Monitor",
+                "href": url_for("teacher_monitor"),
+            }
+        )
 
     # Class average from auto-scored assessment attempts in this subject (honest; no fake %).
     score_attempts = Attempt.query.filter_by(subject_slug=slug, kind="assessment").all()
@@ -2957,7 +2994,7 @@ def teacher_hots(user):
     return render_template(
         "teacher_hots.html",
         user=user,
-        topbar_sub="HOTS Generator",
+        topbar_sub=f"Teacher · {SUBJECTS[slug]['name']}",
         role_nav=teacher_nav(),
         active_nav="hots",
         materials=materials,

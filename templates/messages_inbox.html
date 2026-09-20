@@ -28,13 +28,13 @@
     {% if threads %}
       <div class="message-toolbar">
         <form class="announce-search message-search" role="search" data-message-search onsubmit="return false;">
-          <label class="sr-only" for="message-q">Search teachers or messages</label>
+          <label class="sr-only" for="message-q">{% if is_teacher %}Search students or messages{% else %}Search teachers or messages{% endif %}</label>
           <span class="search-icon" aria-hidden="true">⌕</span>
           <input
             id="message-q"
             class="announce-q"
             type="search"
-            placeholder="Search teachers or messages..."
+            placeholder="{% if is_teacher %}Search students or messages...{% else %}Search teachers or messages...{% endif %}"
             autocomplete="off"
           />
         </form>
