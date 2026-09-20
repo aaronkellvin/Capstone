@@ -30,22 +30,47 @@
     true
   );
 
+  const prefersReducedMotion = () =>
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+    document.documentElement.classList.contains("pref-reduce-motion");
+
   const overlay = (message) => {
     let node = document.getElementById("qol-overlay");
     if (!node) {
       node = document.createElement("div");
       node.id = "qol-overlay";
       node.className = "qol-overlay";
+      node.hidden = true;
       node.innerHTML = `<div class="qol-overlay-card" role="status" aria-live="assertive"><span class="qol-spinner" aria-hidden="true"></span><p></p></div>`;
       document.body.appendChild(node);
     }
     node.querySelector("p").textContent = message;
     node.hidden = false;
+    if (prefersReducedMotion()) {
+      node.classList.add("is-visible");
+      return;
+    }
+    // Next frame so opacity can transition from 0 → 1.
+    requestAnimationFrame(() => {
+      node.classList.add("is-visible");
+    });
   };
 
   const hideOverlay = () => {
     const node = document.getElementById("qol-overlay");
-    if (node) node.hidden = true;
+    if (!node) return;
+    if (prefersReducedMotion() || !node.classList.contains("is-visible")) {
+      node.classList.remove("is-visible");
+      node.hidden = true;
+      return;
+    }
+    const finish = (event) => {
+      if (event && event.target !== node) return;
+      node.removeEventListener("transitionend", finish);
+      if (!node.classList.contains("is-visible")) node.hidden = true;
+    };
+    node.addEventListener("transitionend", finish);
+    node.classList.remove("is-visible");
   };
 
   const confirmAction = (message, options = {}) =>
@@ -98,7 +123,6 @@
     });
 
   const popovers = [
-    ["notify-toggle", "notify-panel"],
     ["profile-toggle", "profile-panel"],
     ["settings-toggle", "settings-panel"],
   ]
@@ -110,16 +134,81 @@
 
   const closePopover = (item) => {
     item.panel.hidden = true;
+    item.panel.classList.remove("is-open");
     item.toggle.setAttribute("aria-expanded", "false");
   };
 
-  const closeAll = () => popovers.forEach(closePopover);
+  const closeAllPopovers = () => popovers.forEach(closePopover);
 
   const openPopover = (item) => {
-    closeAll();
+    closeAllPopovers();
+    closeNotifyDropdown();
     item.panel.hidden = false;
+    item.panel.classList.add("is-open");
     item.toggle.setAttribute("aria-expanded", "true");
   };
+
+  // Announcement bell dropdown — independent of sidebar (pro-shell.js) and of the
+  // generic profile/settings popover list (do not put notify back in that array).
+  const notifyToggle = document.getElementById("notify-toggle");
+  const notifyDropdown = document.getElementById("notify-dropdown");
+
+  const closeMobileSidebarIfOpen = () => {
+    const body = document.body;
+    if (!body.classList.contains("pro-sidebar-open")) return;
+    body.classList.remove("pro-sidebar-open", "pro-scroll-locked");
+    const backdrop = document.getElementById("pro-sidebar-backdrop");
+    if (backdrop) backdrop.hidden = true;
+    const sidebarToggle = document.getElementById("sidebar-toggle");
+    if (sidebarToggle) sidebarToggle.setAttribute("aria-expanded", "false");
+  };
+
+  const closeNotifyDropdown = () => {
+    if (!notifyToggle || !notifyDropdown) return;
+    notifyDropdown.classList.remove("is-open");
+    notifyToggle.setAttribute("aria-expanded", "false");
+    if (prefersReducedMotion()) {
+      notifyDropdown.hidden = true;
+      return;
+    }
+    const finish = (event) => {
+      if (event && event.target !== notifyDropdown) return;
+      notifyDropdown.removeEventListener("transitionend", finish);
+      if (!notifyDropdown.classList.contains("is-open")) notifyDropdown.hidden = true;
+    };
+    notifyDropdown.addEventListener("transitionend", finish);
+    // Fallback if transitionend doesn't fire (display/hidden edge cases).
+    window.setTimeout(() => {
+      if (!notifyDropdown.classList.contains("is-open")) notifyDropdown.hidden = true;
+    }, 280);
+  };
+
+  const openNotifyDropdown = () => {
+    if (!notifyToggle || !notifyDropdown) return;
+    closeAllPopovers();
+    closeMobileSidebarIfOpen();
+    notifyDropdown.hidden = false;
+    notifyToggle.setAttribute("aria-expanded", "true");
+    if (prefersReducedMotion()) {
+      notifyDropdown.classList.add("is-open");
+      return;
+    }
+    requestAnimationFrame(() => notifyDropdown.classList.add("is-open"));
+  };
+
+  const toggleNotifyDropdown = () => {
+    if (!notifyDropdown) return;
+    if (notifyToggle.getAttribute("aria-expanded") === "true") closeNotifyDropdown();
+    else openNotifyDropdown();
+  };
+
+  if (notifyToggle && notifyDropdown) {
+    notifyToggle.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleNotifyDropdown();
+    });
+  }
 
   popovers.forEach((item) => {
     item.toggle.addEventListener("click", (event) => {
@@ -136,10 +225,21 @@
         closePopover(item);
       }
     });
+    if (
+      notifyDropdown &&
+      notifyToggle &&
+      notifyToggle.getAttribute("aria-expanded") === "true" &&
+      !notifyDropdown.contains(event.target) &&
+      !notifyToggle.contains(event.target)
+    ) {
+      closeNotifyDropdown();
+    }
   });
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") closeAll();
+    if (event.key !== "Escape") return;
+    closeAllPopovers();
+    if (notifyToggle?.getAttribute("aria-expanded") === "true") closeNotifyDropdown();
   });
 
   const prefKey = (name) => `bloom-pref-${name}`;

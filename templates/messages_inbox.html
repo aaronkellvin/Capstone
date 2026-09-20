@@ -55,10 +55,10 @@
         </div>
       </div>
 
-      <div class="hub-list message-list" data-message-list>
+      <div class="hub-list message-list pro-stagger-in" data-message-list>
         {% for thread in threads %}
           <a
-            class="message-row subject-accent-{{ thread.subject_slug }} {% if thread.unread %}is-unread{% endif %} {% if not thread.started %}is-starter{% endif %}"
+            class="message-row pro-card-interactive subject-accent-{{ thread.subject_slug }} {% if thread.unread %}is-unread{% endif %} {% if not thread.started %}is-starter{% endif %}"
             href="{{ thread.href }}"
             data-subject="{{ thread.subject_slug }}"
             data-unread="{{ 1 if thread.unread else 0 }}"
@@ -83,12 +83,12 @@
           </a>
         {% endfor %}
       </div>
-      <article class="empty-state-card message-filter-empty" data-message-empty hidden>
+      <article class="empty-state-card message-filter-empty pro-toast-in" data-message-empty hidden>
         <h3 class="empty-title" data-message-empty-title>No conversations found</h3>
         <p class="empty-copy" data-message-empty-copy>Try a different search or filter.</p>
       </article>
     {% else %}
-      <article class="empty-state-card message-empty">
+      <article class="empty-state-card message-empty pro-toast-in">
         <span class="empty-state-icon" aria-hidden="true">✉</span>
         <p class="empty-kicker">Messages</p>
         <h3 class="empty-title">{% if is_teacher %}No student messages yet{% else %}No teachers to message yet{% endif %}</h3>

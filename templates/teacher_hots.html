@@ -1,44 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HOTS Generator — Bloom</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-</head>
-<body class="app-body staff-body">
-  <div class="app-bg" aria-hidden="true">
-    <span class="ribbon ribbon-blue"></span>
-    <span class="ribbon ribbon-red"></span>
-    <span class="dot-field"></span>
-  </div>
-
-  {% include "partials/staff_topbar.html" %}
-
-  <main class="app-main">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <ul class="flash-list home-flash">
-          {% for category, message in messages %}
-            <li class="flash flash-{{ category }}">{{ message }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
-
-    <section class="home-section">
-      <h1 class="section-title">HOTS Generator</h1>
-      <p class="section-note">{{ subject_name }} · Generate from approved materials, review items, then publish to the section.</p>
-    </section>
+{% extends "layouts/pro.html" %}
+{% block title %}HOTS Generator — Bloom{% endblock %}
+{% block body_class %}teacher-workspace teacher-hots-page subject-accent-{{ subject_slug }}{% endblock %}
+{% block page_kicker %}HOTS · {{ subject_name }}{% endblock %}
+{% block page_title %}HOTS Generator{% endblock %}
+{% block page_subtitle %}Generate from approved materials, review items, then publish to the section.{% endblock %}
+{% block content %}
+  <section class="home-section" aria-labelledby="hots-generate-title">
+    <div class="section-heading-row">
+      <div>
+        <p class="section-eyebrow">Create</p>
+        <h2 id="hots-generate-title" class="section-title section-title-sm">Generate a HOTS set</h2>
+      </div>
+    </div>
 
     <section class="lobby-card">
-      <h2 class="hub-panel-title">Generate a HOTS set</h2>
       <p class="section-note">Questions stay grounded in the uploaded lesson text. Review before publishing.</p>
       {% if materials %}
         <form class="login-form" method="POST" action="{{ url_for('teacher_hots') }}" data-loading="Generating HOTS questions…">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
           <input type="hidden" name="action" value="generate" />
           <div class="field">
             <label for="material_id">Approved material</label>
@@ -80,10 +59,20 @@
         <a class="today-action" href="{{ url_for('teacher_materials') }}">Go to Materials</a>
       {% endif %}
     </section>
+  </section>
+
+  <section class="home-section" aria-labelledby="hots-sets-title">
+    <div class="section-heading-row">
+      <div>
+        <p class="section-eyebrow">Your sets</p>
+        <h2 id="hots-sets-title" class="section-title section-title-sm">HOTS assessments</h2>
+      </div>
+      <span class="count-badge {% if not assessments %}count-badge-muted{% endif %}">{{ assessments|length }}</span>
+    </div>
 
     {% for assessment in assessments %}
       <section class="lobby-card stack-md">
-        <p class="hub-card-kicker">{{ assessment.status.title() }}</p>
+        <p class="teacher-status-pill is-{{ assessment.status }}">{{ assessment.status.title() }}</p>
         <h2 class="hub-panel-title">{{ assessment.title }}</h2>
         <p class="section-note">
           {{ assessment.questions|length }} questions
@@ -91,7 +80,7 @@
           {% if assessment.deadline %} · Due {{ assessment.deadline.strftime("%b %d · %I:%M %p") }}{% endif %}
         </p>
 
-        <div class="hub-list stack-sm">
+        <div class="hub-list stack-sm pro-stagger-in">
           {% for question in assessment.questions %}
             <article class="hub-card hub-card-stack">
               <div>
@@ -106,6 +95,7 @@
               </div>
               {% if assessment.status == "draft" %}
                 <form method="POST" action="{{ url_for('teacher_hots') }}" data-loading="Regenerating this question…">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                   <input type="hidden" name="action" value="regenerate" />
                   <input type="hidden" name="question_id" value="{{ question.id }}" />
                   <button class="today-action today-action-soft" type="submit">Regenerate</button>
@@ -116,7 +106,8 @@
         </div>
 
         {% if assessment.status == "draft" %}
-          <form class="login-form stack-md" method="POST" action="{{ url_for('teacher_hots') }}" data-confirm="Publish this HOTS assessment to the section?">
+          <form class="login-form stack-md" method="POST" action="{{ url_for('teacher_hots') }}" data-confirm="Publish this HOTS assessment to the section?" data-loading="Publishing to section…">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <input type="hidden" name="action" value="publish" />
             <input type="hidden" name="assessment_id" value="{{ assessment.id }}" />
             <div class="field">
@@ -128,13 +119,11 @@
         {% endif %}
       </section>
     {% else %}
-      <article class="empty-state-card stack-md">
+      <article class="empty-state-card stack-md pro-toast-in">
         <p class="empty-kicker">HOTS</p>
         <h3 class="empty-title">No HOTS sets yet</h3>
         <p class="empty-copy">Generate from an approved lesson, review each item, then publish.</p>
       </article>
-    {% endfor %}
-  </main>
-  <script src="{{ url_for('static', filename='js/topbar.js') }}"></script>
-</body>
-</html>
+    {% endif %}
+  </section>
+{% endblock %}

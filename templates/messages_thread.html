@@ -29,7 +29,7 @@
         </div>
       </header>
 
-      <div class="chat-thread" id="chat-thread">
+      <div class="chat-thread pro-stagger-in" id="chat-thread">
         {% if messages %}
           {% for item in messages %}
             <article class="chat-bubble {% if item.mine %}is-mine{% else %}is-theirs{% endif %}" data-id="{{ item.id }}">
@@ -38,7 +38,7 @@
             </article>
           {% endfor %}
         {% else %}
-          <div class="chat-empty" id="chat-empty">
+          <div class="chat-empty pro-toast-in" id="chat-empty">
             <span class="empty-state-icon" aria-hidden="true">✉</span>
             <h2>Ask {{ other.name.split(' ')[0] }}</h2>
             <p>Start with a clear question about a lesson, assessment, or material.</p>
@@ -60,7 +60,7 @@
           <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3.4 11.2 20.2 3.6a.8.8 0 0 1 1.1 1.1L13.7 21.5a.8.8 0 0 1-1.5.1l-2.6-6.3-6.3-2.6a.8.8 0 0 1 .1-1.5Z"/></svg>
           <span>Send</span>
         </button>
-        <p class="chat-status" id="chat-status" hidden role="status" aria-live="polite"></p>
+        <p class="chat-status pro-toast-in" id="chat-status" hidden role="status" aria-live="polite"></p>
       </form>
     </section>
 {% endblock %}

@@ -10,15 +10,15 @@
         <p class="pro-hero-sub">See who has started, who submitted, and what still needs a release.</p>
       </div>
       <div class="home-command-pulse" aria-label="Class signals">
-        <div class="home-pulse-chip {% if class_avg is none %}is-quiet{% endif %}">
+        <div class="home-pulse-chip pro-toast-in {% if class_avg is none %}is-quiet{% endif %}">
           <span class="home-pulse-value">{% if class_avg is not none %}{{ class_avg }}%{% else %}—{% endif %}</span>
           <span class="home-pulse-label">Class avg score</span>
         </div>
-        <div class="home-pulse-chip">
+        <div class="home-pulse-chip pro-toast-in">
           <span class="home-pulse-value">{{ submitted_students }}/{{ students|length }}</span>
           <span class="home-pulse-label">Submitted HOTS</span>
         </div>
-        <div class="home-pulse-chip {% if not practice_n %}is-quiet{% endif %}">
+        <div class="home-pulse-chip pro-toast-in {% if not practice_n %}is-quiet{% endif %}">
           <span class="home-pulse-value">{{ practice_n }}</span>
           <span class="home-pulse-label">Practice checks</span>
         </div>
@@ -37,9 +37,9 @@
     </div>
 
     {% if students %}
-      <div class="teacher-student-grid" role="list" aria-label="Student progress">
+      <div class="teacher-student-grid pro-stagger-in" role="list" aria-label="Student progress">
         {% for student in students %}
-          <article class="teacher-student-card" role="listitem">
+          <article class="teacher-student-card pro-card-interactive" role="listitem">
             <div class="teacher-student-top">
               <div class="teacher-roster-name">
                 {% with class_name="pro-avatar", initials=student.initials, photo_url=student.photo_url %}
@@ -105,9 +105,9 @@
     </div>
 
     {% if panels %}
-      <div class="teacher-monitor-list">
+      <div class="teacher-monitor-list pro-stagger-in">
         {% for panel in panels %}
-          <article class="teacher-monitor-card is-{{ panel.status }}">
+          <article class="teacher-monitor-card pro-card-interactive is-{{ panel.status }}">
             <div class="teacher-monitor-head">
               <div>
                 <p class="teacher-status-pill is-{{ panel.status }}">{{ panel.status_label }}</p>
@@ -159,14 +159,14 @@
 
             <div class="hub-card-actions">
               {% if panel.status == "published" %}
-                <form method="POST" action="{{ url_for('teacher_monitor') }}" data-confirm="Close this assessment? Students already answering may still submit.">
+                <form method="POST" action="{{ url_for('teacher_monitor') }}" data-confirm="Close this assessment? Students already answering may still submit." data-loading="Closing assessment…">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                   <input type="hidden" name="assessment_id" value="{{ panel.assessment_id }}" />
                   <input type="hidden" name="action" value="close" />
                   <button class="today-action today-action-soft" type="submit">Close</button>
                 </form>
               {% elif panel.status == "closed" %}
-                <form method="POST" action="{{ url_for('teacher_monitor') }}" data-confirm="Reopen with one extra attempt? Original attempts stay in history.">
+                <form method="POST" action="{{ url_for('teacher_monitor') }}" data-confirm="Reopen with one extra attempt? Original attempts stay in history." data-loading="Reopening assessment…">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                   <input type="hidden" name="assessment_id" value="{{ panel.assessment_id }}" />
                   <input type="hidden" name="action" value="reopen" />

@@ -125,6 +125,19 @@ def inject_unread_messages():
 
 
 @app.context_processor
+def inject_announcement_unread():
+    """Keep topbar/sidebar announcement badges + bell preview honest on every student page."""
+    user = current_user()
+    if not user or user.get("role") != "student":
+        return {"unread_announcements": 0, "announcements_preview": []}
+    ctx = announcements_context(user)
+    return {
+        "unread_announcements": ctx["unread_announcements"],
+        "announcements_preview": ctx["announcements_preview"],
+    }
+
+
+@app.context_processor
 def inject_difficulty_helpers():
     return {"difficulty_label": difficulty_label}
 
@@ -2841,6 +2854,7 @@ def teacher_hots(user):
         materials=materials,
         assessments=assessments,
         subject_name=SUBJECTS[slug]["name"],
+        subject_slug=slug,
     )
 
 

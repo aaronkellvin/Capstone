@@ -74,12 +74,19 @@
 
     if (empty) {
       const showEmpty = visible === 0;
+      const wasHidden = empty.hidden;
       empty.hidden = !showEmpty;
       empty.classList.toggle("is-filtered-out", !showEmpty);
       if (showEmpty) {
         const copy = emptyCopyFor(activeFilter);
         if (emptyTitle) emptyTitle.textContent = copy.title;
         if (emptyCopy) emptyCopy.textContent = copy.copy;
+        // Re-trigger entrance when the filter empty state becomes visible again.
+        if (wasHidden) {
+          empty.classList.remove("pro-toast-in");
+          void empty.offsetWidth;
+          empty.classList.add("pro-toast-in");
+        }
       }
     }
   };
@@ -113,4 +120,10 @@
 
   // Initialize aria-pressed + count from the default "All" state.
   setFilter("all");
+
+  // Freeze list stagger after first entrance so filter show/hide does not replay it
+  // (rows use display:none when filtered, which would restart CSS animations).
+  window.setTimeout(() => {
+    list.classList.add("is-stagger-done");
+  }, 650);
 })();

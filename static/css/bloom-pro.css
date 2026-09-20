@@ -535,6 +535,33 @@ body.app-body > .app-main > section.take-shell:first-of-type {
   overflow: visible;
 }
 
+/* Announcement bell dropdown open state (fade + slight lift) */
+.pro-body #notify-dropdown.notify-panel {
+  opacity: 0;
+  transform: translateY(4px);
+  animation: none;
+  transition:
+    opacity var(--pro-duration-base) var(--pro-ease-standard),
+    transform var(--pro-duration-base) var(--pro-ease-standard);
+}
+
+.pro-body #notify-dropdown.notify-panel.is-open {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
+  transition: none;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pro-body #notify-dropdown.notify-panel {
+    transition: none;
+    transform: none;
+  }
+}
+
 .pro-body .menu-panel,
 .pro-body .notify-panel {
   z-index: 1200;
@@ -2040,6 +2067,29 @@ body.app-body > .app-main > section.take-shell:first-of-type {
 .teacher-status-pill.is-draft {
   background: var(--pro-orange-soft);
   color: var(--bloom-warning);
+}
+
+/* Materials aliases — same token recipes as draft/published + score-low red */
+.teacher-status-pill.is-pending {
+  background: var(--pro-orange-soft);
+  color: var(--bloom-warning);
+}
+
+.teacher-status-pill.is-approved {
+  background: var(--pro-green-soft);
+  color: var(--bloom-success);
+}
+
+.teacher-status-pill.is-rejected {
+  background: var(--pro-red-soft);
+  color: var(--bloom-error);
+}
+
+.teacher-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 .teacher-release-pills,
@@ -4743,7 +4793,12 @@ body.app-body > .app-main > section.take-shell:first-of-type {
      .pro-toast-out         Exit animation for confirmation toasts
 
    Buttons:
-     .btn / .pro-btn / .btn-primary / .today-action get active:scale(0.98)
+     .btn / .pro-btn / .btn-primary / .today-action / .chat-send-btn
+     get active:scale(0.98)
+
+   One-shot stagger:
+     .pro-stagger-in.is-stagger-done > *  freezes children after first paint
+     so filter show/hide or polled appends do not replay nth-child stagger.
 
    All entrance / transform motion respects prefers-reduced-motion: reduce.
    ============================================================================= */
@@ -4787,10 +4842,18 @@ body.app-body > .app-main > section.take-shell:first-of-type {
 .pro-stagger-in > *:nth-child(8) { animation-delay: 280ms; }
 .pro-stagger-in > *:nth-child(n + 9) { animation-delay: 280ms; }
 
+/* Freeze after first entrance (toggled by messages_inbox.js / messages.js). */
+.pro-stagger-in.is-stagger-done > * {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+
 .btn:active,
 .pro-btn:active,
 .btn-primary:active,
-.today-action:active {
+.today-action:active,
+.chat-send-btn:active {
   transform: scale(0.98);
   transition:
     transform var(--pro-duration-fast) var(--pro-ease-standard),
@@ -4853,7 +4916,25 @@ body.app-body > .app-main > section.take-shell:first-of-type {
   animation: pro-toast-out var(--pro-duration-base) var(--pro-ease-standard) both;
 }
 
+/* Full-page loading overlay (#qol-overlay) — fade using shared --pro tokens */
+.qol-overlay {
+  opacity: 0;
+  transition: opacity var(--pro-duration-base) var(--pro-ease-standard);
+}
+
+.qol-overlay.is-visible {
+  opacity: 1;
+}
+
+html.pref-reduce-motion .qol-overlay {
+  transition: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .qol-overlay {
+    transition: none;
+  }
+
   .pro-card-interactive,
   .pro-card-interactive:hover,
   .pro-card-interactive:focus-visible {
@@ -4872,7 +4953,8 @@ body.app-body > .app-main > section.take-shell:first-of-type {
   .btn:active,
   .pro-btn:active,
   .btn-primary:active,
-  .today-action:active {
+  .today-action:active,
+  .chat-send-btn:active {
     transform: none;
   }
 

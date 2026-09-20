@@ -17,13 +17,28 @@
   <div class="pro-top-actions">
     {% if user and user.role == 'student' %}
       <div class="menu-wrap notify-wrap">
-        <button type="button" class="icon-btn" id="notify-toggle" aria-label="Announcement alerts" aria-haspopup="true" aria-expanded="false" aria-controls="notify-panel" title="Announcement alerts">
+        <button
+          type="button"
+          class="icon-btn"
+          id="notify-toggle"
+          aria-label="Announcements{% if unread_announcements %} ({{ unread_announcements }} unread){% endif %}"
+          title="Announcements"
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-controls="notify-dropdown"
+        >
           <svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.2 2.2 0 0 0 2.2-2.2h-4.4A2.2 2.2 0 0 0 12 22Zm7-5.2V11a7 7 0 1 0-14 0v5.8L3 18.6V20h18v-1.4l-2-1.8Z" fill="currentColor"/></svg>
           {% if unread_announcements %}<span class="bell-dot">{{ unread_announcements }}</span>{% endif %}
         </button>
-        <div class="menu-panel notify-panel" id="notify-panel" hidden role="region" aria-label="Announcement alerts">
-          <div class="menu-head">
-            <p class="menu-title">Announcement alerts</p>
+        <div
+          class="menu-panel notify-panel"
+          id="notify-dropdown"
+          hidden
+          role="region"
+          aria-label="Announcement alerts"
+        >
+          <div class="menu-head notify-head">
+            <p class="menu-title notify-title">Announcements</p>
             {% if unread_announcements %}
               <p class="notify-count">{{ unread_announcements }} unread</p>
             {% else %}
@@ -33,7 +48,11 @@
           <ul class="notify-list">
             {% for note in announcements_preview %}
               <li>
-                <a class="notify-item {% if note.unread %}is-unread{% endif %}" href="{{ note.href }}" data-id="{{ note.id }}">
+                <a
+                  class="notify-item {% if note.unread %}is-unread{% endif %} subject-accent-{{ note.subject|lower|replace('math', 'mathematics') }}"
+                  href="{{ note.href }}"
+                  data-id="{{ note.id }}"
+                >
                   <p class="notify-subject">{{ note.subject }}{% if note.unread %} · New{% endif %}</p>
                   <p class="notify-item-title">{{ note.title }}</p>
                   <p class="notify-meta">{{ note.meta }}</p>
@@ -43,7 +62,7 @@
               <li class="notify-empty">No announcements yet.</li>
             {% endfor %}
           </ul>
-          <a class="notify-all" href="{{ url_for('announcements') }}">View announcement history</a>
+          <a class="notify-all" href="{{ url_for('announcements') }}">View all announcements</a>
         </div>
       </div>
       {% include "partials/header_messages.html" %}

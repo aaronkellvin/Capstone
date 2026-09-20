@@ -41,11 +41,14 @@
       <span class="count-badge {% if not pending %}count-badge-muted{% endif %}">{{ pending|length }}</span>
     </div>
     {% if pending %}
-      <div class="hub-list stack-md">
+      <div class="hub-list stack-md pro-stagger-in">
         {% for item in pending %}
-          <article class="hub-card">
+          <article class="hub-card pro-card-interactive">
             <div>
-              <p class="hub-card-kicker">{{ item.source_label }} · {{ item.owner_name }}</p>
+              <div class="teacher-status-row">
+                <span class="teacher-status-pill is-pending">Pending</span>
+                <span class="hub-card-meta">{{ item.source_label }} · {{ item.owner_name }}</span>
+              </div>
               <h3 class="hub-card-title">{{ item.title }}</h3>
               <p class="hub-card-meta">{{ item.filename }} · {{ item.char_count }} characters{% if item.has_summary %} · Summary ready{% else %} · Summary missing{% endif %}</p>
             </div>
@@ -72,11 +75,14 @@
       <span class="count-badge count-badge-muted">{{ deployed|length }}</span>
     </div>
     {% if deployed %}
-      <div class="hub-list stack-md">
+      <div class="hub-list stack-md pro-stagger-in">
         {% for item in deployed %}
-          <article class="hub-card">
+          <article class="hub-card pro-card-interactive">
             <div>
-              <p class="hub-card-kicker">Available · {{ item.source_label }}</p>
+              <div class="teacher-status-row">
+                <span class="teacher-status-pill is-approved">Approved</span>
+                <span class="hub-card-meta">{{ item.source_label }}</span>
+              </div>
               <h3 class="hub-card-title">{{ item.title }}</h3>
               <p class="hub-card-meta">{{ item.filename }} · {{ item.owner_name }} · {{ item.created_at }}</p>
             </div>
@@ -97,11 +103,14 @@
           <h2 id="rejected-title" class="section-title section-title-sm">Rejected</h2>
         </div>
       </div>
-      <div class="hub-list stack-md">
+      <div class="hub-list stack-md pro-stagger-in">
         {% for item in rejected %}
-          <article class="hub-card">
+          <article class="hub-card pro-card-interactive">
             <div>
-              <p class="hub-card-kicker">Rejected · {{ item.owner_name }}</p>
+              <div class="teacher-status-row">
+                <span class="teacher-status-pill is-rejected">Rejected</span>
+                <span class="hub-card-meta">{{ item.owner_name }}</span>
+              </div>
               <h3 class="hub-card-title">{{ item.title }}</h3>
               <p class="hub-card-meta">{{ item.reject_reason or item.filename }}</p>
             </div>

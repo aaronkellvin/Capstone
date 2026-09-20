@@ -57,6 +57,11 @@
     article.className = `chat-bubble ${item.mine ? "is-mine" : "is-theirs"}`;
     if (item.status === "sending") article.classList.add("is-sending");
     if (item.status === "failed") article.classList.add("is-failed");
+    // After initial stagger freezes, give polled/sent bubbles a single fade-in
+    // instead of reusing nth-child list stagger.
+    if (thread.classList.contains("is-stagger-done")) {
+      article.classList.add("pro-toast-in");
+    }
     if (item.id) article.dataset.id = String(item.id);
     if (item.tempId) article.dataset.tempId = item.tempId;
     article.innerHTML = `<p class="chat-text"></p><p class="chat-stamp"></p>`;
@@ -69,9 +74,15 @@
 
   const setStatus = (text, isError) => {
     if (!status) return;
+    const wasHidden = status.hidden;
     status.hidden = !text;
     status.textContent = text || "";
     status.classList.toggle("is-error", Boolean(isError));
+    if (text && wasHidden) {
+      status.classList.remove("pro-toast-in");
+      void status.offsetWidth;
+      status.classList.add("pro-toast-in");
+    }
   };
 
   const addRetry = (bubble, body) => {
@@ -208,5 +219,10 @@
 
   scrollToEnd();
   markThreadRead();
+  // Freeze thread stagger after first paint so poll/send appends do not
+  // pick up nth-child stagger delays on the whole list.
+  window.setTimeout(() => {
+    thread.classList.add("is-stagger-done");
+  }, 650);
   window.setInterval(poll, 4000);
 })();
