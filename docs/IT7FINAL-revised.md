@@ -1,6 +1,10 @@
 # AI-POWERED SMART STUDY ASSISTANT FOR HOTS-BASED ASSESSMENT GENERATION AND LEARNING SUPPORT
 ### System name in the prototype: **Bloom**
 
+**This file is the old mixed draft. Do not use it for Chapters I–III.**  
+Use **`docs/chengwaThesis.md`** or **`docs/chengwaThesis.docx`** for aligned Chapters 1–3.  
+Use **`docs/IT7-Chapter4-5.md`** for Chapters 4–5.
+
 **Revised draft (aligned with the working Capstone prototype)**  
 Esguerra, Patrick Carlos P. · Lamadrid, Isaiah Matthew C. · Quilitis, Marvic Mat M.  
 Colegio de San Juan de Letran Calamba · BS Information Technology · May 2026
@@ -266,3 +270,4 @@ Human participant data are anonymized in reporting; only aggregates are publishe
 2. Copy the **updated Chapter I naming**, **Definition of Terms**, and especially **Chapter III Materials / Architecture / Use Case / ERD** into your official thesis document.
 3. Redraw Figures 1–7 captions/labels to say **Bloom** and match the finalized stack.
 4. Keep your original Chapter II literature pages unless your adviser asks for changes.
+5. Chapters IV–V are drafted in `docs/IT7-Chapter4-5.md` and `docs/IT7-Chapter4-5.docx` (handbook: development screenshots + unit / integration / system / UAT). Insert the PNGs from `docs/audit-screenshots/` under each figure. Fill UAT Tables 4.4–4.6 after the Grade 7 pilot.
