@@ -61,11 +61,32 @@ if IS_PRODUCTION:
 else:
     SECRET_KEY = SECRET_KEY or DEV_SECRET_FALLBACK
 
+def database_uri() -> str:
+    """Postgres when DATABASE_URL is set (Railway / local pgAdmin); else SQLite."""
+    test_path = os.environ.get("BLOOM_TEST_DB", "").strip()
+    if test_path:
+        return "sqlite:///" + test_path
+    url = (
+        os.environ.get("DATABASE_URL")
+        or os.environ.get("POSTGRES_URL")
+        or ""
+    ).strip()
+    if url:
+        if url.startswith("postgres://"):
+            url = "postgresql://" + url[len("postgres://") :]
+        if url.startswith("postgresql://"):
+            url = "postgresql+psycopg://" + url[len("postgresql://") :]
+        if "sslmode=" not in url.lower() and "railway" in url.lower():
+            url += ("&" if "?" in url else "?") + "sslmode=require"
+        return url
+    path = os.path.join(app.instance_path, "bloom.db")
+    return "sqlite:///" + path
+
+
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 os.makedirs(app.instance_path, exist_ok=True)
-_db_path = os.environ.get("BLOOM_TEST_DB") or os.path.join(app.instance_path, "bloom.db")
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + _db_path
+app.config["SQLALCHEMY_DATABASE_URI"] = database_uri()
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
 app.config["UPLOAD_FOLDER"] = os.path.join(app.instance_path, "uploads")
@@ -224,13 +245,19 @@ def ensure_schema():
         ("assessment", "difficulty", "VARCHAR(20)"),
         ("user", "avatar_filename", "VARCHAR(255)"),
     )
+    preparer = db.engine.dialect.identifier_preparer
     with db.engine.begin() as conn:
         for table, column, ddl in additions:
             if table not in tables:
                 continue
             columns = {col["name"] for col in inspector.get_columns(table)}
             if column not in columns:
-                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}"))
+                conn.execute(
+                    text(
+                        f"ALTER TABLE {preparer.quote(table)} "
+                        f"ADD COLUMN {preparer.quote(column)} {ddl}"
+                    )
+                )
 
 
 def unique_slug(base: str, model, field="slug") -> str:
@@ -3617,5 +3644,11 @@ def logout():
 
 
 if __name__ == "__main__":
-    debug = os.environ.get("FLASK_DEBUG", "0" if IS_PRODUCTION else "1").lower() in {"1", "true", "yes"}
-    app.run(debug=debug, host="127.0.0.1", port=int(os.environ.get("PORT", "5001")))
+    on_railway = bool(os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RAILWAY_PROJECT_ID"))
+    debug = os.environ.get("FLASK_DEBUG", "0" if (IS_PRODUCTION or on_railway) else "1").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+    host = "0.0.0.0" if (on_railway or IS_PRODUCTION) else "127.0.0.1"
+    app.run(debug=debug, host=host, port=int(os.environ.get("PORT", "5001")))
