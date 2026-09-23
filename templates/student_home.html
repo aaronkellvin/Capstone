@@ -104,15 +104,28 @@
           <h3 class="today-title">{{ primary.title }}</h3>
           <p class="today-meta">{{ primary.meta }}</p>
         </div>
-        <div class="today-actions">
-          <a class="today-action" href="{{ primary.href }}">
-            {{ primary.action }}
-            <span aria-hidden="true">→</span>
-          </a>
-          {% if primary.secondary_href and primary.secondary_action %}
-            <a class="today-action today-action-soft" href="{{ primary.secondary_href }}">
-              {{ primary.secondary_action }}
+        <div class="today-actions {% if primary.actions and primary.actions|length > 2 %}today-actions-stack{% endif %}" role="group" aria-label="Next steps">
+          {% if primary.actions %}
+            {% for step in primary.actions %}
+              <a
+                class="today-action {% if step.tone == 'soft' %}today-action-soft{% elif step.tone == 'accent' %}today-action-accent{% endif %}"
+                href="{{ step.href }}"
+              >
+                {% if step.step %}<span class="today-action-step">{{ step.step }}</span>{% endif %}
+                <span class="today-action-label">{{ step.label }}</span>
+                {% if loop.first %}<span aria-hidden="true">→</span>{% endif %}
+              </a>
+            {% endfor %}
+          {% else %}
+            <a class="today-action" href="{{ primary.href }}">
+              {{ primary.action }}
+              <span aria-hidden="true">→</span>
             </a>
+            {% if primary.secondary_href and primary.secondary_action %}
+              <a class="today-action today-action-soft" href="{{ primary.secondary_href }}">
+                {{ primary.secondary_action }}
+              </a>
+            {% endif %}
           {% endif %}
         </div>
       </article>
@@ -146,15 +159,27 @@
                 <h3 class="today-title">{{ item.title }}</h3>
                 <p class="today-meta">{{ item.meta }}</p>
               </div>
-              <div class="today-actions today-actions-compact">
-                <a class="today-action today-action-soft" href="{{ item.href }}">
-                  {{ item.action }}
-                  <span aria-hidden="true">→</span>
-                </a>
-                {% if item.secondary_href and item.secondary_action %}
-                  <a class="today-action today-action-soft" href="{{ item.secondary_href }}">
-                    {{ item.secondary_action }}
+              <div class="today-actions today-actions-compact" role="group" aria-label="Next steps">
+                {% if item.actions %}
+                  {% for step in item.actions %}
+                    <a
+                      class="today-action {% if step.tone == 'soft' %}today-action-soft{% elif step.tone == 'accent' %}today-action-accent{% endif %}"
+                      href="{{ step.href }}"
+                    >
+                      {% if step.step %}<span class="today-action-step">{{ step.step }}</span>{% endif %}
+                      <span class="today-action-label">{{ step.label }}</span>
+                    </a>
+                  {% endfor %}
+                {% else %}
+                  <a class="today-action today-action-soft" href="{{ item.href }}">
+                    {{ item.action }}
+                    <span aria-hidden="true">→</span>
                   </a>
+                  {% if item.secondary_href and item.secondary_action %}
+                    <a class="today-action today-action-soft" href="{{ item.secondary_href }}">
+                      {{ item.secondary_action }}
+                    </a>
+                  {% endif %}
                 {% endif %}
               </div>
             </article>

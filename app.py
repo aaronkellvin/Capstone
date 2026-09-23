@@ -1049,6 +1049,35 @@ def build_today(user_id: int) -> list[dict]:
         attempt_label = "1 attempt" if allowed == 1 else f"{allowed} attempts"
         material = db.session.get(Material, assessment.material_id) if assessment.material_id else None
         review_href = lesson_review_href(assessment.subject_slug, material)
+        actions = [
+            {
+                "label": "Review lesson",
+                "href": review_href,
+                "tone": "primary",
+                "step": "1",
+            }
+        ]
+        if material and material.status == "approved":
+            actions.append(
+                {
+                    "label": "Practice",
+                    "href": url_for(
+                        "practice_setup",
+                        subject_slug=assessment.subject_slug,
+                        material_slug=material.slug,
+                    ),
+                    "tone": "soft",
+                    "step": "2",
+                }
+            )
+        actions.append(
+            {
+                "label": "Start assessment",
+                "href": url_for("assessment_lobby", slug=assessment.slug),
+                "tone": "accent",
+                "step": str(len(actions) + 1),
+            }
+        )
         learn_assess.append(
             {
                 "type": "assessment",
@@ -1057,16 +1086,33 @@ def build_today(user_id: int) -> list[dict]:
                 "subject_slug": assessment.subject_slug,
                 "kicker": due,
                 "title": assessment.title,
-                "meta": f"{attempt_label} · Review the lesson first, then start when you feel ready",
-                "action": "Review lesson",
-                "href": review_href,
-                "secondary_action": "Start assessment",
-                "secondary_href": url_for("assessment_lobby", slug=assessment.slug),
+                "meta": f"{attempt_label} · Go in order: review, practice, then assess when ready",
+                "action": actions[0]["label"],
+                "href": actions[0]["href"],
+                "actions": actions,
             }
         )
 
     approved = Material.query.filter_by(status="approved").order_by(Material.created_at.desc()).first()
     if approved:
+        practice_actions = [
+            {
+                "label": "Review lesson",
+                "href": lesson_review_href(approved.subject_slug, approved),
+                "tone": "primary",
+                "step": "1",
+            },
+            {
+                "label": "Practice",
+                "href": url_for(
+                    "practice_setup",
+                    subject_slug=approved.subject_slug,
+                    material_slug=approved.slug,
+                ),
+                "tone": "accent",
+                "step": "2",
+            },
+        ]
         practice_items.append(
             {
                 "type": "practice",
@@ -1075,15 +1121,10 @@ def build_today(user_id: int) -> list[dict]:
                 "subject_slug": approved.subject_slug,
                 "kicker": "Practice reminder",
                 "title": f"Try the {approved.title} Practice Check",
-                "meta": "Skim the summary, then try a short practice check",
-                "action": "Review lesson",
-                "href": lesson_review_href(approved.subject_slug, approved),
-                "secondary_action": "Practice",
-                "secondary_href": url_for(
-                    "practice_setup",
-                    subject_slug=approved.subject_slug,
-                    material_slug=approved.slug,
-                ),
+                "meta": "Review the lesson, then take a short practice check",
+                "action": practice_actions[0]["label"],
+                "href": practice_actions[0]["href"],
+                "actions": practice_actions,
             }
         )
 

@@ -986,6 +986,31 @@ body {
   border: 1px solid rgba(11, 61, 145, 0.12);
 }
 
+.today-action-accent {
+  background: #fff;
+  color: var(--text-link);
+  box-shadow: none;
+  border: 1px solid rgba(11, 61, 145, 0.28);
+}
+
+.today-action-step {
+  display: inline-grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.today-action-label {
+  flex: 1 1 auto;
+  text-align: left;
+}
+
 .subject-progress {
   font-size: 0.9rem;
   font-weight: 700;
