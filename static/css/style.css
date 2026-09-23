@@ -638,10 +638,10 @@ body {
 
 .section-title {
   font-family: "Fredoka", "Nunito", sans-serif;
-  font-size: clamp(1.8rem, 5vw, 2.2rem);
+  font-size: clamp(1.35rem, 2.5vw, 1.7rem);
   font-weight: 700;
   color: var(--heading);
-  line-height: 1.1;
+  line-height: 1.15;
 }
 
 .section-title-sm {

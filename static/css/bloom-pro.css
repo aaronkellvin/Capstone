@@ -103,6 +103,17 @@
   --pro-duration-fast: 150ms;
   --pro-duration-base: 220ms;
   --pro-duration-slow: 320ms;
+
+  /* Density scale — tighter on smaller / shorter viewports via media queries */
+  --pro-space-page-x: 1.25rem;
+  --pro-space-page-y: 1.25rem;
+  --pro-space-section: 1.1rem;
+  --pro-space-card: 1.15rem;
+  --pro-space-card-gap: 0.85rem;
+  --pro-title-hero: clamp(1.35rem, 2vw, 1.75rem);
+  --pro-title-section: clamp(1.25rem, 1.8vw, 1.55rem);
+  --pro-title-card: 1.05rem;
+  --pro-body-size: 0.95rem;
 }
 
 .pro-body,
@@ -601,9 +612,9 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 .pro-hero {
   position: relative;
   overflow: hidden;
-  margin: 0 1.25rem;
-  margin-top: 1.25rem;
-  padding: 1.35rem 1.45rem 1.4rem 1.55rem;
+  margin: 0 var(--pro-space-page-x);
+  margin-top: var(--pro-space-page-y);
+  padding: var(--pro-space-card) calc(var(--pro-space-card) + 0.15rem) var(--pro-space-card) calc(var(--pro-space-card) + 0.25rem);
   border: 1px solid var(--bloom-border);
   border-radius: 1.15rem;
   color: var(--bloom-text);
@@ -647,23 +658,24 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 .pro-hero-title {
   margin: 0;
   color: var(--pro-heading);
-  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-size: var(--pro-title-hero);
   font-family: "Fredoka", "Inter", sans-serif;
   font-weight: 700;
   letter-spacing: -0.015em;
+  line-height: 1.2;
 }
 
 .pro-hero-sub {
-  margin: 0.4rem 0 0;
+  margin: 0.35rem 0 0;
   color: var(--bloom-text-secondary);
   max-width: 40rem;
-  font-size: 0.95rem;
+  font-size: var(--pro-body-size);
   font-weight: 500;
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
 .pro-content {
-  margin: 1rem 1.25rem 0;
+  margin: 1rem var(--pro-space-page-x) 0;
   min-width: 0;
   position: relative;
   z-index: 1;
@@ -786,7 +798,7 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
   color: var(--pro-heading);
   font-family: "Fredoka", "Inter", sans-serif;
   font-weight: 700;
-  font-size: 1.28rem;
+  font-size: clamp(1.05rem, 1.5vw, 1.2rem);
   line-height: 1.25;
   opacity: 1;
   visibility: visible;
@@ -812,7 +824,7 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 
 .pro-body .home-section,
 .pro-body .section-head {
-  margin-top: 1.1rem;
+  margin-top: var(--pro-space-section);
 }
 
 .pro-body .section-title,
@@ -825,6 +837,19 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
   color: var(--pro-heading);
   font-family: "Fredoka", "Inter", sans-serif;
   letter-spacing: -0.012em;
+  font-size: var(--pro-title-section);
+  line-height: 1.2;
+}
+
+.pro-body .hub-card-title,
+.app-body .hub-card-title {
+  font-size: var(--pro-title-card);
+  line-height: 1.3;
+}
+
+.pro-body .empty-title,
+.app-body .empty-title {
+  font-size: clamp(1.1rem, 1.6vw, 1.3rem);
 }
 
 .pro-body .section-note,
@@ -1337,7 +1362,7 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
   margin: 0;
   color: var(--pro-heading);
   font-family: "Fredoka", "Inter", sans-serif;
-  font-size: clamp(1.55rem, 3vw, 1.95rem);
+  font-size: var(--pro-title-hero);
   line-height: 1.15;
 }
 
@@ -1616,7 +1641,7 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 }
 
 .pro-body .home-today .today-featured .today-title {
-  font-size: clamp(1.25rem, 2.4vw, 1.55rem);
+  font-size: clamp(1.15rem, 2vw, 1.4rem);
   line-height: 1.25;
 }
 
@@ -1650,16 +1675,16 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 }
 
 .home-first-region {
-  margin: 1.25rem 1.25rem 0.15rem;
+  margin: var(--pro-space-page-y) var(--pro-space-page-x) 0.15rem;
 }
 
 .home-command-hero {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 1.25rem;
-  margin-bottom: 1.05rem;
-  padding: 1.15rem 1.25rem;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+  padding: var(--pro-space-card);
   border-radius: 1rem;
   border: 1px solid var(--pro-line);
   background:
@@ -1681,8 +1706,8 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
   display: grid;
   gap: 0.55rem;
   align-content: center;
-  min-height: 9.5rem;
-  padding: 1.45rem 1.4rem;
+  min-height: 7.5rem;
+  padding: var(--pro-space-card);
   /* Beat later .empty-state-card blue left-border; keep subject wash from today-featured */
   border: 1px solid color-mix(in srgb, var(--subject-color, var(--bloom-primary)) 34%, white);
   border-left: 5px solid var(--subject-color, var(--bloom-primary));
@@ -1721,9 +1746,9 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 .home-pulse-chip {
   display: grid;
   gap: 0.1rem;
-  min-width: 5.5rem;
-  padding: 0.55rem 0.75rem;
-  border-radius: 0.85rem;
+  min-width: 4.75rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.75rem;
   border: 1px solid var(--pro-line);
   background: var(--pro-card-soft);
   text-decoration: none;
@@ -1825,7 +1850,7 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
   margin: 0;
   color: var(--pro-heading);
   font-family: "Fredoka", "Inter", sans-serif;
-  font-size: 1.65rem;
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
   font-weight: 700;
   line-height: 1.1;
 }
@@ -2679,7 +2704,7 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 
 .pro-body .empty-state-card {
   border-left: 4px solid var(--pro-blue);
-  padding: 1.35rem;
+  padding: var(--pro-space-card);
 }
 
 .pro-body .empty-kicker,
@@ -2717,15 +2742,15 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
    ============================================================================= */
 :root {
   --wic-accent-width: 4px;
-  --wic-radius: 14px;
-  --wic-padding-y: 16px;
-  --wic-padding-x: 16px;
-  --wic-gap: 12px;
-  --wic-avatar-size: 40px;
+  --wic-radius: 12px;
+  --wic-padding-y: 14px;
+  --wic-padding-x: 14px;
+  --wic-gap: 10px;
+  --wic-avatar-size: 36px;
   --wic-avatar-radius: 10px;
-  --wic-badge-pad-y: 4px;
-  --wic-badge-pad-x: 9px;
-  --wic-badge-font: 0.7rem;
+  --wic-badge-pad-y: 3px;
+  --wic-badge-pad-x: 8px;
+  --wic-badge-font: 0.68rem;
   --wic-badge-radius: 999px;
   --wic-shadow: 0 1px 2px rgba(20, 35, 61, 0.05), 0 8px 22px rgba(20, 35, 61, 0.07);
   --wic-border: var(--pro-line);
@@ -2790,13 +2815,13 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 .work-item-grid {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.9rem;
+  gap: var(--pro-space-card-gap);
   width: 100%;
 }
 
 .work-item-list {
   display: grid;
-  gap: 0.9rem;
+  gap: var(--pro-space-card-gap);
 }
 
 /* Reset any .hub-card / global card rules — geometry comes only from --wic-* */
@@ -3067,8 +3092,8 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(17rem, 0.72fr);
   align-items: stretch;
-  gap: 1.2rem;
-  padding: 1.4rem;
+  gap: 1rem;
+  padding: var(--pro-space-card);
   border: 0;
   border-radius: 1.15rem;
   color: #fff;
@@ -3077,9 +3102,9 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 }
 
 .pro-body .result-hero .hero-title {
-  margin-top: 0.85rem;
+  margin-top: 0.55rem;
   color: #fff;
-  font-size: clamp(1.55rem, 3vw, 2.15rem);
+  font-size: var(--pro-title-hero);
 }
 
 .pro-body .result-hero .hero-note,
@@ -3887,10 +3912,10 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 }
 
 .pro-body .announce-detail-title {
-  margin-top: 0.8rem;
+  margin-top: 0.55rem;
   color: var(--pro-heading);
   font-family: "Fredoka", "Inter", sans-serif;
-  font-size: clamp(1.45rem, 3vw, 1.9rem);
+  font-size: var(--pro-title-hero);
 }
 
 .pro-body .announce-detail-by,
@@ -4163,7 +4188,7 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 .pro-body .practice-setup-card,
 .pro-body .take-shell {
   position: relative;
-  padding: 1.25rem;
+  padding: var(--pro-space-card);
   border: 1px solid var(--pro-line);
   border-radius: 1rem;
   box-shadow: var(--pro-shadow);
@@ -4216,9 +4241,9 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 
 .pro-body .practice-fieldset-card {
   position: relative;
-  padding: 1.05rem 1.05rem 1.1rem;
+  padding: calc(var(--pro-space-card) - 0.1rem);
   border: 1px solid var(--pro-line);
-  border-radius: 1rem;
+  border-radius: 0.9rem;
   background: #fff;
   box-shadow: var(--shadow-sm);
 }
@@ -4991,6 +5016,217 @@ html.pref-reduce-motion .qol-overlay {
   .pro-toast-in,
   .pro-toast-out {
     animation: none;
+  }
+}
+
+/* ==========================================================================
+   Responsive density — scale fonts/regions by device so data-heavy screens
+   stay usable when lists and uploads fill the page
+   ========================================================================== */
+
+@media (max-width: 1100px) {
+  :root {
+    --pro-space-page-x: 1.05rem;
+    --pro-space-page-y: 1rem;
+    --pro-space-section: 0.95rem;
+    --pro-space-card: 1rem;
+    --pro-space-card-gap: 0.75rem;
+    --pro-title-hero: clamp(1.25rem, 2.2vw, 1.55rem);
+    --pro-title-section: clamp(1.15rem, 2vw, 1.4rem);
+    --pro-title-card: 1rem;
+    --pro-sidebar-w: 14.5rem;
+  }
+
+  .pro-stat-grid {
+    gap: 0.7rem;
+    margin-bottom: 1.1rem;
+  }
+
+  .pro-body .hub-list,
+  .pro-body .today-list {
+    gap: 0.7rem;
+  }
+}
+
+@media (max-width: 860px) {
+  :root {
+    --pro-space-page-x: 0.85rem;
+    --pro-space-page-y: 0.85rem;
+    --pro-space-section: 0.85rem;
+    --pro-space-card: 0.9rem;
+    --pro-space-card-gap: 0.65rem;
+    --pro-title-hero: clamp(1.2rem, 3.5vw, 1.4rem);
+    --pro-title-section: clamp(1.1rem, 3vw, 1.3rem);
+    --pro-title-card: 0.98rem;
+    --pro-body-size: 0.92rem;
+    --wic-padding-y: 12px;
+    --wic-padding-x: 12px;
+    --wic-gap: 8px;
+    --wic-avatar-size: 34px;
+  }
+
+  .pro-body .flash-list {
+    margin-left: var(--pro-space-page-x);
+    margin-right: var(--pro-space-page-x);
+  }
+
+  .pro-hero,
+  .home-command-hero,
+  .hub-command,
+  .pro-body .practice-setup-card,
+  .pro-body .take-shell,
+  .pro-body .result-hero,
+  .pro-body .empty-state-card,
+  .pro-panel {
+    border-radius: 0.9rem;
+  }
+
+  .home-command-hero .pro-hero-sub,
+  .pro-hero-sub,
+  .hub-command-meta,
+  .hub-command-next {
+    font-size: 0.88rem;
+  }
+
+  .teacher-stat-value,
+  .home-pulse-value {
+    font-size: 1.2rem;
+  }
+
+  .pro-body.teacher-home-command .home-today .teacher-home-empty {
+    min-height: 0;
+  }
+
+  .empty-state-icon {
+    width: 2.35rem;
+    height: 2.35rem;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+  }
+
+  .pro-body .announce-detail {
+    min-height: 0;
+    padding: var(--pro-space-card);
+  }
+}
+
+@media (max-width: 700px) {
+  :root {
+    --pro-space-page-x: 0.75rem;
+    --pro-space-page-y: 0.75rem;
+    --pro-space-card: 0.85rem;
+    --pro-title-hero: 1.2rem;
+    --pro-title-section: 1.1rem;
+    --pro-title-card: 0.95rem;
+    --wic-padding-y: 10px;
+    --wic-padding-x: 10px;
+    --wic-avatar-size: 32px;
+    --wic-radius: 10px;
+  }
+
+  .home-command-pulse {
+    gap: 0.4rem;
+  }
+
+  .home-pulse-chip {
+    min-width: 4.25rem;
+    padding: 0.4rem 0.55rem;
+  }
+
+  .pro-body .home-today .today-featured {
+    padding: 0.9rem 1rem;
+  }
+
+  .pro-body .section-note,
+  .pro-body .hub-card-meta,
+  .pro-body .today-meta {
+    font-size: 0.86rem;
+  }
+
+  .work-item-grid {
+    gap: 0.55rem;
+  }
+
+  .pro-stat {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .pro-stat-label {
+    font-size: 0.74rem;
+  }
+}
+
+@media (max-width: 520px) {
+  :root {
+    --pro-space-page-x: 0.65rem;
+    --pro-space-page-y: 0.65rem;
+    --pro-space-card: 0.8rem;
+    --pro-title-hero: 1.15rem;
+    --pro-title-section: 1.05rem;
+  }
+
+  .pro-body .practice-setup-heading .section-title,
+  .pro-body .result-hero .hero-title {
+    font-size: 1.15rem;
+  }
+
+  .hub-path {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem;
+  }
+
+  .hub-path-step a {
+    min-height: 2.25rem;
+    padding: 0.35rem 0.45rem;
+    font-size: 0.78rem;
+  }
+}
+
+/* Short laptop / landscape phone — reclaim vertical room for data */
+@media (max-height: 720px) {
+  :root {
+    --pro-space-page-y: 0.7rem;
+    --pro-space-section: 0.7rem;
+    --pro-space-card: 0.8rem;
+    --pro-title-hero: 1.2rem;
+    --pro-title-section: 1.1rem;
+  }
+
+  .pro-hero,
+  .home-command-hero {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .home-command-hero .pro-hero-sub,
+  .pro-hero-sub {
+    margin-top: 0.2rem;
+  }
+
+  .pro-body.teacher-home-command .home-today .teacher-home-empty,
+  .pro-body .announce-detail {
+    min-height: 0;
+  }
+
+  .pro-stat-grid {
+    margin-bottom: 0.85rem;
+  }
+}
+
+@media (max-height: 560px) {
+  .pro-hero-sub,
+  .home-command-hero .pro-hero-sub,
+  .hub-command-meta {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .home-pulse-chip .home-pulse-label,
+  .teacher-stat-meta {
+    display: none;
   }
 }
 
