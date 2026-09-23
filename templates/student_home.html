@@ -166,8 +166,8 @@
                       class="today-action {% if step.tone == 'soft' %}today-action-soft{% elif step.tone == 'accent' %}today-action-accent{% endif %}"
                       href="{{ step.href }}"
                     >
-                      {% if step.step %}<span class="today-action-step">{{ step.step }}</span>{% endif %}
                       <span class="today-action-label">{{ step.label }}</span>
+                      {% if loop.first %}<span aria-hidden="true">→</span>{% endif %}
                     </a>
                   {% endfor %}
                 {% else %}
