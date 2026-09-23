@@ -2397,7 +2397,14 @@ def profile():
         return redirect(url_for("login"))
     record = db.session.get(User, user["id"])
     if request.method == "POST":
-        action = request.form.get("action", "password")
+        action = request.form.get("action", "photo")
+        # Password changes live on /profile/password — keep old posts from breaking.
+        if action == "password" or (
+            request.form.get("current_password")
+            and not request.files.get("photo")
+            and action not in {"photo", "remove_photo"}
+        ):
+            return redirect(url_for("profile_password"))
         if action == "remove_photo":
             remove_avatar(record)
             db.session.commit()
@@ -2414,19 +2421,7 @@ def profile():
             except ExtractError as exc:
                 flash(str(exc), "danger")
             return redirect(url_for("profile"))
-        current = request.form.get("current_password", "")
-        new = request.form.get("new_password", "")
-        confirm = request.form.get("confirm_password", "")
-        if not check_password_hash(record.password_hash, current):
-            flash("Current password is incorrect.", "danger")
-        elif len(new) < 8:
-            flash("New password must be at least 8 characters.", "danger")
-        elif new != confirm:
-            flash("New passwords do not match.", "danger")
-        else:
-            record.password_hash = generate_password_hash(new)
-            db.session.commit()
-            flash("Password updated. Use your new password next time.", "success")
+        flash("Nothing to update.", "danger")
         return redirect(url_for("profile"))
 
     profile_subjects = []
@@ -2480,6 +2475,39 @@ def profile():
     }
     context.update(announcements_context(user))
     return render_template("profile.html", **context)
+
+
+@app.route("/profile/password", methods=["GET", "POST"])
+def profile_password():
+    user = require_user()
+    if not user:
+        return redirect(url_for("login"))
+    record = db.session.get(User, user["id"])
+    if request.method == "POST":
+        current = request.form.get("current_password", "")
+        new = request.form.get("new_password", "")
+        confirm = request.form.get("confirm_password", "")
+        if not check_password_hash(record.password_hash, current):
+            flash("Current password is incorrect.", "danger")
+        elif len(new) < 8:
+            flash("New password must be at least 8 characters.", "danger")
+        elif new != confirm:
+            flash("New passwords do not match.", "danger")
+        else:
+            record.password_hash = generate_password_hash(new)
+            db.session.commit()
+            flash("Password updated. Use your new password next time.", "success")
+            return redirect(url_for("profile"))
+        return redirect(url_for("profile_password"))
+
+    context = {
+        "user": user,
+        "topbar_sub": "Change password",
+        "role_nav": teacher_nav() if user["role"] == "teacher" else (admin_nav() if user["role"] == "admin" else None),
+        "active_nav": "profile",
+    }
+    context.update(announcements_context(user))
+    return render_template("profile_password.html", **context)
 
 
 @app.route("/users/<int:user_id>/photo")

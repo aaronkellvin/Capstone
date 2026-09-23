@@ -178,6 +178,7 @@ class BloomSmokeTest(unittest.TestCase):
             "/practice",
             "/results",
             "/profile",
+            "/profile/password",
             "/announcements",
             "/messages",
             f"/messages/with/{self.teacher_id}",

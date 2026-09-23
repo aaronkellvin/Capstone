@@ -4029,13 +4029,17 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 }
 
 /* Profile */
-.pro-body .profile-banner {
+.pro-body .profile-banner,
+.pro-body .profile-identity {
+  justify-content: flex-start;
   align-items: center;
+  gap: 1rem 1.15rem;
 }
 
 .profile-avatar {
   width: 5rem;
   height: 5rem;
+  flex: 0 0 auto;
   border: 3px solid #fff;
   background: var(--bloom-primary);
   color: #fff;
@@ -4088,6 +4092,16 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 
 .profile-banner-copy {
   min-width: 0;
+  flex: 0 1 auto;
+  max-width: 40rem;
+}
+
+.profile-banner-copy .pro-hero-title {
+  margin: 0;
+}
+
+.profile-banner-copy .pro-hero-sub {
+  margin-top: 0.25rem;
 }
 
 .profile-banner-eyebrow {
@@ -4282,6 +4296,26 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 
 .profile-security .login-form {
   margin-top: 1rem;
+}
+
+.pro-body .account-details-panel {
+  width: min(92vw, 22.5rem);
+}
+
+.pro-body .account-details-facts dt {
+  color: var(--pro-quiet);
+}
+
+.pro-body .account-details-facts dd {
+  color: var(--pro-ink);
+}
+
+.pro-body .menu-link-accent {
+  color: var(--pro-link);
+}
+
+.pro-body .profile-password-card {
+  margin-top: 1.25rem;
 }
 
 /* Practice setup and taking */

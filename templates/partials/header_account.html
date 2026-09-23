@@ -1,4 +1,4 @@
-{# Account cluster: profile avatar + preferences. Expects `user`. #}
+{# Account cluster: avatar account details + preferences. Expects `user`. #}
 {% set name_parts = (user.name or "Bloom").split(" ") %}
 {% set avatar_initials = (name_parts[0][:1] ~ (name_parts[-1][:1] if name_parts|length > 1 else ""))|upper %}
 
@@ -8,27 +8,48 @@
       type="button"
       class="icon-btn avatar-btn"
       id="profile-toggle"
-      aria-label="Account menu"
+      aria-label="Account details"
       aria-haspopup="true"
       aria-expanded="false"
       aria-controls="profile-panel"
+      title="Account details"
     >
       {% with class_name="avatar", initials=avatar_initials, photo_url=user.avatar_url %}
         {% include "partials/user_avatar.html" %}
       {% endwith %}
     </button>
-    <div class="menu-panel profile-panel" id="profile-panel" hidden role="menu" aria-label="Account">
-      <div class="profile-card">
+    <div class="menu-panel profile-panel account-details-panel" id="profile-panel" hidden role="menu" aria-label="Account details">
+      <div class="menu-head account-details-head">
+        <p class="menu-title">Account details</p>
+        <p class="menu-sub">Signed in to Bloom</p>
+      </div>
+
+      <div class="profile-card profile-card-compact">
         {% with class_name="avatar avatar-lg", initials=avatar_initials, photo_url=user.avatar_url %}
           {% include "partials/user_avatar.html" %}
         {% endwith %}
         <div>
           <p class="profile-card-name">{{ user.name }}</p>
-          <p class="profile-card-meta">{{ user.email }}</p>
-          <p class="profile-card-role">{{ user.role|capitalize }}{% if user.section %} · {{ user.section }}{% endif %}</p>
         </div>
       </div>
-      <a class="menu-link" role="menuitem" href="{{ url_for('profile') }}">Profile &amp; password</a>
+
+      <dl class="account-details-facts">
+        <div>
+          <dt>School email</dt>
+          <dd>{{ user.email }}</dd>
+        </div>
+        <div>
+          <dt>Role</dt>
+          <dd>{{ user.role|capitalize }}</dd>
+        </div>
+        <div>
+          <dt>Section</dt>
+          <dd>{{ user.section or "Grade 7 · Pilot Section" }}</dd>
+        </div>
+      </dl>
+
+      <a class="menu-link" role="menuitem" href="{{ url_for('profile') }}">Open full profile</a>
+      <a class="menu-link menu-link-accent" role="menuitem" href="{{ url_for('profile_password') }}">Change password</a>
       <form method="POST" action="{{ url_for('logout') }}" class="menu-logout-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <button type="submit" class="menu-link menu-link-danger" role="menuitem">Log out</button>
@@ -54,7 +75,7 @@
     <div class="menu-panel settings-panel" id="settings-panel" hidden role="region" aria-label="Preferences">
       <div class="menu-head">
         <p class="menu-title">Preferences</p>
-        <p class="menu-sub">Saved on this device · Account password is in Profile</p>
+        <p class="menu-sub">Saved on this device · Password is changed separately</p>
       </div>
 
       <div class="settings-group">
@@ -89,7 +110,7 @@
         <p class="settings-readonly">English only for this pilot</p>
       </div>
 
-      <a class="notify-all" href="{{ url_for('profile') }}">Open Profile &amp; password</a>
+      <a class="notify-all" href="{{ url_for('profile') }}">Open account profile</a>
     </div>
   </div>
 </div>

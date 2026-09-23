@@ -2957,6 +2957,15 @@ a.notify-item {
   border-bottom: 1px solid rgba(201, 215, 239, 0.85);
 }
 
+.profile-card-compact {
+  padding: 0.85rem 1rem;
+}
+
+.profile-card-compact .profile-card-name {
+  margin: 0;
+  line-height: 1.25;
+}
+
 .profile-card-name {
   font-family: "Fredoka", "Nunito", sans-serif;
   font-size: 1.05rem;
@@ -3001,6 +3010,68 @@ a.notify-item {
 
 .menu-link-danger {
   color: var(--danger-text);
+}
+
+.menu-link-accent {
+  color: var(--text-link);
+}
+
+.account-details-panel {
+  width: min(92vw, 22rem);
+}
+
+.account-details-head {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+}
+
+.account-details-facts {
+  margin: 0;
+  padding: 0.55rem 1rem 0.75rem;
+  display: grid;
+  gap: 0.45rem;
+  border-bottom: 1px solid rgba(201, 215, 239, 0.55);
+}
+
+.account-details-facts > div {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.account-details-facts dt {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--quiet);
+}
+
+.account-details-facts dd {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 650;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.profile-password-card {
+  width: min(100%, 28rem);
+  margin: 1rem auto 0;
+}
+
+.profile-password-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+  margin-top: 0.35rem;
+}
+
+.profile-security-copy {
+  margin: 0 0 1rem;
 }
 
 .settings-group {

@@ -112,7 +112,7 @@
         <span class="section-icon section-icon-blue" aria-hidden="true">i</span>
         <div>
           <h2 class="hub-panel-title" id="profile-details-title">Account details</h2>
-          <p class="section-note">School information used throughout Bloom.</p>
+          <p class="section-note">School information used throughout Bloom. You can also open this from your avatar menu.</p>
         </div>
       </div>
 
@@ -128,28 +128,12 @@
       <div class="profile-section-head">
         <span class="section-icon section-icon-violet" aria-hidden="true">◆</span>
         <div>
-          <h2 class="hub-panel-title" id="profile-security-title">Password & security</h2>
-          <p class="section-note">Keep your school account secure. Appearance and accessibility live under Preferences (gear), not here.</p>
+          <h2 class="hub-panel-title" id="profile-security-title">Password &amp; security</h2>
+          <p class="section-note">Password changes happen on a separate page so account details stay easy to read.</p>
         </div>
       </div>
-      <form class="login-form" method="POST" action="{{ url_for('profile') }}" data-loading="Updating password…">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <div class="field">
-          <label for="current_password">Current password</label>
-          <input type="password" id="current_password" name="current_password" required />
-        </div>
-        <div class="field">
-          <label for="new_password">New password</label>
-          <input type="password" id="new_password" name="new_password" minlength="8" required />
-          <p class="field-hint">At least 8 characters.</p>
-        </div>
-        <div class="field">
-          <label for="confirm_password">Confirm new password</label>
-          <input type="password" id="confirm_password" name="confirm_password" minlength="8" required data-match="#new_password" data-match-message="New passwords must match." />
-          <p class="field-error" id="confirm_password-error" hidden></p>
-        </div>
-        <button type="submit" class="btn-primary">Update password</button>
-      </form>
+      <p class="section-note profile-security-copy">Update your password when you need to. Appearance and accessibility stay under Preferences (gear).</p>
+      <a class="btn-primary btn-inline" href="{{ url_for('profile_password') }}">Change password</a>
     </section>
   </div>
 {% endblock %}
