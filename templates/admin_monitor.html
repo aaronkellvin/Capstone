@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ title }} — Bloom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bloom-pro.css') }}" />
+</head>
+<body class="app-body staff-body admin-monitor-body">
+  {% include "partials/staff_topbar.html" %}
+
+  <main class="app-main admin-monitor" id="main-content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-list home-flash">
+          {% for category, message in messages %}
+            <li class="flash flash-{{ category }} pro-toast-in">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <section class="home-first-region admin-monitor-hero" aria-labelledby="admin-monitor-title">
+      <div class="home-command-hero">
+        <div class="home-command-hero-copy">
+          <p class="pro-hero-kicker">{{ monitor.section_label }}</p>
+          <h1 class="pro-hero-title" id="admin-monitor-title">{{ title }}</h1>
+          <p class="pro-hero-sub">{{ subtitle }}</p>
+        </div>
+        <div class="home-command-pulse" aria-label="Class signals">
+          <div class="home-pulse-chip">
+            <span class="home-pulse-value">{{ monitor.student_count }}</span>
+            <span class="home-pulse-label">Students</span>
+          </div>
+          <div class="home-pulse-chip {% if monitor.active_percent < 50 %}is-alert{% endif %}">
+            <span class="home-pulse-value">{{ monitor.active_percent }}%</span>
+            <span class="home-pulse-label">Active</span>
+          </div>
+          <div class="home-pulse-chip {% if monitor.class_avg is none %}is-quiet{% endif %}">
+            <span class="home-pulse-value">{% if monitor.class_avg is not none %}{{ monitor.class_avg }}%{% else %}—{% endif %}</span>
+            <span class="home-pulse-label">Class avg</span>
+          </div>
+          <div class="home-pulse-chip {% if monitor.needs_support_count %}is-alert{% endif %}">
+            <span class="home-pulse-value">{{ monitor.needs_support_count }}</span>
+            <span class="home-pulse-label">Need support</span>
+          </div>
+        </div>
+      </div>
+      <p class="admin-monitor-insight">{{ monitor.insight }}</p>
+      <p class="section-note admin-monitor-teachers">Teachers: {{ monitor.teacher_names }} · {{ monitor.approved_materials }} materials · {{ monitor.published_assessments }} assessments · {{ monitor.recent_attempts }} attempts this week</p>
+    </section>
+
+    <section class="admin-stat-grid" aria-label="Class health">
+      <article class="admin-stat-card">
+        <p class="admin-stat-label">Participation</p>
+        <p class="admin-stat-value">{{ monitor.active_count }}/{{ monitor.student_count }}</p>
+        <p class="admin-stat-meta">{{ monitor.inactive_count }} not started</p>
+      </article>
+      <article class="admin-stat-card">
+        <p class="admin-stat-label">On track / strong</p>
+        <p class="admin-stat-value">{{ monitor.on_track_count }}</p>
+        <p class="admin-stat-meta">Students progressing well</p>
+      </article>
+      <article class="admin-stat-card">
+        <p class="admin-stat-label">Total attempts</p>
+        <p class="admin-stat-value">{{ monitor.total_attempts }}</p>
+        <p class="admin-stat-meta">Practice + assessments</p>
+      </article>
+      <article class="admin-stat-card">
+        <p class="admin-stat-label">HOTS success</p>
+        <p class="admin-stat-value">A {{ monitor.bloom_rates.Analyze }}% · E {{ monitor.bloom_rates.Evaluate }}% · C {{ monitor.bloom_rates.Create }}%</p>
+        <p class="admin-stat-meta">Analyze · Evaluate · Create (scored “good”)</p>
+      </article>
+    </section>
+
+    <section class="admin-chart-grid" aria-label="Class charts">
+      <article class="admin-chart-card">
+        <h2 class="hub-panel-title">Critical thinking (HOTS)</h2>
+        <p class="section-note">Good responses by Bloom level across the whole class.</p>
+        <div class="admin-chart-frame">
+          <canvas id="chart-hots" height="220" aria-label="HOTS bar chart"></canvas>
+        </div>
+        <div class="admin-hots-legend" aria-hidden="true">
+          <span>Analyze {{ monitor.bloom_good.Analyze }}/{{ monitor.bloom_total.Analyze or 0 }}</span>
+          <span>Evaluate {{ monitor.bloom_good.Evaluate }}/{{ monitor.bloom_total.Evaluate or 0 }}</span>
+          <span>Create {{ monitor.bloom_good.Create }}/{{ monitor.bloom_total.Create or 0 }}</span>
+        </div>
+      </article>
+
+      <article class="admin-chart-card">
+        <h2 class="hub-panel-title">Subject averages</h2>
+        <p class="section-note">Average auto-scored percent by subject.</p>
+        <div class="admin-chart-frame">
+          <canvas id="chart-subjects" height="220" aria-label="Subject averages chart"></canvas>
+        </div>
+        <ul class="admin-subject-bars">
+          {% for bar in monitor.subject_bars %}
+            <li>
+              <div class="admin-subject-bar-head">
+                <span>{{ bar.name }}</span>
+                <strong>{% if bar.has_data %}{{ bar.avg }}%{% else %}—{% endif %}</strong>
+              </div>
+              <div class="admin-subject-meter" role="presentation">
+                <span style="width: {% if bar.has_data %}{{ bar.avg }}{% else %}0{% endif %}%;"></span>
+              </div>
+              <p class="admin-subject-meta">{{ bar.attempts }} attempt{{ 's' if bar.attempts != 1 else '' }}</p>
+            </li>
+          {% endfor %}
+        </ul>
+      </article>
+
+      <article class="admin-chart-card">
+        <h2 class="hub-panel-title">Participation</h2>
+        <p class="section-note">Students with any practice or assessment activity.</p>
+        <div class="admin-chart-frame admin-chart-frame-sm">
+          <canvas id="chart-participation" height="200" aria-label="Participation chart"></canvas>
+        </div>
+      </article>
+
+      <article class="admin-chart-card">
+        <h2 class="hub-panel-title">Progress status</h2>
+        <p class="section-note">How the class is functioning as a whole.</p>
+        <div class="admin-chart-frame admin-chart-frame-sm">
+          <canvas id="chart-status" height="200" aria-label="Progress status chart"></canvas>
+        </div>
+      </article>
+    </section>
+
+    <section class="admin-student-panel" aria-labelledby="student-progress-title">
+      <div class="section-heading-row">
+        <div>
+          <p class="section-eyebrow">Student progress</p>
+          <h2 id="student-progress-title" class="section-title section-title-sm">Who is progressing</h2>
+        </div>
+        <a class="today-action today-action-soft" href="{{ url_for('admin_users') }}">Manage users</a>
+      </div>
+
+      {% if monitor.student_rows %}
+        <div class="admin-student-table-wrap">
+          <table class="admin-student-table">
+            <thead>
+              <tr>
+                <th scope="col">Student</th>
+                <th scope="col">Status</th>
+                <th scope="col">Avg score</th>
+                <th scope="col">Attempts</th>
+                <th scope="col">Strongest HOTS</th>
+                <th scope="col">Last activity</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in monitor.student_rows %}
+                <tr class="is-{{ row.status }}">
+                  <td>
+                    <div class="admin-student-id">
+                      {% with class_name="avatar announce-avatar", initials=row.initials, photo_url=row.photo_url %}
+                        {% include "partials/user_avatar.html" %}
+                      {% endwith %}
+                      <div>
+                        <p class="admin-student-name">{{ row.name }}</p>
+                        <p class="admin-student-email">{{ row.email }}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="admin-status-pill status-{{ row.status }}">{{ row.status_label }}</span></td>
+                  <td>{% if row.avg_score is not none %}{{ row.avg_score }}%{% else %}—{% endif %}</td>
+                  <td>{{ row.attempt_count }} <span class="admin-muted">(P {{ row.practice_count }} · A {{ row.assessment_count }})</span></td>
+                  <td>{% if row.strongest_bloom %}{{ row.strongest_bloom }}{% else %}—{% endif %}</td>
+                  <td>
+                    <p class="admin-student-last">{{ row.last_title }}</p>
+                    <p class="admin-muted">{{ row.last_when }}</p>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <article class="empty-state-card">
+          <p class="empty-kicker">Class monitor</p>
+          <h3 class="empty-title">No students yet</h3>
+          <p class="empty-copy">Import Grade 7 accounts under Users to begin monitoring progress.</p>
+          <a class="today-action" href="{{ url_for('admin_users') }}">Import users</a>
+        </article>
+      {% endif %}
+    </section>
+  </main>
+
+  <script id="admin-monitor-data" type="application/json">{{ monitor.charts_json|safe }}</script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <script src="{{ url_for('static', filename='js/admin_monitor.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/topbar.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/pro-shell.js') }}" defer></script>
+</body>
+</html>

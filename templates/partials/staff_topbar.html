@@ -9,7 +9,22 @@
 <div class="pro-sidebar-backdrop" id="pro-sidebar-backdrop" hidden></div>
 <header class="pro-topbar">
   <button type="button" class="pro-menu-btn" id="sidebar-toggle" aria-label="Toggle sidebar" aria-controls="pro-sidebar" aria-expanded="false">☰</button>
-  <p class="pro-context">{{ topbar_sub or "Staff workspace" }}</p>
+  <a
+    class="pro-topbar-brand"
+    href="{{ url_for('home') }}"
+    aria-label="Colegio de San Juan de Letran Calamba — Home"
+  >
+    <img
+      class="pro-topbar-logo"
+      src="{{ url_for('static', filename='images/letran-calamba-logo.png') }}"
+      alt=""
+      width="36"
+      height="36"
+    />
+  </a>
+  {% if topbar_sub %}
+    <p class="pro-context">{{ topbar_sub }}</p>
+  {% endif %}
   <div class="pro-top-actions">
     {% include "partials/header_account.html" %}
   </div>

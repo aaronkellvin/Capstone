@@ -352,7 +352,7 @@ def admin_nav():
         {"label": "Home", "endpoint": "admin_home", "key": "home"},
         {"label": "Users", "endpoint": "admin_users", "key": "users"},
         {"label": "Section", "endpoint": "admin_section", "key": "section"},
-        {"label": "Reports", "endpoint": "admin_reports", "key": "reports"},
+        {"label": "Monitor", "endpoint": "admin_reports", "key": "reports"},
         {"label": "Settings", "endpoint": "admin_settings", "key": "settings"},
     ]
 
@@ -837,6 +837,182 @@ def progress_display_label(percent: int, has_progress: bool, insight: str = "") 
     else:
         base = f"{percent}% avg score"
     return f"{base} · {insight}" if insight else base
+
+
+def build_admin_class_monitor() -> dict:
+    """Section-wide student progress, HOTS strength, and class health for admin."""
+    students = User.query.filter_by(role="student").order_by(User.name).all()
+    teachers = User.query.filter_by(role="teacher").order_by(User.subject, User.name).all()
+    attempts = Attempt.query.order_by(Attempt.submitted_at.desc()).all()
+
+    bloom_good = {"Analyze": 0, "Evaluate": 0, "Create": 0}
+    bloom_total = {"Analyze": 0, "Evaluate": 0, "Create": 0}
+    subject_scores: dict[str, list[int]] = {slug: [] for slug in SUBJECTS}
+    subject_attempt_counts = {slug: 0 for slug in SUBJECTS}
+    student_rows = []
+    active_ids = set()
+    scored_percents: list[int] = []
+
+    attempts_by_user: dict[int, list[Attempt]] = {}
+    for attempt in attempts:
+        attempts_by_user.setdefault(attempt.user_id, []).append(attempt)
+        subject_attempt_counts[attempt.subject_slug] = subject_attempt_counts.get(attempt.subject_slug, 0) + 1
+        percent = attempt_score_percent(attempt)
+        if percent is not None and attempt.subject_slug in subject_scores:
+            subject_scores[attempt.subject_slug].append(percent)
+            scored_percents.append(percent)
+        for item in attempt.review_items():
+            bloom = item.get("bloom")
+            if bloom in bloom_total:
+                bloom_total[bloom] += 1
+                if item.get("status") == "good":
+                    bloom_good[bloom] += 1
+
+    week_ago = datetime.utcnow() - timedelta(days=7)
+    recent_attempts = sum(1 for a in attempts if a.submitted_at and a.submitted_at >= week_ago)
+
+    for student in students:
+        user_attempts = attempts_by_user.get(student.id, [])
+        if user_attempts:
+            active_ids.add(student.id)
+        percents = []
+        blooms = {"Analyze": 0, "Evaluate": 0, "Create": 0}
+        for attempt in user_attempts:
+            percent = attempt_score_percent(attempt)
+            if percent is not None:
+                percents.append(percent)
+            for item in attempt.review_items():
+                bloom = item.get("bloom")
+                if bloom in blooms and item.get("status") == "good":
+                    blooms[bloom] += 1
+        avg = int(round(sum(percents) / len(percents))) if percents else None
+        strongest = max(blooms, key=blooms.get) if max(blooms.values()) > 0 else None
+        if not user_attempts:
+            status = "not_started"
+            status_label = "Not started"
+        elif avg is None:
+            status = "warming"
+            status_label = "Started · no auto score yet"
+        elif avg < 50:
+            status = "needs_support"
+            status_label = "Needs support"
+        elif avg >= 80:
+            status = "strong"
+            status_label = "Strong"
+        else:
+            status = "on_track"
+            status_label = "On track"
+        last = user_attempts[0] if user_attempts else None
+        student_rows.append(
+            {
+                "id": student.id,
+                "name": student.name,
+                "email": student.email,
+                "attempt_count": len(user_attempts),
+                "practice_count": sum(1 for a in user_attempts if a.kind == "practice"),
+                "assessment_count": sum(1 for a in user_attempts if a.kind == "assessment"),
+                "avg_score": avg,
+                "strongest_bloom": strongest,
+                "status": status,
+                "status_label": status_label,
+                "last_title": last.title if last else "—",
+                "last_when": relative_time(last.submitted_at) if last and last.submitted_at else "No activity yet",
+                "photo_url": url_for("user_photo", user_id=student.id) if student.avatar_filename else None,
+                "initials": "".join(part[:1] for part in (student.name or "S").split()[:2]).upper(),
+            }
+        )
+
+    student_count = len(students) or 1
+    active_count = len(active_ids)
+    inactive_count = max(0, len(students) - active_count)
+    class_avg = int(round(sum(scored_percents) / len(scored_percents))) if scored_percents else None
+    needs_support = sum(1 for row in student_rows if row["status"] in {"needs_support", "not_started"})
+    on_track = sum(1 for row in student_rows if row["status"] in {"on_track", "strong"})
+
+    subject_bars = []
+    for slug, meta in SUBJECTS.items():
+        scores = subject_scores.get(slug) or []
+        subject_bars.append(
+            {
+                "slug": slug,
+                "name": meta["name"],
+                "avg": int(round(sum(scores) / len(scores))) if scores else 0,
+                "has_data": bool(scores),
+                "attempts": subject_attempt_counts.get(slug, 0),
+            }
+        )
+
+    bloom_rates = {}
+    for key in bloom_total:
+        total = bloom_total[key]
+        bloom_rates[key] = int(round(100 * bloom_good[key] / total)) if total else 0
+
+    if not students:
+        insight = "Import students to begin class monitoring."
+    elif active_count == 0:
+        insight = "No student activity yet. Encourage teachers to publish materials and assessments."
+    elif needs_support > on_track:
+        insight = (
+            f"{needs_support} student(s) need attention (not started or low scores). "
+            "Ask subject teachers to nudge Study → Practice before HOTS assessments."
+        )
+    else:
+        insight = (
+            f"{on_track} student(s) are on track or strong. "
+            f"HOTS focus: Analyze {bloom_rates['Analyze']}% · Evaluate {bloom_rates['Evaluate']}% · Create {bloom_rates['Create']}% correct on scored items."
+        )
+
+    charts = {
+        "hots": {
+            "labels": ["Analyze", "Evaluate", "Create"],
+            "good": [bloom_good["Analyze"], bloom_good["Evaluate"], bloom_good["Create"]],
+            "total": [bloom_total["Analyze"], bloom_total["Evaluate"], bloom_total["Create"]],
+        },
+        "subjects": {
+            "labels": [bar["name"] for bar in subject_bars],
+            "averages": [bar["avg"] for bar in subject_bars],
+        },
+        "participation": {
+            "labels": ["Active", "Not started"],
+            "values": [active_count, inactive_count],
+        },
+        "status": {
+            "labels": ["Strong", "On track", "Needs support", "Not started"],
+            "values": [
+                sum(1 for row in student_rows if row["status"] == "strong"),
+                sum(1 for row in student_rows if row["status"] == "on_track"),
+                sum(1 for row in student_rows if row["status"] == "needs_support"),
+                sum(1 for row in student_rows if row["status"] == "not_started"),
+            ],
+        },
+    }
+
+    return {
+        "section_label": "Grade 7 · Pilot Section",
+        "student_count": len(students),
+        "teacher_count": len(teachers),
+        "teacher_names": ", ".join(
+            f"{t.subject or 'Teacher'} ({t.name})" for t in teachers
+        )
+        or "No teachers yet",
+        "active_count": active_count,
+        "active_percent": int(round(100 * active_count / student_count)),
+        "inactive_count": inactive_count,
+        "class_avg": class_avg,
+        "total_attempts": len(attempts),
+        "recent_attempts": recent_attempts,
+        "published_assessments": Assessment.query.filter_by(status="published").count(),
+        "approved_materials": Material.query.filter_by(status="approved").count(),
+        "needs_support_count": needs_support,
+        "on_track_count": on_track,
+        "bloom_good": bloom_good,
+        "bloom_total": bloom_total,
+        "bloom_rates": bloom_rates,
+        "subject_bars": subject_bars,
+        "student_rows": student_rows,
+        "insight": insight,
+        "charts_json": json.dumps(charts),
+    }
 
 
 def lesson_review_href(subject_slug: str, material: Material | None = None) -> str:
@@ -3237,33 +3413,16 @@ def teacher_announce(user):
 @app.route("/admin")
 @require_role("admin")
 def admin_home(user):
+    monitor = build_admin_class_monitor()
     return render_template(
-        "staff_page.html",
+        "admin_monitor.html",
         user=user,
         topbar_sub="Admin",
         role_nav=admin_nav(),
         active_nav="home",
-        title="Admin dashboard",
-        subtitle="Pilot section oversight for Grade 7 Bloom.",
-        panels=[
-            {
-                "kicker": "Users",
-                "title": f"{User.query.count()} accounts",
-                "meta": f"{User.query.filter_by(role='student').count()} students · {User.query.filter_by(role='teacher').count()} teachers",
-                "action": "Manage",
-                "action_href": url_for("admin_users"),
-                "soft": True,
-            },
-            {
-                "kicker": "Content",
-                "title": f"{Material.query.filter_by(status='approved').count()} approved materials",
-                "meta": f"{Assessment.query.filter_by(status='published').count()} published assessments",
-                "action": "Reports",
-                "action_href": url_for("admin_reports"),
-                "soft": True,
-            },
-        ],
-        form_blocks=[],
+        title="Class monitor",
+        subtitle="See whether the Grade 7 pilot section is progressing — participation, HOTS strength, and student-by-student status.",
+        monitor=monitor,
     )
 
 
@@ -3379,35 +3538,16 @@ def admin_section(user):
 @app.route("/admin/reports")
 @require_role("admin")
 def admin_reports(user):
-    students = User.query.filter_by(role="student").count() or 1
-    active = db.session.query(Attempt.user_id).distinct().count()
+    monitor = build_admin_class_monitor()
     return render_template(
-        "staff_page.html",
+        "admin_monitor.html",
         user=user,
         topbar_sub="Reports",
         role_nav=admin_nav(),
         active_nav="reports",
         title="Reports & analytics",
-        subtitle="Section-level completion, Bloom performance, and participation snapshots.",
-        panels=[
-            {
-                "kicker": "Participation",
-                "title": f"{int(100 * active / students)}% students with activity",
-                "meta": f"{Attempt.query.count()} total attempts",
-                "action": None,
-                "action_href": None,
-                "soft": True,
-            },
-            {
-                "kicker": "Assessments",
-                "title": f"{Assessment.query.filter_by(status='published').count()} published",
-                "meta": f"{Assessment.query.filter_by(status='draft').count()} drafts",
-                "action": None,
-                "action_href": None,
-                "soft": True,
-            },
-        ],
-        form_blocks=[],
+        subtitle="Class functioning at a glance — critical-thinking (HOTS) stats, subject averages, and who still needs support.",
+        monitor=monitor,
     )
 
 
