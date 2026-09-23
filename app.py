@@ -2570,7 +2570,7 @@ def results():
             story = {
                 "eyebrow": "Latest result",
                 "title": latest["title"],
-                "copy": "Submitted and waiting for your teacher to release scores and feedback.",
+                "message": "Submitted and waiting for your teacher to release scores and feedback.",
                 "cta_href": latest["href"],
                 "cta_label": "Open submission",
             }
@@ -2578,7 +2578,7 @@ def results():
             story = {
                 "eyebrow": "Assessment closed",
                 "title": latest["title"],
-                "copy": (
+                "message": (
                     f"You’ve used your available attempts on this HOTS check. "
                     f"Review feedback in {latest['subject']}, practice the topic on your own, "
                     "or ask your teacher for an extra attempt."
@@ -2590,7 +2590,7 @@ def results():
             story = {
                 "eyebrow": "Focus next",
                 "title": latest["title"],
-                "copy": f"Review the feedback in {latest['subject']}, then try another practice while it’s fresh.",
+                "message": f"Review the feedback in {latest['subject']}, then try another practice while it’s fresh.",
                 "cta_href": latest["href"],
                 "cta_label": "Review and improve",
             }
@@ -2598,7 +2598,7 @@ def results():
             story = {
                 "eyebrow": "Keep building",
                 "title": latest["title"],
-                "copy": "Revisit explanations, then continue with another practice or assessment.",
+                "message": "Revisit explanations, then continue with another practice or assessment.",
                 "cta_href": latest["href"],
                 "cta_label": "Review feedback",
             }
