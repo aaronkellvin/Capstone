@@ -580,6 +580,57 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
   box-shadow: 0 18px 40px rgba(20, 35, 61, 0.22);
 }
 
+.pro-body #notify-dropdown.notify-panel {
+  width: min(92vw, 24rem);
+  max-height: min(78vh, 34rem);
+}
+
+.pro-body .notify-item-title,
+.pro-body .notify-meta {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+}
+
+/* Mobile / tablet: center the announcements sheet on screen so it is not clipped */
+@media (max-width: 860px) {
+  .pro-body .notify-wrap {
+    position: static;
+  }
+
+  .pro-body #notify-dropdown.notify-panel {
+    position: fixed;
+    left: 50%;
+    right: auto;
+    top: max(4.75rem, calc(env(safe-area-inset-top, 0px) + 4.25rem));
+    width: min(calc(100vw - 1.5rem), 26rem);
+    max-height: min(78vh, 36rem);
+    margin: 0;
+    opacity: 0;
+    transform: translate(-50%, 8px);
+    overflow: auto;
+    z-index: 1300;
+    border-radius: 1rem;
+  }
+
+  .pro-body #notify-dropdown.notify-panel.is-open {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel,
+  html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel.is-open {
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (max-width: 860px) and (prefers-reduced-motion: reduce) {
+  .pro-body #notify-dropdown.notify-panel,
+  .pro-body #notify-dropdown.notify-panel.is-open {
+    transform: translate(-50%, 0);
+  }
+}
+
 .pro-menu-btn {
   border: 1px solid var(--bloom-border);
   background: var(--bloom-surface);
@@ -3935,6 +3986,7 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
   color: var(--pro-heading);
   font-family: "Fredoka", "Inter", sans-serif;
   font-size: var(--pro-title-hero);
+  overflow-wrap: anywhere;
 }
 
 .pro-body .announce-detail-by,
@@ -3945,6 +3997,35 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 .pro-body .announce-detail-body {
   border-top-color: var(--pro-line);
   color: var(--pro-ink);
+  max-width: 42rem;
+  overflow-wrap: anywhere;
+}
+
+/* Center the reading pane when an announcement is open (especially phones) */
+@media (max-width: 839px) {
+  .pro-body .announce-layout.is-open .announce-detail-pane {
+    width: min(100%, 42rem);
+    margin-inline: auto;
+  }
+
+  .pro-body .announce-detail {
+    min-height: 0;
+    padding: 1.1rem 1.15rem 1.35rem;
+  }
+
+  .pro-body .announce-detail-body {
+    max-width: none;
+  }
+}
+
+@media (min-width: 840px) {
+  .pro-body .announce-detail {
+    max-width: none;
+  }
+
+  .pro-body .announce-detail-body {
+    max-width: 42rem;
+  }
 }
 
 /* Profile */

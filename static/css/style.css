@@ -1094,12 +1094,13 @@ body {
   position: absolute;
   top: calc(100% + 0.55rem);
   right: 0;
-  width: min(92vw, 340px);
+  width: min(92vw, 380px);
+  max-height: min(78vh, 34rem);
   border-radius: 16px;
   background: #fff;
   border: 1px solid var(--line);
   box-shadow: 0 18px 40px rgba(11, 61, 145, 0.18);
-  overflow: hidden;
+  overflow: auto;
   z-index: 20;
   animation: rise-in 0.2s ease both;
 }
@@ -1128,13 +1129,17 @@ body {
 
 .notify-list {
   list-style: none;
-  max-height: 16rem;
-  overflow: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 .notify-item {
+  display: block;
   padding: 0.8rem 1rem;
   border-bottom: 1px solid rgba(201, 215, 239, 0.55);
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
 }
 
 .notify-item.is-unread {
@@ -1154,6 +1159,10 @@ body {
   font-size: 0.95rem;
   font-weight: 800;
   color: var(--ink);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .notify-meta {
@@ -1161,6 +1170,8 @@ body {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--muted);
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .notify-empty {
@@ -3173,6 +3184,11 @@ html.pref-reduce-motion *::after {
 
   .menu-panel {
     width: min(calc(100vw - 1.2rem), 320px);
+  }
+
+  #notify-dropdown.notify-panel,
+  .notify-panel {
+    width: min(calc(100vw - 1.5rem), 26rem);
   }
 }
 
