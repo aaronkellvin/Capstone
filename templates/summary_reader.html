@@ -7,9 +7,10 @@
 {% block content %}
     <section class="summary-hero" aria-labelledby="summary-title">
       <a class="hub-back" href="{{ url_for('subject_hub', slug=subject.slug, tab='study') }}">Back to Study</a>
-      <p class="hero-kicker summary-kicker">{{ subject.name }} · AI Summary</p>
+      <p class="hero-kicker summary-kicker">{{ subject.name }} · Study summary</p>
       <h1 id="summary-title" class="section-title">{{ summary.title }}</h1>
       <p class="section-note">{{ summary.intro }}</p>
+      <p class="summary-scope-note">This is a fuller review summary of your lesson — not the full module file. Use it to refresh ideas before practice or assessment.</p>
     </section>
 
     <nav class="summary-outline" aria-label="Jump to section">

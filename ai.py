@@ -6,38 +6,66 @@ import urllib.request
 
 
 def summarize_material(title: str, text: str, subject: str) -> dict:
+    source = (text or "").strip()
+    min_sections, max_sections = _summary_section_budget(source)
     prompt = f"""You are an educational assistant for Grade 7 {subject} at a Philippine junior high school.
-Summarize ONLY the uploaded lesson text. Do not add outside knowledge.
+Write a FULLER study summary for review before practice or assessment — not bare key-point bullets.
+Use ONLY the uploaded lesson text. Do not add outside knowledge.
+Cover the main parts of the lesson so a student who did not memorize the file can still review the ideas, relationships, and examples.
 Return JSON with this shape:
 {{
-  "intro": "one friendly sentence",
+  "intro": "2 friendly sentences that orient the student to what this lesson is about",
   "sections": [
-    {{"id": "s1", "heading": "short heading", "body": "2-4 student-friendly sentences", "citation": "p. 1"}}
+    {{
+      "id": "s1",
+      "heading": "clear section heading",
+      "body": "4 to 7 student-friendly sentences. Explain the idea, how it connects to other lesson ideas, and one concrete example or detail from the text when available.",
+      "citation": "p. 1"
+    }}
   ]
 }}
-Use 3 to 5 sections. Cite approximate page or section from the source text.
+Use {min_sections} to {max_sections} sections so the whole lesson arc is covered (opening ideas → important relationships → examples or applications → wrap-up when present).
+Do NOT shrink this into keyword lists or one-line bullets. Prefer clear paragraphs.
+Cite approximate page or section from the source text.
 Lesson title: {title}
 Lesson text:
-{text[:12000]}
+{source[:12000]}
 """
     data = _complete_json(prompt)
     sections = data.get("sections") or []
     if not sections:
-        return _fallback_summary(title, text)
+        return _fallback_summary(title, source)
     normalized = []
-    for index, section in enumerate(sections[:5], start=1):
+    for index, section in enumerate(sections[:max_sections], start=1):
+        body = (section.get("body") or "").strip()
         normalized.append(
             {
                 "id": section.get("id") or f"s{index}",
                 "heading": section.get("heading") or f"Section {index}",
-                "body": section.get("body") or "",
+                "body": body,
                 "citation": section.get("citation") or f"p. {index}",
             }
         )
+    intro = (data.get("intro") or "").strip()
+    if not intro:
+        intro = (
+            f"This is a fuller study summary of {title} from your uploaded material. "
+            "Use it to review the main ideas before practice or assessment."
+        )
     return {
-        "intro": data.get("intro") or f"A short summary of {title} from your uploaded material.",
+        "intro": intro,
         "sections": normalized,
     }
+
+
+def _summary_section_budget(text: str) -> tuple[int, int]:
+    """Longer lessons get more sections; still a summary, not the full file."""
+    length = len(text or "")
+    if length < 1500:
+        return 3, 5
+    if length < 6000:
+        return 4, 6
+    return 5, 7
 
 
 def generate_hots_questions(
@@ -280,19 +308,42 @@ def _gemini(prompt: str, key: str) -> str:
 
 def _fallback_summary(title: str, text: str) -> dict:
     sentences = _sentences(text)
-    chunks = [sentences[i : i + 2] for i in range(0, min(len(sentences), 8), 2)] or [[text[:280]]]
+    # Pack more source sentences per section for a fuller offline/fallback review summary.
+    chunk_size = 3
+    max_sentences = min(len(sentences), 18) if sentences else 0
+    chunks = (
+        [sentences[i : i + chunk_size] for i in range(0, max_sentences, chunk_size)]
+        if sentences
+        else [[(text or "")[:900]]]
+    )
+    _, max_sections = _summary_section_budget(text or "")
     sections = []
-    for index, chunk in enumerate(chunks[:4], start=1):
+    for index, chunk in enumerate(chunks[:max_sections], start=1):
+        body = " ".join(chunk).strip()
+        if len(body) > 900:
+            body = body[:897].rstrip() + "…"
         sections.append(
             {
                 "id": f"s{index}",
-                "heading": f"Key idea {index}",
-                "body": " ".join(chunk)[:500],
+                "heading": f"Lesson part {index}",
+                "body": body or f"Review the uploaded material for {title}.",
                 "citation": f"p. {index}",
             }
         )
+    if not sections:
+        sections = [
+            {
+                "id": "s1",
+                "heading": "Lesson overview",
+                "body": f"Review the main ideas in {title} from your teacher's uploaded material before you practice.",
+                "citation": "p. 1",
+            }
+        ]
     return {
-        "intro": f"A short student-friendly summary of {title} from the uploaded material.",
+        "intro": (
+            f"This is a fuller study summary of {title} from the uploaded material. "
+            "Use it to review the main ideas before practice or assessment."
+        ),
         "sections": sections,
     }
 
