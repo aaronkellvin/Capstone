@@ -59,7 +59,7 @@
 
 body {
   min-height: 100vh;
-  font-family: "Nunito", "Segoe UI", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   color: var(--ink);
   background: var(--sky);
 }
@@ -180,7 +180,7 @@ body {
 }
 
 .brand-name {
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: clamp(3.4rem, 12vw, 4.4rem);
   font-weight: 700;
   letter-spacing: -0.04em;
@@ -206,7 +206,7 @@ body {
 
 .task-label {
   margin: 1rem 0 1rem;
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.15rem;
   font-weight: 600;
   color: var(--ink);
@@ -382,7 +382,7 @@ body {
   width: 100%;
   border-radius: 14px;
   padding: 0.9rem 1.25rem;
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.15rem;
   font-weight: 600;
   color: var(--text-on-dark);
@@ -542,7 +542,7 @@ body {
 }
 
 .topbar-title {
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.35rem;
   font-weight: 700;
   color: var(--heading);
@@ -637,7 +637,7 @@ body {
 }
 
 .section-title {
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: clamp(1.35rem, 2.5vw, 1.7rem);
   font-weight: 700;
   color: var(--heading);
@@ -696,7 +696,7 @@ body {
 
 .today-title {
   margin-top: 0.25rem;
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.2rem;
   font-weight: 600;
   color: var(--ink);
@@ -719,7 +719,7 @@ body {
   border: 0;
   border-radius: 12px;
   text-decoration: none;
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-on-dark);
@@ -752,7 +752,7 @@ body {
 }
 
 .subject-name {
-  font-family: "Fredoka", "Nunito", "Inter", "Segoe UI", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.45rem;
   font-weight: 700;
   line-height: 1.25;
@@ -877,7 +877,7 @@ body {
 
 .hero-title {
   margin-top: 0.4rem;
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: clamp(1.55rem, 5vw, 1.9rem);
   font-weight: 650;
   line-height: 1.2;
@@ -1140,7 +1140,7 @@ body {
 }
 
 .notify-title {
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.05rem;
   font-weight: 650;
   color: var(--heading);
@@ -1303,7 +1303,7 @@ body {
 }
 
 .hub-panel-title {
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.35rem;
   font-weight: 650;
   color: var(--ink);
@@ -1352,7 +1352,7 @@ a.hub-card {
 
 .hub-card-title {
   margin-top: 0.2rem;
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.1rem;
   font-weight: 650;
   color: var(--ink);
@@ -1468,7 +1468,7 @@ a.hub-card {
 
 .empty-title {
   margin-top: 0.3rem;
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.25rem;
   font-weight: 650;
   color: var(--heading);
@@ -1581,7 +1581,7 @@ a.hub-card {
 }
 
 .summary-heading {
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.2rem;
   font-weight: 650;
   color: var(--heading);
@@ -1792,7 +1792,7 @@ a.hub-card {
 
 .take-title {
   margin-top: 0.25rem;
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: clamp(1.35rem, 4vw, 1.7rem);
   font-weight: 650;
   color: var(--heading);
@@ -1833,7 +1833,7 @@ a.hub-card {
 
 .take-question {
   margin-top: 0.35rem;
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.2rem;
   font-weight: 650;
   line-height: 1.35;
@@ -1914,7 +1914,7 @@ a.hub-card {
 }
 
 .result-score {
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.35rem;
   font-weight: 650;
 }
@@ -2081,7 +2081,7 @@ a.hub-card {
 
 .stat-value {
   margin-top: 0.25rem;
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.8rem;
   font-weight: 700;
   color: var(--heading);
@@ -2419,7 +2419,7 @@ button:disabled,
   border-radius: 12px;
   display: grid;
   place-items: center;
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.05rem;
   font-weight: 700;
   color: #fff;
@@ -2501,7 +2501,7 @@ button:disabled,
 }
 
 .home-boost-title {
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.05rem;
   font-weight: 650;
   color: var(--heading);
@@ -2543,7 +2543,7 @@ button:disabled,
 
 .home-chat-title {
   margin-top: 0.2rem;
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.05rem;
   font-weight: 650;
   color: var(--heading);
@@ -2960,7 +2960,7 @@ a.notify-item {
 }
 
 .menu-title {
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.05rem;
   font-weight: 650;
   color: var(--heading);
@@ -2992,7 +2992,7 @@ a.notify-item {
 }
 
 .profile-card-name {
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.05rem;
   font-weight: 650;
   color: var(--ink);
@@ -3387,7 +3387,7 @@ a.message-row:hover {
 }
 
 .chat-name {
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: 1.15rem;
   font-weight: 650;
   color: var(--heading);
@@ -3830,7 +3830,7 @@ a.message-row:hover {
 
 .announce-detail-title {
   margin-top: 0.35rem;
-  font-family: "Fredoka", "Nunito", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   font-size: clamp(1.35rem, 4vw, 1.7rem);
   font-weight: 650;
   color: var(--heading);
