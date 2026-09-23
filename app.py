@@ -3414,16 +3414,17 @@ def teacher_announce(user):
 @require_role("admin")
 def admin_home(user):
     monitor = build_admin_class_monitor()
-    return render_template(
-        "admin_monitor.html",
-        user=user,
-        topbar_sub="Admin",
-        role_nav=admin_nav(),
-        active_nav="home",
-        title="Class monitor",
-        subtitle="See whether the Grade 7 pilot section is progressing — participation, HOTS strength, and student-by-student status.",
-        monitor=monitor,
-    )
+    context = {
+        "user": user,
+        "topbar_sub": "Admin",
+        "role_nav": admin_nav(),
+        "active_nav": "home",
+        "title": "Class monitor",
+        "subtitle": "See whether the Grade 7 pilot section is progressing — participation, HOTS strength, and student-by-student status.",
+        "monitor": monitor,
+    }
+    context.update(announcements_context(user))
+    return render_template("admin_monitor.html", **context)
 
 
 @app.route("/admin/users", methods=["GET", "POST"])
@@ -3539,16 +3540,17 @@ def admin_section(user):
 @require_role("admin")
 def admin_reports(user):
     monitor = build_admin_class_monitor()
-    return render_template(
-        "admin_monitor.html",
-        user=user,
-        topbar_sub="Reports",
-        role_nav=admin_nav(),
-        active_nav="reports",
-        title="Reports & analytics",
-        subtitle="Class functioning at a glance — critical-thinking (HOTS) stats, subject averages, and who still needs support.",
-        monitor=monitor,
-    )
+    context = {
+        "user": user,
+        "topbar_sub": "Monitor",
+        "role_nav": admin_nav(),
+        "active_nav": "reports",
+        "title": "Reports & analytics",
+        "subtitle": "Class functioning at a glance — critical-thinking (HOTS) stats, subject averages, and who still needs support.",
+        "monitor": monitor,
+    }
+    context.update(announcements_context(user))
+    return render_template("admin_monitor.html", **context)
 
 
 @app.route("/admin/settings", methods=["GET", "POST"])

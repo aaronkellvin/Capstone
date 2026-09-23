@@ -171,6 +171,58 @@ body.app-body.pro-sidebar-collapsed > .pro-sidebar {
   transform: translateX(-100%);
 }
 
+/* Staff/admin: fixed sidebar (do not scroll away) + clickable topbar controls */
+body.app-body.staff-body {
+  display: block;
+  min-height: 100vh;
+  padding-bottom: 0;
+}
+
+body.app-body.staff-body > .pro-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--pro-sidebar-w);
+  height: 100vh;
+  max-height: 100vh;
+  grid-column: auto;
+  grid-row: auto;
+  transform: none;
+  z-index: 1040;
+  overflow: hidden;
+}
+
+body.app-body.staff-body > .pro-topbar {
+  position: sticky;
+  top: 0;
+  margin-left: var(--pro-sidebar-w);
+  grid-column: auto;
+  grid-row: auto;
+  z-index: 1100;
+}
+
+body.app-body.staff-body > .app-main,
+body.app-body.staff-body > main.app-main {
+  margin-left: var(--pro-sidebar-w);
+  grid-column: auto;
+  grid-row: auto;
+  width: auto;
+  max-width: none;
+}
+
+body.app-body.staff-body.pro-sidebar-collapsed > .pro-sidebar {
+  transform: translateX(-100%);
+}
+
+body.app-body.staff-body.pro-sidebar-collapsed > .pro-topbar,
+body.app-body.staff-body.pro-sidebar-collapsed > .app-main,
+body.app-body.staff-body.pro-sidebar-collapsed > main.app-main {
+  margin-left: 0;
+}
+
+body.app-body.staff-body > .pro-sidebar-backdrop {
+  z-index: 1035;
+}
+
 .pro-body .app-bg,
 .pro-body .app-tabbar,
 .pro-body .app-topbar,
@@ -611,7 +663,8 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 
   .pro-body .account-cluster .menu-wrap,
   .app-body .account-cluster .menu-wrap,
-  .staff-body .account-cluster .menu-wrap {
+  .staff-body .account-cluster .menu-wrap,
+  .pro-body .pro-top-actions .menu-wrap {
     position: static;
   }
 
@@ -639,20 +692,21 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 
   .pro-body #profile-panel.menu-panel,
   .pro-body #settings-panel.menu-panel,
+  .pro-body #profile-panel.account-details-panel,
   .app-body #profile-panel.menu-panel,
   .app-body #settings-panel.menu-panel,
   .staff-body #profile-panel.menu-panel,
   .staff-body #settings-panel.menu-panel {
-    position: fixed;
-    left: 50%;
-    right: auto;
-    top: max(4.75rem, calc(env(safe-area-inset-top, 0px) + 4.25rem));
-    width: min(calc(100vw - 1.5rem), 22.5rem);
+    position: fixed !important;
+    left: 50% !important;
+    right: auto !important;
+    top: max(4.75rem, calc(env(safe-area-inset-top, 0px) + 4.25rem)) !important;
+    width: min(calc(100vw - 1.5rem), 22.5rem) !important;
     max-height: min(78vh, 36rem);
-    margin: 0;
-    transform: translate(-50%, 0);
+    margin: 0 !important;
+    transform: translate(-50%, 0) !important;
     overflow: auto;
-    z-index: 1300;
+    z-index: 1400 !important;
     border-radius: 1rem;
   }
 
@@ -1641,6 +1695,21 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
   body.app-body > .app-main,
   body.app-body > main.app-main {
     grid-column: 1;
+  }
+
+  body.app-body.staff-body > .pro-topbar,
+  body.app-body.staff-body > .app-main,
+  body.app-body.staff-body > main.app-main {
+    margin-left: 0;
+  }
+
+  body.app-body.staff-body > .pro-sidebar {
+    transform: translateX(-100%);
+    z-index: 1050;
+  }
+
+  body.app-body.staff-body.pro-sidebar-open > .pro-sidebar {
+    transform: translateX(0);
   }
 
   .pro-sidebar {
@@ -5439,8 +5508,15 @@ html.pref-reduce-motion .qol-overlay {
    Admin class monitor — progress, HOTS, charts
    ========================================================================== */
 
-.admin-monitor {
-  padding-bottom: 2rem;
+.admin-monitor .admin-stat-grid,
+.admin-monitor .admin-chart-grid,
+.admin-monitor .admin-student-panel {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.pro-body.admin-monitor-body .pro-content {
+  margin-top: 0.35rem;
 }
 
 .admin-monitor-hero {
@@ -5464,7 +5540,7 @@ html.pref-reduce-motion .qol-overlay {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
-  margin: 0 var(--pro-space-page-x, 1.25rem) 1.15rem;
+  margin: 0 0 1.15rem;
 }
 
 .admin-stat-card {
@@ -5504,7 +5580,7 @@ html.pref-reduce-motion .qol-overlay {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
-  margin: 0 var(--pro-space-page-x, 1.25rem) 1.35rem;
+  margin: 0 0 1.35rem;
 }
 
 .admin-chart-card {
@@ -5575,7 +5651,7 @@ html.pref-reduce-motion .qol-overlay {
 }
 
 .admin-student-panel {
-  margin: 0 var(--pro-space-page-x, 1.25rem);
+  margin: 0;
 }
 
 .admin-student-table-wrap {
