@@ -6981,10 +6981,10 @@ html.pref-reduce-motion .qol-overlay {
   color: #fff;
 }
 
-/* Greeting rhythm */
+/* Greeting rhythm — full-bleed left-aligned with shell, not a centered column */
 .editorial-page {
-  margin: 1.75rem clamp(1.25rem, 3vw, 2.25rem) 0;
-  max-width: 68rem;
+  margin: 1.75rem var(--pro-space-page-x) 0;
+  max-width: none;
 }
 
 .editorial-greeting {
@@ -7227,10 +7227,10 @@ html.pref-reduce-motion .qol-overlay {
   background: var(--bloom-primary);
 }
 
-/* Also today list */
+/* Also today list — same left edge as greeting / top nav */
 .editorial-today-list {
-  margin: var(--home-gap-xl, 2.5rem) clamp(1.25rem, 3vw, 2.25rem) 2.75rem;
-  max-width: 68rem;
+  margin: var(--home-gap-xl, 2.5rem) var(--pro-space-page-x) 2.75rem;
+  max-width: none;
 }
 
 .editorial-list-head {
@@ -7603,14 +7603,9 @@ html.pref-reduce-motion .qol-overlay {
 
 /* =============================================================================
    Home responsive layout — all devices
+   Left-aligned with shell padding (matches topbar), not a centered narrow column.
    ============================================================================= */
 
-.pro-body.home-editorial {
-  --home-pad: clamp(1rem, 2.5vw, 2rem);
-  --home-measure: 56rem;
-}
-
-/* One centered content column; page_header + pro-content stay aligned */
 .pro-body.home-editorial .pro-content {
   margin: 0;
   padding: 0;
@@ -7622,11 +7617,11 @@ html.pref-reduce-motion .qol-overlay {
 .pro-body.home-editorial .editorial-today-list {
   box-sizing: border-box;
   width: 100%;
-  max-width: var(--home-measure);
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: var(--home-pad);
-  padding-right: var(--home-pad);
+  max-width: none;
+  margin-left: var(--pro-space-page-x);
+  margin-right: var(--pro-space-page-x);
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .pro-body.home-editorial .editorial-page {
@@ -7639,7 +7634,7 @@ html.pref-reduce-motion .qol-overlay {
   margin-bottom: clamp(2rem, 4vw, 3rem);
 }
 
-/* Band: continue + subjects share the measure */
+/* Band: continue + subjects fill the main area */
 .pro-body.home-editorial .editorial-band {
   display: grid;
   grid-template-columns: minmax(0, 1.55fr) minmax(12.5rem, 0.95fr);
@@ -7694,13 +7689,13 @@ html.pref-reduce-motion .qol-overlay {
   margin-bottom: 0.25rem;
 }
 
-/* Also today: action stays with the copy (not trailing-edge of the page) */
+/* Also today: action stays with the copy */
 .pro-body.home-editorial .editorial-row {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.4rem;
-  max-width: 40rem;
+  max-width: 42rem;
 }
 
 .pro-body.home-editorial .editorial-row-main {
@@ -7709,7 +7704,6 @@ html.pref-reduce-motion .qol-overlay {
 }
 
 .pro-body.home-editorial .editorial-row-action {
-  justify-self: start;
   white-space: nowrap;
 }
 
@@ -7717,12 +7711,7 @@ html.pref-reduce-motion .qol-overlay {
   overflow-wrap: anywhere;
 }
 
-/* Topbar: prevent crush on mid widths */
 @media (max-width: 1100px) {
-  .pro-body.home-editorial {
-    --home-measure: 100%;
-  }
-
   .pro-top-nav {
     gap: 0.1rem 0.95rem;
   }
@@ -7747,8 +7736,10 @@ html.pref-reduce-motion .qol-overlay {
 
 /* Phones */
 @media (max-width: 640px) {
-  .pro-body.home-editorial {
-    --home-pad: 1rem;
+  .pro-body.home-editorial .editorial-page,
+  .pro-body.home-editorial .editorial-today-list {
+    margin-left: 1rem;
+    margin-right: 1rem;
   }
 
   .pro-body.home-editorial .editorial-title {
@@ -7773,10 +7764,6 @@ html.pref-reduce-motion .qol-overlay {
     gap: 0.45rem;
   }
 
-  .pro-body.home-editorial .editorial-row-action {
-    margin-left: 0;
-  }
-
   .pro-top-user-name {
     display: none;
   }
@@ -7788,7 +7775,6 @@ html.pref-reduce-motion .qol-overlay {
   }
 }
 
-/* Short laptop / landscape phone */
 @media (max-width: 900px) and (max-height: 500px) {
   .pro-body.home-editorial .editorial-page {
     margin-top: 0.85rem;
