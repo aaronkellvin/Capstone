@@ -592,8 +592,17 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
   white-space: normal;
 }
 
-/* Mobile / tablet: center the announcements sheet on screen so it is not clipped */
 @media (max-width: 860px) {
+  .pro-topbar-logo {
+    width: 1.95rem;
+    height: 1.95rem;
+  }
+
+  .pro-context {
+    font-size: 0.84rem;
+    max-width: 42vw;
+  }
+
   .pro-body .notify-wrap {
     position: static;
   }
@@ -639,6 +648,28 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
   border-radius: 0.8rem;
   cursor: pointer;
   color: var(--bloom-text);
+  flex: 0 0 auto;
+}
+
+.pro-topbar-brand {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  line-height: 0;
+  text-decoration: none;
+  border-radius: 0.45rem;
+}
+
+.pro-topbar-brand:focus-visible {
+  outline: 2px solid var(--bloom-primary);
+  outline-offset: 2px;
+}
+
+.pro-topbar-logo {
+  display: block;
+  width: 2.15rem;
+  height: 2.15rem;
+  object-fit: contain;
 }
 
 .pro-context {
@@ -646,6 +677,10 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
   color: var(--bloom-text);
   font-size: 0.9rem;
   font-weight: 650;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pro-top-actions {

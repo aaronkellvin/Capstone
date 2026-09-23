@@ -8,10 +8,21 @@
     aria-expanded="false"
   >☰</button>
 
+  <a
+    class="pro-topbar-brand"
+    href="{{ url_for('home') }}"
+    aria-label="Colegio de San Juan de Letran Calamba — Home"
+  >
+    <img
+      class="pro-topbar-logo"
+      src="{{ url_for('static', filename='images/letran-calamba-logo.png') }}"
+      alt=""
+      width="36"
+      height="36"
+    />
+  </a>
   {% if topbar_sub %}
     <p class="pro-context">{{ topbar_sub }}</p>
-  {% else %}
-    <p class="pro-context">Colegio de San Juan de Letran Calamba</p>
   {% endif %}
 
   <div class="pro-top-actions">
