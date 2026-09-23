@@ -6,26 +6,22 @@
   <title>{{ code }} — Bloom</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bloom-pro.css') }}" />
 </head>
-<body class="app-body">
-  <div class="app-bg" aria-hidden="true">
-    <span class="ribbon ribbon-blue"></span>
-    <span class="ribbon ribbon-red"></span>
-    <span class="dot-field"></span>
-  </div>
-  <main class="app-main">
-    <section class="lobby-card">
-      <p class="hero-kicker">Bloom</p>
-      <h1 class="section-title">{{ title }}</h1>
+<body>
+  <div class="pro-login">
+    <div class="pro-login-card">
+      <p class="pro-hero-kicker">Bloom</p>
+      <h1 class="pro-login-title">{{ title }}</h1>
       <p class="section-note">{{ message }}</p>
-      <div class="lobby-actions">
+      <div class="lobby-actions" style="margin-top: 1rem;">
         <a class="btn-primary btn-inline" href="{{ url_for('home') if user else url_for('login') }}">
           {{ "Go to Home" if user else "Sign in" }}
         </a>
       </div>
-    </section>
-  </main>
+    </div>
+  </div>
 </body>
 </html>

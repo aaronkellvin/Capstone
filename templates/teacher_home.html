@@ -1,90 +1,68 @@
 {% extends "layouts/pro.html" %}
 {% block title %}Teacher Home — Bloom{% endblock %}
-{% block body_class %}home-command teacher-home-command subject-accent-{{ subject_slug }}{% endblock %}
+{% block body_class %}home-editorial teacher-home-editorial subject-accent-{{ subject_slug }}{% endblock %}
 {% block page_header %}
-  <div class="home-first-region">
-    <section class="home-command-hero" aria-labelledby="teacher-greeting">
-      <div class="home-command-hero-copy">
-        <p class="pro-hero-kicker">Your day</p>
-        <h1 class="pro-hero-title" id="teacher-greeting">{{ greeting }}</h1>
-        <p class="pro-hero-sub">{{ guide_note }}</p>
-      </div>
-      <div class="home-command-pulse" aria-label="Quick signals">
-        <a class="home-pulse-chip {% if not class_pulse.has_data %}is-quiet{% endif %}" href="{{ class_pulse.href }}">
-          <span class="home-pulse-value">{{ class_pulse.value }}</span>
-          <span class="home-pulse-label">{{ class_pulse.label }}</span>
-        </a>
+  <div class="editorial-page">
+    <header class="editorial-greeting" aria-labelledby="teacher-greeting">
+      <h1 class="editorial-title" id="teacher-greeting">{{ greeting }}</h1>
+      <p class="editorial-lede">{{ guide_note }}</p>
+      <p class="editorial-meta-line">
+        <a href="{{ class_pulse.href }}">{{ class_pulse.label }}: {{ class_pulse.value }}</a>
         {% if unread_messages %}
-          <a class="home-pulse-chip is-messages" href="{{ url_for('messages_inbox') }}">
-            <span class="home-pulse-value">{{ unread_messages }}</span>
-            <span class="home-pulse-label">Unread chats</span>
-          </a>
+          <span aria-hidden="true">·</span>
+          <a href="{{ url_for('messages_inbox') }}">{{ unread_messages }} unread chat{% if unread_messages != 1 %}s{% endif %}</a>
         {% endif %}
-      </div>
-    </section>
+      </p>
+    </header>
   </div>
 {% endblock %}
 {% block content %}
-  <section class="home-today home-today-command" aria-labelledby="teacher-queue-title">
-    <div class="section-heading-row">
-      <div>
-        <p class="section-eyebrow">Do this next</p>
-        <h2 class="section-title section-title-sm" id="teacher-queue-title">Open items</h2>
-      </div>
+  <section class="editorial-today-list" aria-labelledby="teacher-queue-title">
+    <div class="editorial-list-head">
+      <h2 class="section-title section-title-sm" id="teacher-queue-title">Open items</h2>
       {% if attention %}
-        <span class="count-badge">{{ attention|length }} pending</span>
+        <span class="editorial-count">{{ attention|length }} pending</span>
       {% else %}
-        <span class="count-badge count-badge-muted">None</span>
+        <span class="editorial-count is-muted">None</span>
       {% endif %}
     </div>
 
     {% if attention %}
-      <div class="hub-list stack-md pro-stagger-in" aria-label="Pending items">
+      <div class="editorial-rows" role="list">
         {% for item in attention %}
-          <article class="hub-card pro-card-interactive">
-            <div>
-              <p class="hub-card-kicker">{{ item.kicker }}</p>
-              <h3 class="hub-card-title">{{ item.title }}</h3>
-              <p class="hub-card-meta">{{ item.meta }}</p>
+          <article class="editorial-row" role="listitem">
+            <div class="editorial-row-main">
+              <p class="editorial-row-kicker">{{ item.kicker }}</p>
+              <h3 class="editorial-row-title">{{ item.title }}</h3>
+              <p class="editorial-row-meta">{{ item.meta }}</p>
             </div>
-            <a class="today-action today-action-soft" href="{{ item.href }}">
-              {{ item.action }} <span aria-hidden="true">→</span>
-            </a>
+            <div class="editorial-row-action">
+              <a class="editorial-text-link" href="{{ item.href }}">{{ item.action }} →</a>
+            </div>
           </article>
         {% endfor %}
       </div>
     {% else %}
-      <article class="empty-state-card today-empty today-featured today-command-primary pro-toast-in teacher-home-empty">
+      <article class="editorial-empty">
         <h3 class="empty-title">{{ empty_cta.title }}</h3>
         <p class="empty-copy">{{ empty_cta.note }}</p>
-        <a class="today-action today-action-soft" href="{{ empty_cta.href }}">
-          {{ empty_cta.action }} <span aria-hidden="true">→</span>
-        </a>
+        <a class="editorial-text-link" href="{{ empty_cta.href }}">{{ empty_cta.action }} →</a>
       </article>
     {% endif %}
   </section>
 
   <section class="home-section teacher-stat-section" aria-labelledby="teacher-stats-title">
-    <div class="section-heading-row">
-      <div>
-        <p class="section-eyebrow">Workspace</p>
-        <h2 id="teacher-stats-title" class="section-title section-title-sm">At a glance</h2>
-      </div>
-      <p class="count-badge count-badge-muted">{{ subject_name }}</p>
+    <div class="editorial-list-head">
+      <h2 id="teacher-stats-title" class="section-title section-title-sm">At a glance</h2>
+      <span class="editorial-count is-muted">{{ subject_name }}</span>
     </div>
 
     <div class="teacher-stat-grid">
       {% for card in stats %}
         <a class="teacher-stat-card tone-{{ card.tone }}" href="{{ card.href }}">
-          <span class="teacher-stat-icon" aria-hidden="true">
-            {% if card.tone == "blue" %}▣
-            {% elif card.tone == "amber" %}✎
-            {% elif card.tone == "gray" %}↥
-            {% else %}✓{% endif %}
-          </span>
-          <p class="teacher-stat-label">{{ card.label }}</p>
-          <p class="teacher-stat-value">{{ card.value }}</p>
-          <p class="teacher-stat-meta">{{ card.meta }}</p>
+          <span class="teacher-stat-label">{{ card.label }}</span>
+          <strong class="teacher-stat-value">{{ card.value }}</strong>
+          <span class="teacher-stat-note">{{ card.meta }}</span>
         </a>
       {% endfor %}
     </div>

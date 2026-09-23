@@ -1,112 +1,103 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{ title }} — Bloom</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
-</head>
-<body class="app-body staff-body">
-  <div class="app-bg" aria-hidden="true">
-    <span class="ribbon ribbon-blue"></span>
-    <span class="ribbon ribbon-red"></span>
-    <span class="dot-field"></span>
-  </div>
-
-  {% include "partials/staff_topbar.html" %}
-
-  <main class="app-main">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <ul class="flash-list home-flash">
-          {% for category, message in messages %}
-            <li class="flash flash-{{ category }} pro-toast-in">{{ message }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
-
-    <section class="home-section">
-      <h1 class="section-title">{{ title }}</h1>
-      <p class="section-note">{{ subtitle }}</p>
-
-      {% if panels %}
-        <div class="hub-list stack-md pro-stagger-in">
-          {% for panel in panels %}
-            <article class="hub-card hub-card-stack pro-card-interactive">
-              <div>
-                <p class="hub-card-kicker">{{ panel.kicker }}</p>
-                <h2 class="hub-card-title">{{ panel.title }}</h2>
-                <p class="hub-card-meta">{{ panel.meta }}</p>
-              </div>
-              {% if panel.form_action and panel.action %}
-                <div class="hub-card-actions">
-                  <form method="POST" action="{{ panel.form_action }}" data-confirm="Approve this upload? Students will be able to practice from it after summarization." data-loading="Approving and summarizing…">
-                    {% for key, value in (panel.hidden or {}).items() %}
-                      <input type="hidden" name="{{ key }}" value="{{ value }}" />
-                    {% endfor %}
-                    <button class="today-action" type="submit">{{ panel.action }}</button>
-                  </form>
-                  {% if panel.reject %}
-                    <form method="POST" action="{{ panel.form_action }}" data-confirm="Reject this upload? The student will not be able to practice from it.">
-                      <input type="hidden" name="action" value="reject" />
-                      <input type="hidden" name="material_id" value="{{ panel.material_id }}" />
-                      <button class="today-action today-action-soft" type="submit">Reject</button>
-                    </form>
-                  {% endif %}
-                </div>
-              {% elif panel.action_href and panel.action %}
-                <a class="today-action {% if panel.soft %}today-action-soft{% endif %}" href="{{ panel.action_href }}">{{ panel.action }}</a>
-              {% endif %}
-            </article>
-          {% endfor %}
+{% extends "layouts/pro.html" %}
+{% block title %}{{ title }} — Bloom{% endblock %}
+{% block page_kicker %}{% if user and user.role == "teacher" %}Teacher{% elif user and user.role == "admin" %}Admin{% else %}Bloom{% endif %}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block page_subtitle %}{{ subtitle }}{% endblock %}
+{% block content %}
+  {% if form_blocks %}
+    {% for block in form_blocks %}
+      <section class="home-section" {% if block.id %}id="{{ block.id }}"{% endif %} aria-labelledby="staff-form-{{ loop.index }}">
+        <div class="section-heading-row">
+          <div>
+            <p class="section-eyebrow">Form</p>
+            <h2 id="staff-form-{{ loop.index }}" class="section-title section-title-sm">{{ block.title }}</h2>
+          </div>
         </div>
-      {% endif %}
+        <section class="lobby-card stack-md">
+          <p class="section-note">{{ block.note }}</p>
+          <form class="login-form" method="POST" action="{{ block.action }}" {% if block.enctype %}enctype="{{ block.enctype }}"{% endif %} {% if block.loading %}data-loading="{{ block.loading }}"{% endif %} {% if block.confirm %}data-confirm="{{ block.confirm }}"{% endif %}>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            {% for field in block.fields %}
+              <div class="field">
+                <label for="{{ field.id }}">{{ field.label }}</label>
+                {% if field.type == 'textarea' %}
+                  <textarea id="{{ field.id }}" name="{{ field.name }}" rows="4" placeholder="{{ field.placeholder }}" {% if field.required %}required{% endif %}>{{ field.value or '' }}</textarea>
+                {% elif field.type == 'select' %}
+                  <select id="{{ field.id }}" name="{{ field.name }}" {% if field.required %}required{% endif %}>
+                    {% for opt in field.options %}
+                      <option value="{{ opt }}">{{ opt }}</option>
+                    {% endfor %}
+                  </select>
+                {% else %}
+                  <input
+                    id="{{ field.id }}"
+                    name="{{ field.name }}"
+                    type="{{ field.type }}"
+                    placeholder="{{ field.placeholder }}"
+                    {% if field.accept %}accept="{{ field.accept }}"{% endif %}
+                    {% if field.required %}required{% endif %}
+                    {% if field.minlength %}minlength="{{ field.minlength }}"{% endif %}
+                    {% if field.match %}data-match="{{ field.match }}" data-match-message="{{ field.match_message or 'Values must match.' }}"{% endif %}
+                  />
+                {% endif %}
+              </div>
+            {% endfor %}
+            {% if block.sample_target %}
+              <button type="button" class="text-link" data-fill-target="{{ block.sample_target }}" data-fill-value="{{ block.sample_value }}">Insert sample rows</button>
+            {% endif %}
+            <button type="submit" class="btn-primary">{{ block.submit }}</button>
+          </form>
+        </section>
+      </section>
+    {% endfor %}
+  {% endif %}
 
-      {% if form_blocks %}
-        {% for block in form_blocks %}
-          <section class="lobby-card stack-md" {% if block.id %}id="{{ block.id }}"{% endif %}>
-            <h2 class="hub-panel-title">{{ block.title }}</h2>
-            <p class="section-note">{{ block.note }}</p>
-            <form class="login-form" method="POST" action="{{ block.action }}" {% if block.enctype %}enctype="{{ block.enctype }}"{% endif %} {% if block.loading %}data-loading="{{ block.loading }}"{% endif %} {% if block.confirm %}data-confirm="{{ block.confirm }}"{% endif %}>
-              {% for field in block.fields %}
-                <div class="field">
-                  <label for="{{ field.id }}">{{ field.label }}</label>
-                  {% if field.type == 'textarea' %}
-                    <textarea id="{{ field.id }}" name="{{ field.name }}" rows="4" placeholder="{{ field.placeholder }}" {% if field.required %}required{% endif %}>{{ field.value or '' }}</textarea>
-                  {% elif field.type == 'select' %}
-                    <select id="{{ field.id }}" name="{{ field.name }}" {% if field.required %}required{% endif %}>
-                      {% for opt in field.options %}
-                        <option value="{{ opt }}">{{ opt }}</option>
-                      {% endfor %}
-                    </select>
-                  {% else %}
-                    <input
-                      id="{{ field.id }}"
-                      name="{{ field.name }}"
-                      type="{{ field.type }}"
-                      placeholder="{{ field.placeholder }}"
-                      {% if field.accept %}accept="{{ field.accept }}"{% endif %}
-                      {% if field.required %}required{% endif %}
-                      {% if field.minlength %}minlength="{{ field.minlength }}"{% endif %}
-                      {% if field.match %}data-match="{{ field.match }}" data-match-message="{{ field.match_message or 'Values must match.' }}"{% endif %}
-                    />
-                  {% endif %}
-                </div>
-              {% endfor %}
-              {% if block.sample_target %}
-                <button type="button" class="text-link" data-fill-target="{{ block.sample_target }}" data-fill-value="{{ block.sample_value }}">Insert sample rows</button>
-              {% endif %}
-              <button type="submit" class="btn-primary">{{ block.submit }}</button>
-            </form>
-          </section>
+  {% if panels %}
+    <section class="home-section" aria-labelledby="staff-panels-title">
+      <div class="section-heading-row">
+        <div>
+          <p class="section-eyebrow">Records</p>
+          <h2 id="staff-panels-title" class="section-title section-title-sm">{{ title }}</h2>
+        </div>
+        <span class="count-badge {% if not panels %}count-badge-muted{% endif %}">{{ panels|length }}</span>
+      </div>
+      <div class="hub-list stack-md pro-stagger-in">
+        {% for panel in panels %}
+          <article class="hub-card hub-card-stack pro-card-interactive">
+            <div>
+              <p class="hub-card-kicker">{{ panel.kicker }}</p>
+              <h3 class="hub-card-title">{{ panel.title }}</h3>
+              <p class="hub-card-meta">{{ panel.meta }}</p>
+            </div>
+            {% if panel.form_action and panel.action %}
+              <div class="hub-card-actions">
+                <form method="POST" action="{{ panel.form_action }}" data-confirm="Approve this upload? Students will be able to practice from it after summarization." data-loading="Approving and summarizing…">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                  {% for key, value in (panel.hidden or {}).items() %}
+                    <input type="hidden" name="{{ key }}" value="{{ value }}" />
+                  {% endfor %}
+                  <button class="today-action" type="submit">{{ panel.action }}</button>
+                </form>
+                {% if panel.reject %}
+                  <form method="POST" action="{{ panel.form_action }}" data-confirm="Reject this upload? The student will not be able to practice from it.">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="hidden" name="action" value="reject" />
+                    <input type="hidden" name="material_id" value="{{ panel.material_id }}" />
+                    <button class="today-action today-action-soft" type="submit">Reject</button>
+                  </form>
+                {% endif %}
+              </div>
+            {% elif panel.action_href and panel.action %}
+              <a class="today-action {% if panel.soft %}today-action-soft{% endif %}" href="{{ panel.action_href }}">{{ panel.action }}</a>
+            {% endif %}
+          </article>
         {% endfor %}
-      {% endif %}
+      </div>
     </section>
-  </main>
-  <script src="{{ url_for('static', filename='js/topbar.js') }}" defer></script>
-</body>
-</html>
+  {% elif not form_blocks %}
+    <article class="empty-state-card">
+      <h3 class="empty-title">Nothing here yet</h3>
+      <p class="empty-copy">{{ subtitle }}</p>
+    </article>
+  {% endif %}
+{% endblock %}

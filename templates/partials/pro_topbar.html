@@ -1,31 +1,34 @@
+{% include "partials/pro_nav_context.html" %}
 <header class="pro-topbar">
   <button
     type="button"
     class="pro-menu-btn"
     id="sidebar-toggle"
-    aria-label="Toggle sidebar"
+    aria-label="Toggle navigation"
     aria-controls="pro-sidebar"
     aria-expanded="false"
   >☰</button>
 
-  <a
-    class="pro-topbar-brand"
-    href="{{ url_for('home') }}"
-    aria-label="Colegio de San Juan de Letran Calamba — Home"
-  >
-    <img
-      class="pro-topbar-logo"
-      src="{{ url_for('static', filename='images/letran-calamba-logo.png') }}"
-      alt=""
-      width="36"
-      height="36"
-    />
-  </a>
+  <nav class="pro-top-nav" aria-label="Sections">
+    {% if user and user.role == 'student' %}
+      <a class="pro-top-link {% if tab == 'home' %}is-active{% endif %}" href="{{ url_for('home') }}">Home</a>
+      <a class="pro-top-link {% if tab == 'practice' %}is-active{% endif %}" href="{{ url_for('practice') }}">Practice</a>
+      <a class="pro-top-link {% if tab == 'results' %}is-active{% endif %}" href="{{ url_for('results') }}">Results</a>
+    {% elif role_nav %}
+      {% for item in role_nav %}
+        <a class="pro-top-link {% if tab == item.key or active_nav == item.key %}is-active{% endif %}" href="{{ url_for(item.endpoint) }}">{{ item.label }}</a>
+      {% endfor %}
+    {% endif %}
+  </nav>
+
   {% if topbar_sub %}
     <p class="pro-context">{{ topbar_sub }}</p>
   {% endif %}
 
   <div class="pro-top-actions">
+    {% if user %}
+      <p class="pro-top-user-name">{{ user.name }}</p>
+    {% endif %}
     {% if user and user.role == 'student' %}
       <div class="menu-wrap notify-wrap">
         <button
@@ -60,7 +63,7 @@
             {% for note in announcements_preview %}
               <li>
                 <a
-                  class="notify-item {% if note.unread %}is-unread{% endif %} subject-accent-{{ note.subject|lower|replace('math', 'mathematics') }}"
+                  class="notify-item {% if note.unread %}is-unread{% endif %}"
                   href="{{ note.href }}"
                   data-id="{{ note.id }}"
                 >

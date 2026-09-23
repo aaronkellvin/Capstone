@@ -1,0 +1,30 @@
+{# Shared active-tab resolution for rail + top text nav #}
+{% set endpoint = request.endpoint or '' %}
+{% if active_tab is defined and active_tab %}
+  {% set tab = active_tab %}
+{% elif active_nav is defined and active_nav %}
+  {% set tab = active_nav %}
+{% elif 'practice' in endpoint %}
+  {% set tab = 'practice' %}
+{% elif endpoint == 'results' or endpoint.startswith('result') %}
+  {% set tab = 'results' %}
+{% elif 'announce' in endpoint %}
+  {% set tab = 'announcements' if user and user.role == 'student' else 'announce' %}
+{% elif endpoint == 'profile' or endpoint.startswith('profile') %}
+  {% set tab = 'profile' %}
+{% elif 'messages' in endpoint %}
+  {% set tab = 'messages' %}
+{% elif user and user.role == 'teacher' and endpoint.startswith('teacher') %}
+  {% if 'material' in endpoint %}{% set tab = 'materials' %}
+  {% elif 'hots' in endpoint %}{% set tab = 'hots' %}
+  {% elif 'monitor' in endpoint %}{% set tab = 'monitor' %}
+  {% else %}{% set tab = 'home' %}{% endif %}
+{% elif user and user.role == 'admin' %}
+  {% if 'users' in endpoint %}{% set tab = 'users' %}
+  {% elif 'section' in endpoint %}{% set tab = 'section' %}
+  {% elif 'report' in endpoint or 'admin_reports' == endpoint %}{% set tab = 'reports' %}
+  {% elif 'settings' in endpoint %}{% set tab = 'settings' %}
+  {% else %}{% set tab = 'home' %}{% endif %}
+{% else %}
+  {% set tab = 'home' %}
+{% endif %}

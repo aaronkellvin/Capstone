@@ -1,191 +1,133 @@
 {% extends "layouts/pro.html" %}
 {% set active_tab = "home" %}
 {% block title %}Home — Bloom{% endblock %}
-{% block body_class %}home-command{% endblock %}
+{% block body_class %}home-editorial{% endblock %}
 {% block page_header %}
-  <div class="home-first-region">
-    <section class="home-command-hero" aria-labelledby="home-greeting">
-      <div class="home-command-hero-copy">
-        <p class="pro-hero-kicker">Your classroom</p>
-        <h1 class="pro-hero-title" id="home-greeting">{{ greeting }}</h1>
-        <p class="pro-hero-sub">{{ guide_note }}</p>
-      </div>
-      <div class="home-command-pulse" aria-label="Quick signals">
-        <a class="home-pulse-chip" href="{{ url_for('practice') }}">
-          <span class="home-pulse-value">{% if weekly_goal.has_progress %}{{ weekly_goal.percent }}%{% else %}—{% endif %}</span>
-          <span class="home-pulse-label">Practice avg</span>
-        </a>
+  <div class="editorial-page">
+    <header class="editorial-greeting" aria-labelledby="home-greeting">
+      <h1 class="editorial-title" id="home-greeting">{{ greeting }}</h1>
+      <p class="editorial-lede">{{ guide_note }}</p>
+      <p class="editorial-meta-line">
+        {% if weekly_goal.has_progress %}
+          <a href="{{ url_for('practice') }}">Practice avg {{ weekly_goal.percent }}%</a>
+        {% else %}
+          <a class="is-quiet" href="{{ url_for('practice') }}">Practice avg · Not started yet</a>
+        {% endif %}
         {% if unread_announcements %}
-          <a class="home-pulse-chip is-alert" href="{{ url_for('announcements') }}">
-            <span class="home-pulse-value">{{ unread_announcements }}</span>
-            <span class="home-pulse-label">Unread news</span>
-          </a>
+          <span class="meta-sep" aria-hidden="true">·</span>
+          <a href="{{ url_for('announcements') }}">{{ unread_announcements }} unread</a>
         {% endif %}
         {% if unread_messages %}
-          <a class="home-pulse-chip is-messages" href="{{ url_for('messages_inbox') }}">
-            <span class="home-pulse-value">{{ unread_messages }}</span>
-            <span class="home-pulse-label">Messages</span>
-          </a>
+          <span class="meta-sep" aria-hidden="true">·</span>
+          <a href="{{ url_for('messages_inbox') }}">{{ unread_messages }} message{% if unread_messages != 1 %}s{% endif %}</a>
         {% endif %}
-      </div>
-    </section>
+      </p>
+    </header>
 
-    <section class="home-section home-subjects" aria-labelledby="subjects-title">
-      <div class="section-heading-row">
-        <div>
-          <p class="section-eyebrow">Continue learning</p>
-          <h2 id="subjects-title" class="section-title section-title-sm">My Subjects</h2>
-        </div>
-        <p class="count-badge count-badge-muted">Grade 7 · {{ subjects|length }} subjects</p>
-      </div>
+    {% set primary = today_items[0] if today_items else none %}
+    {% set secondary = today_items[1:] if today_items|length > 1 else [] %}
 
-      <div class="subject-grid pro-stagger-in">
-        {% for subject in subjects %}
-          <a class="subject-card subject-{{ subject.slug }} pro-card-interactive" href="{{ url_for('subject_hub', slug=subject.slug) }}">
-            <div class="subject-card-top">
-              <span class="subject-badge" aria-hidden="true">{{ subject.name[:1] }}</span>
-              <span class="status-pill status-subject subject-{{ subject.slug }}">{{ subject.name }}</span>
-            </div>
-            <p class="subject-name">{{ subject.name or subject.slug|title }}</p>
-            <p class="subject-progress {% if not subject.has_progress %}is-empty{% endif %}">
-              {% if not subject.has_progress %}
-                Not started
-              {% elif subject.progress_percent <= 0 %}
-                No auto-scored items yet · {{ subject.progress_insight }}
-              {% else %}
-                {{ subject.progress_percent }}% avg score · {{ subject.progress_insight }}
+    <section class="editorial-band" aria-label="Continue learning">
+      <article class="editorial-continue">
+        {% if primary %}
+          <p class="editorial-kicker">Do this next</p>
+          <h2 class="editorial-continue-title">{{ primary.title }}</h2>
+          <p class="editorial-continue-copy">
+            {% if primary.subject %}<span class="editorial-subject-label">{{ primary.subject }}</span>{% endif %}
+            {{ primary.meta }}
+          </p>
+          <div class="editorial-continue-actions">
+            {% if primary.actions %}
+              {% for step in primary.actions %}
+                <a
+                  class="{% if loop.first %}btn-primary{% else %}editorial-text-link{% endif %}"
+                  href="{{ step.href }}"
+                >{{ step.label }}{% if loop.first %} <span aria-hidden="true">→</span>{% endif %}</a>
+              {% endfor %}
+            {% else %}
+              <a class="btn-primary" href="{{ primary.href }}">
+                {{ primary.action }} <span aria-hidden="true">→</span>
+              </a>
+              {% if primary.secondary_href and primary.secondary_action %}
+                <a class="editorial-text-link" href="{{ primary.secondary_href }}">{{ primary.secondary_action }}</a>
               {% endif %}
-            </p>
-            <div
-              class="subject-meter {% if subject.progress_percent <= 0 %}is-empty{% endif %}"
-              role="progressbar"
-              aria-valuemin="0"
-              aria-valuemax="100"
-              aria-valuenow="{{ subject.progress_percent }}"
-              aria-label="{{ subject.name }} average practice score"
-            >
-              <span style="width: {{ subject.progress_percent }}%;"></span>
-            </div>
-            <div class="subject-footer">
-              <p class="subject-next">{{ subject.next_action }}</p>
-              <span class="subject-open">Open</span>
-            </div>
-          </a>
-        {% endfor %}
+            {% endif %}
+          </div>
+        {% else %}
+          <p class="editorial-kicker">Do this next</p>
+          <h2 class="editorial-continue-title">
+            {% if weekly_goal.has_progress %}You’re all caught up{% else %}Nothing waiting yet{% endif %}
+          </h2>
+          <p class="editorial-continue-copy">
+            {% if weekly_goal.has_progress %}
+              When something needs attention, it will show up here. Open a subject to keep learning.
+            {% else %}
+              {{ weekly_goal.hint }}
+            {% endif %}
+          </p>
+          <div class="editorial-continue-actions">
+            <a class="btn-primary" href="#subjects-title">Browse subjects <span aria-hidden="true">↓</span></a>
+          </div>
+        {% endif %}
+      </article>
+
+      <div class="editorial-subjects-wrap">
+        <div class="editorial-subjects-head">
+          <h2 class="editorial-subjects-label" id="subjects-title">My Subjects</h2>
+          <p class="editorial-subjects-note">Grade 7</p>
+        </div>
+        <div class="editorial-subjects" aria-label="My subjects">
+          {% for subject in subjects %}
+            {% set has_score = subject.has_progress and subject.progress_percent > 0 %}
+            <a class="subject-tile {% if has_score %}has-score{% else %}is-empty{% endif %}" href="{{ url_for('subject_hub', slug=subject.slug) }}">
+              <h3 class="subject-tile-name">{{ subject.name or subject.slug|title }}</h3>
+              {% if has_score %}
+                <p class="subject-tile-progress">{{ subject.progress_percent }}%</p>
+                <div
+                  class="subject-tile-meter"
+                  role="progressbar"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="{{ subject.progress_percent }}"
+                  aria-label="{{ subject.name }} average practice score"
+                >
+                  <span style="width: {{ subject.progress_percent }}%;"></span>
+                </div>
+              {% else %}
+                <p class="subject-tile-progress is-empty">Not started</p>
+              {% endif %}
+            </a>
+          {% endfor %}
+        </div>
       </div>
     </section>
   </div>
 {% endblock %}
 {% block content %}
-  <section class="home-today home-today-command" aria-labelledby="today-title">
-    <div class="section-heading-row">
-      <div>
-        <p class="section-eyebrow">Do this next</p>
-        <h2 class="section-title section-title-sm" id="today-title">Today</h2>
+  {% set secondary = today_items[1:] if today_items|length > 1 else [] %}
+  {% if secondary %}
+    <section class="editorial-today-list" aria-labelledby="also-today-title">
+      <h2 class="editorial-list-title" id="also-today-title">Also today</h2>
+      <div class="editorial-rows is-open" role="list">
+        {% for item in secondary %}
+          <article class="editorial-row" role="listitem">
+            <div class="editorial-row-main">
+              <p class="editorial-row-kicker">
+                {% if item.subject %}{{ item.subject }} · {% endif %}{{ item.kicker }}
+              </p>
+              <h3 class="editorial-row-title">{{ item.title }}</h3>
+              <p class="editorial-row-meta">{{ item.meta }}</p>
+            </div>
+            <div class="editorial-row-action">
+              {% if item.actions %}
+                <a class="editorial-text-link" href="{{ item.actions[0].href }}">{{ item.actions[0].label }} →</a>
+              {% else %}
+                <a class="editorial-text-link" href="{{ item.href }}">{{ item.action }} →</a>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
       </div>
-      {% if today_items %}
-        <span class="count-badge">{{ today_items|length }} waiting</span>
-      {% endif %}
-    </div>
-
-    {% set primary = today_items[0] if today_items else none %}
-    {% set secondary = today_items[1:] if today_items|length > 1 else [] %}
-
-    {% if primary %}
-      <article class="today-card today-{{ primary.priority }} today-{{ primary.type }} subject-{{ primary.subject_slug or 'general' }} today-featured today-command-primary pro-card-interactive">
-        <div class="today-icon" aria-hidden="true" data-type="{{ primary.type }}"></div>
-        <div class="today-copy">
-          <div class="status-row today-status-row">
-            {% if primary.subject %}
-              <span class="status-pill status-subject subject-{{ primary.subject_slug or 'general' }}">{{ primary.subject }}</span>
-            {% endif %}
-            <span class="status-pill status-neutral">{{ primary.kicker }}</span>
-          </div>
-          <h3 class="today-title">{{ primary.title }}</h3>
-          <p class="today-meta">{{ primary.meta }}</p>
-        </div>
-        <div class="today-actions {% if primary.actions and primary.actions|length > 2 %}today-actions-stack{% endif %}" role="group" aria-label="Next steps">
-          {% if primary.actions %}
-            {% for step in primary.actions %}
-              <a
-                class="today-action {% if step.tone == 'soft' %}today-action-soft{% elif step.tone == 'accent' %}today-action-accent{% endif %}"
-                href="{{ step.href }}"
-              >
-                {% if step.step %}<span class="today-action-step">{{ step.step }}</span>{% endif %}
-                <span class="today-action-label">{{ step.label }}</span>
-                {% if loop.first %}<span aria-hidden="true">→</span>{% endif %}
-              </a>
-            {% endfor %}
-          {% else %}
-            <a class="today-action" href="{{ primary.href }}">
-              {{ primary.action }}
-              <span aria-hidden="true">→</span>
-            </a>
-            {% if primary.secondary_href and primary.secondary_action %}
-              <a class="today-action today-action-soft" href="{{ primary.secondary_href }}">
-                {{ primary.secondary_action }}
-              </a>
-            {% endif %}
-          {% endif %}
-        </div>
-      </article>
-    {% else %}
-      <article class="empty-state-card today-empty today-featured today-command-primary">
-        <p class="empty-kicker">Your next step</p>
-        {% if weekly_goal.has_progress %}
-          <h3 class="empty-title">You’re all caught up</h3>
-          <p class="empty-copy">When something needs attention, it will show up here. Open a subject above to keep learning.</p>
-        {% else %}
-          <h3 class="empty-title">Nothing waiting yet</h3>
-          <p class="empty-copy">{{ weekly_goal.hint }}</p>
-        {% endif %}
-        <a class="today-action" href="#subjects-title">Back to subjects <span aria-hidden="true">↑</span></a>
-      </article>
-    {% endif %}
-
-    {% if secondary %}
-      <div class="today-secondary" aria-label="Also today">
-        <p class="today-secondary-label">Also today</p>
-        <div class="today-list today-list-secondary pro-stagger-in">
-          {% for item in secondary %}
-            <article class="today-card today-{{ item.priority }} today-{{ item.type }} subject-{{ item.subject_slug or 'general' }} pro-card-interactive">
-              <div class="today-copy">
-                <div class="status-row today-status-row">
-                  {% if item.subject %}
-                    <span class="status-pill status-subject subject-{{ item.subject_slug or 'general' }}">{{ item.subject }}</span>
-                  {% endif %}
-                  <span class="status-pill status-neutral">{{ item.kicker }}</span>
-                </div>
-                <h3 class="today-title">{{ item.title }}</h3>
-                <p class="today-meta">{{ item.meta }}</p>
-              </div>
-              <div class="today-actions today-actions-compact" role="group" aria-label="Next steps">
-                {% if item.actions %}
-                  {% for step in item.actions %}
-                    <a
-                      class="today-action {% if step.tone == 'soft' %}today-action-soft{% elif step.tone == 'accent' %}today-action-accent{% endif %}"
-                      href="{{ step.href }}"
-                    >
-                      <span class="today-action-label">{{ step.label }}</span>
-                      {% if loop.first %}<span aria-hidden="true">→</span>{% endif %}
-                    </a>
-                  {% endfor %}
-                {% else %}
-                  <a class="today-action today-action-soft" href="{{ item.href }}">
-                    {{ item.action }}
-                    <span aria-hidden="true">→</span>
-                  </a>
-                  {% if item.secondary_href and item.secondary_action %}
-                    <a class="today-action today-action-soft" href="{{ item.secondary_href }}">
-                      {{ item.secondary_action }}
-                    </a>
-                  {% endif %}
-                {% endif %}
-              </div>
-            </article>
-          {% endfor %}
-        </div>
-      </div>
-    {% endif %}
-  </section>
+    </section>
+  {% endif %}
 {% endblock %}
