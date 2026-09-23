@@ -104,13 +104,17 @@
           <h3 class="today-title">{{ primary.title }}</h3>
           <p class="today-meta">{{ primary.meta }}</p>
         </div>
-        <a class="today-action" href="{{ primary.href }}">
-          {% if primary.type == "upload" %}See status
-          {% elif primary.type == "result" %}Review
-          {% elif primary.type == "assessment" or primary.type == "practice" %}Start now
-          {% else %}{{ primary.action }}{% endif %}
-          <span aria-hidden="true">→</span>
-        </a>
+        <div class="today-actions">
+          <a class="today-action" href="{{ primary.href }}">
+            {{ primary.action }}
+            <span aria-hidden="true">→</span>
+          </a>
+          {% if primary.secondary_href and primary.secondary_action %}
+            <a class="today-action today-action-soft" href="{{ primary.secondary_href }}">
+              {{ primary.secondary_action }}
+            </a>
+          {% endif %}
+        </div>
       </article>
     {% else %}
       <article class="empty-state-card today-empty today-featured today-command-primary">
@@ -142,13 +146,17 @@
                 <h3 class="today-title">{{ item.title }}</h3>
                 <p class="today-meta">{{ item.meta }}</p>
               </div>
-              <a class="today-action today-action-soft" href="{{ item.href }}">
-                {% if item.type == "upload" %}See status
-                {% elif item.type == "result" %}Review
-                {% elif item.type == "assessment" or item.type == "practice" %}Start
-                {% else %}{{ item.action }}{% endif %}
-                <span aria-hidden="true">→</span>
-              </a>
+              <div class="today-actions today-actions-compact">
+                <a class="today-action today-action-soft" href="{{ item.href }}">
+                  {{ item.action }}
+                  <span aria-hidden="true">→</span>
+                </a>
+                {% if item.secondary_href and item.secondary_action %}
+                  <a class="today-action today-action-soft" href="{{ item.secondary_href }}">
+                    {{ item.secondary_action }}
+                  </a>
+                {% endif %}
+              </div>
             </article>
           {% endfor %}
         </div>

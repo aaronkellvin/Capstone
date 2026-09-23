@@ -839,9 +839,21 @@ def progress_display_label(percent: int, has_progress: bool, insight: str = "") 
     return f"{base} · {insight}" if insight else base
 
 
+def lesson_review_href(subject_slug: str, material: Material | None = None) -> str:
+    """Prefer the lesson summary; fall back to the subject Study tab."""
+    if material and material.status == "approved" and material.summary:
+        return url_for("summary_reader", slug=subject_slug, material_slug=material.slug)
+    return url_for("subject_hub", slug=subject_slug, tab="study")
+
+
 def build_today(user_id: int) -> list[dict]:
-    items = []
+    """Home Today queue: Learn → Practice → Assess → Improve (calm CTAs)."""
+    learn_assess: list[dict] = []
+    practice_items: list[dict] = []
+    improve_items: list[dict] = []
+    upload_items: list[dict] = []
     now = datetime.utcnow()
+
     for assessment in Assessment.query.filter_by(status="published").all():
         if assessment.deadline and assessment.deadline < now:
             continue
@@ -852,14 +864,16 @@ def build_today(user_id: int) -> list[dict]:
         allowed = limit + (1 if assessment.extra_attempt else 0)
         if taken >= allowed:
             continue
-        due = "Due soon"
+        due = "Waiting for you"
         if assessment.deadline:
             if assessment.deadline.date() == (now + timedelta(days=1)).date():
-                due = "Due tomorrow — start now"
+                due = "Due tomorrow"
             elif assessment.deadline.date() == now.date():
-                due = "Due today — start now"
+                due = "Due today"
         attempt_label = "1 attempt" if allowed == 1 else f"{allowed} attempts"
-        items.append(
+        material = db.session.get(Material, assessment.material_id) if assessment.material_id else None
+        review_href = lesson_review_href(assessment.subject_slug, material)
+        learn_assess.append(
             {
                 "type": "assessment",
                 "priority": "primary",
@@ -867,18 +881,43 @@ def build_today(user_id: int) -> list[dict]:
                 "subject_slug": assessment.subject_slug,
                 "kicker": due,
                 "title": assessment.title,
-                "meta": f"{attempt_label} · Assistive check · Posted by your teacher",
-                "action": "Start now",
-                "href": url_for("assessment_lobby", slug=assessment.slug),
+                "meta": f"{attempt_label} · Review the lesson first, then start when you feel ready",
+                "action": "Review lesson",
+                "href": review_href,
+                "secondary_action": "Start assessment",
+                "secondary_href": url_for("assessment_lobby", slug=assessment.slug),
             }
         )
+
+    approved = Material.query.filter_by(status="approved").order_by(Material.created_at.desc()).first()
+    if approved:
+        practice_items.append(
+            {
+                "type": "practice",
+                "priority": "secondary",
+                "subject": SUBJECTS[approved.subject_slug]["name"],
+                "subject_slug": approved.subject_slug,
+                "kicker": "Practice reminder",
+                "title": f"Try the {approved.title} Practice Check",
+                "meta": "Skim the summary, then try a short practice check",
+                "action": "Review lesson",
+                "href": lesson_review_href(approved.subject_slug, approved),
+                "secondary_action": "Practice",
+                "secondary_href": url_for(
+                    "practice_setup",
+                    subject_slug=approved.subject_slug,
+                    material_slug=approved.slug,
+                ),
+            }
+        )
+
     latest = (
         Attempt.query.filter_by(user_id=user_id, kind="assessment")
         .order_by(Attempt.submitted_at.desc())
         .first()
     )
     if latest:
-        items.append(
+        improve_items.append(
             {
                 "type": "result",
                 "priority": "secondary",
@@ -887,28 +926,14 @@ def build_today(user_id: int) -> list[dict]:
                 "kicker": "Result ready",
                 "title": latest.title,
                 "meta": "Review answers and explanations when you feel ready",
-                "action": "Review",
+                "action": "Review result",
                 "href": url_for("attempt_review", attempt_id=latest.id),
             }
         )
-    approved = Material.query.filter_by(status="approved").order_by(Material.created_at.desc()).first()
-    if approved:
-        items.append(
-            {
-                "type": "practice",
-                "priority": "secondary",
-                "subject": SUBJECTS[approved.subject_slug]["name"],
-                "subject_slug": approved.subject_slug,
-                "kicker": "Practice reminder",
-                "title": f"Try the {approved.title} Practice Check",
-                "meta": "Short practice from your approved lesson",
-                "action": "Practice",
-                "href": url_for("practice_setup", subject_slug=approved.subject_slug, material_slug=approved.slug),
-            }
-        )
+
     pending = Material.query.filter_by(owner_id=user_id, source="student", status="pending").first()
     if pending:
-        items.append(
+        upload_items.append(
             {
                 "type": "upload",
                 "priority": "secondary",
@@ -917,11 +942,13 @@ def build_today(user_id: int) -> list[dict]:
                 "kicker": "Backup upload",
                 "title": f"{pending.title} is waiting for approval",
                 "meta": "Your teacher will review before practice unlocks",
-                "action": "View",
+                "action": "See status",
                 "href": url_for("subject_hub", slug=pending.subject_slug, tab="study"),
             }
         )
-    return items[:5]
+
+    # Learn/Assess (review-first cards) → Practice → Improve → Upload status
+    return (learn_assess + practice_items + improve_items + upload_items)[:5]
 
 
 def score_answers(questions: list[dict], form) -> tuple[list[dict], int, int, str]:
@@ -2056,6 +2083,8 @@ def assessment_lobby(slug):
         return redirect(url_for("home"))
     taken = Attempt.query.filter_by(user_id=user["id"], assessment_id=assessment.id, kind="assessment").count()
     allowed = assessment.attempt_limit + (1 if assessment.extra_attempt else 0)
+    material = db.session.get(Material, assessment.material_id) if assessment.material_id else None
+    review_href = lesson_review_href(assessment.subject_slug, material)
     context = {
         "user": user,
         "assessment": {
@@ -2069,6 +2098,8 @@ def assessment_lobby(slug):
         "can_start": taken < allowed and assessment.status == "published",
         "taken": taken,
         "allowed": allowed,
+        "review_href": review_href,
+        "has_summary": bool(material and material.status == "approved" and material.summary),
         "ask_teacher": ask_teacher_context(
             user, SUBJECTS[assessment.subject_slug]["name"], assessment.title
         ),

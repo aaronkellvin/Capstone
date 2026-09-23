@@ -28,15 +28,18 @@
       <p class="lobby-focus">Includes: Analyze · Evaluate · Create</p>
 
       <div class="lobby-actions">
+        <a class="today-action" href="{{ review_href }}">
+          {% if has_summary %}Review lesson summary first{% else %}Review Study materials first{% endif %}
+        </a>
         {% if can_start %}
           <form method="POST" action="{{ url_for('assessment_start', slug=assessment.slug) }}" class="lobby-start-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <button type="submit" class="btn-primary btn-inline">
-              {% if taken %}Start extra attempt{% else %}Start Assessment{% endif %}
+            <button type="submit" class="today-action today-action-soft">
+              {% if taken %}Start extra attempt{% else %}Start assessment when ready{% endif %}
             </button>
           </form>
         {% else %}
-          <a class="btn-primary btn-inline" href="{{ url_for('results', filter='assessments') }}">View results</a>
+          <a class="today-action today-action-soft" href="{{ url_for('results', filter='assessments') }}">View results</a>
         {% endif %}
         {% if ask_teacher %}
           <a class="today-action today-action-soft" href="{{ ask_teacher.href }}">Ask Teacher</a>

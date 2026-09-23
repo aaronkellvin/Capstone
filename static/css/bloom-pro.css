@@ -1656,6 +1656,33 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
   box-shadow: 0 8px 18px rgba(30, 70, 184, 0.24);
 }
 
+.pro-body .home-today .today-featured .today-action-soft {
+  min-height: 2.35rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.92rem;
+  box-shadow: none;
+}
+
+.today-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: stretch;
+  min-width: 9.5rem;
+}
+
+.today-actions-compact {
+  min-width: 8.5rem;
+}
+
+.pro-body .today-command-primary {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem 1.15rem;
+  margin-bottom: 0.85rem;
+}
+
 .pro-body .home-today .today-featured .today-icon {
   width: 2.9rem;
   height: 2.9rem;
@@ -2233,14 +2260,6 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
 .home-today-command {
   margin-top: 0.15rem;
   margin-bottom: 0.5rem;
-}
-
-.pro-body .today-command-primary {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 1rem 1.15rem;
-  margin-bottom: 0.85rem;
 }
 
 .today-secondary {
@@ -4691,8 +4710,13 @@ html.pref-reduce-motion .pro-body #notify-dropdown.notify-panel {
     grid-template-columns: auto 1fr;
   }
 
-  .pro-body .home-today .today-featured .today-action {
+  .pro-body .home-today .today-featured .today-actions {
     grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .pro-body .home-today .today-featured .today-action {
     width: 100%;
     justify-content: center;
   }
